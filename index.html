@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Bio của ngduyanh</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: "Arial", sans-serif;
+        background: #0b0f2f;
+        color: white;
+        text-align: center;
+        height: 100vh;
+        overflow-x: hidden;
+    }
+
+    .container {
+        margin-top: 40px;
+        animation: fadeIn 1.5s ease-in-out;
+    }
+
+    .avatar {
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #fff;
+        box-shadow: 0 0 20px #6fdfff;
+    }
+
+    .name {
+        margin-top: 20px;
+        font-size: 30px;
+        font-weight: bold;
+        text-shadow: 0 0 10px #00eaff;
+    }
+
+    .info {
+        margin-top: 10px;
+        font-size: 18px;
+        opacity: 0.9;
+    }
+
+    .counter-box {
+        margin-top: 20px;
+        font-size: 20px;
+        text-shadow: 0 0 8px #00eaff;
+    }
+
+    .heart-btn {
+        margin-top: 15px;
+        font-size: 28px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .heart-btn:hover {
+        transform: scale(1.2);
+    }
+
+    /* Hiệu ứng tuyết */
+    .snowflake {
+        position: fixed;
+        top: -10px;
+        color: white;
+        opacity: 0.9;
+        font-size: 1em;
+        animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(100vh); }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+    }
+</style>
+</head>
+
+<body>
+
+<!-- Nhạc nền -->
+<audio id="music" autoplay loop playsinline>
+    <source src="https://files.catbox.moe/6v13w5.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+// Auto phát nhạc (bypass chặn autoplay)
+document.addEventListener("DOMContentLoaded", () => {
+    const music = document.getElementById("music");
+
+    setTimeout(() => {
+        music.play().catch(() => {
+            setTimeout(() => {
+                music.play();
+            }, 1000);
+        });
+    }, 300);
+});
+</script>
+
+<div class="container">
+    <img class="avatar" src="https://files.catbox.moe/l435rn.jpg" alt="Avatar">
+    <div class="name">ngduyanh</div>
+    <div class="info">Tuổi: 17</div>
+    <div class="info">Sinh ngày: 09/11/2008</div>
+    <div class="info">Sống tại: Cà Mau</div>
+
+    <!-- Lượt xem -->
+    <div class="counter-box">
+        👁 Lượt xem hồ sơ: <span id="viewCount">0</span>
+    </div>
+
+    <!-- Nút thả tim -->
+    <div class="heart-btn" id="heartBtn">❤️ <span id="heartCount">0</span></div>
+</div>
+
+<script>
+/* Lượt xem hồ sơ */
+if (!localStorage.getItem("profileViews")) {
+    localStorage.setItem("profileViews", "0");
+}
+let views = parseInt(localStorage.getItem("profileViews")) + 1;
+localStorage.setItem("profileViews", views);
+document.getElementById("viewCount").textContent = views;
+
+/* Thả tim */
+if (!localStorage.getItem("heartCount")) {
+    localStorage.setItem("heartCount", "0");
+}
+
+document.getElementById("heartBtn").addEventListener("click", () => {
+    let hearts = parseInt(localStorage.getItem("heartCount")) + 1;
+    localStorage.setItem("heartCount", hearts);
+    document.getElementById("heartCount").textContent = hearts;
+
+    // hiệu ứng nhỏ
+    document.getElementById("heartBtn").style.transform = "scale(1.4)";
+    setTimeout(() => {
+        document.getElementById("heartBtn").style.transform = "scale(1)";
+    }, 150);
+});
+
+document.getElementById("heartCount").textContent =
+    localStorage.getItem("heartCount");
+</script>
+
+<script>
+// Tuyết rơi
+function createSnow() {
+    const snow = document.createElement("div");
+    snow.classList.add("snowflake");
+    snow.textContent = "❄";
+    snow.style.left = Math.random() * 100 + "vw";
+    snow.style.fontSize = Math.random() * 10 + 10 + "px";
+    snow.style.animationDuration = Math.random() * 3 + 2 + "s";
+    document.body.appendChild(snow);
+    setTimeout(() => snow.remove(), 5000);
+}
+setInterval(createSnow, 80);
+</script>
+
+</body>
+</html>
