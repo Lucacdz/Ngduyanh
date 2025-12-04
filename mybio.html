@@ -13,27 +13,50 @@
         text-align: center;
         height: 100vh;
         overflow-x: hidden;
+        transition: 0.4s;
+    }
+    body.light {
+        background: #f4f4f4;
+        color: #111;
+    }
+
+    /* Nút chuyển chế độ */
+    #themeToggle {
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        font-size: 28px;
+        cursor: pointer;
+        z-index: 9999;
+        user-select: none;
     }
 
     .container {
-        margin-top: 40px;
+        margin-top: 60px;
         animation: fadeIn 1.5s ease-in-out;
     }
 
+    /* Avatar Neon */
     .avatar {
         width: 180px;
         height: 180px;
         border-radius: 50%;
         object-fit: cover;
-        border: 4px solid #fff;
-        box-shadow: 0 0 20px #6fdfff;
+        border: 4px solid #00eaff;
+        box-shadow: 0 0 20px #00eaff;
+        animation: neonPulse 2s infinite alternate;
+    }
+
+    @keyframes neonPulse {
+        0% { box-shadow: 0 0 15px #00eaff; }
+        100% { box-shadow: 0 0 45px #00eaff; }
     }
 
     .name {
         margin-top: 20px;
         font-size: 30px;
         font-weight: bold;
-        text-shadow: 0 0 10px #00eaff;
+        text-shadow: 0 0 12px #00eaff;
     }
 
     .info {
@@ -53,13 +76,23 @@
         font-size: 28px;
         cursor: pointer;
         transition: 0.2s;
+        user-select: none;
     }
 
-    .heart-btn:hover {
-        transform: scale(1.2);
+    /* Hiệu ứng tim nổ tung */
+    .explosion {
+        position: fixed;
+        font-size: 20px;
+        animation: explode 1s ease-out forwards;
+        pointer-events: none;
     }
 
-    /* Hiệu ứng tuyết */
+    @keyframes explode {
+        0%   { opacity: 1; transform: scale(1) translate(0,0); }
+        100% { opacity: 0; transform: scale(0) translate(var(--x), var(--y)); }
+    }
+
+    /* Tuyết 3D */
     .snowflake {
         position: fixed;
         top: -10px;
@@ -67,10 +100,11 @@
         opacity: 0.9;
         font-size: 1em;
         animation: fall linear infinite;
+        filter: drop-shadow(0 0 5px white);
     }
 
     @keyframes fall {
-        0% { transform: translateY(0); }
+        0% { transform: translateY(-10px); }
         100% { transform: translateY(100vh); }
     }
 
@@ -83,29 +117,25 @@
 
 <body>
 
+<!-- Nút Dark/Light -->
+<div id="themeToggle">🌓</div>
+
 <!-- Nhạc nền -->
 <audio id="music" autoplay loop playsinline>
-    <source src="https://files.catbox.moe/6v13w5.mp3" type="audio/mpeg">
+    <source src="https://files.catbox.moe/6a6zos.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-// Auto phát nhạc (bypass chặn autoplay)
+// Auto play nhạc
 document.addEventListener("DOMContentLoaded", () => {
     const music = document.getElementById("music");
-
-    setTimeout(() => {
-        music.play().catch(() => {
-            setTimeout(() => {
-                music.play();
-            }, 1000);
-        });
-    }, 300);
+    setTimeout(() => { music.play().catch(()=>{}); }, 300);
 });
 </script>
 
 <div class="container">
     <img class="avatar" src="https://files.catbox.moe/l435rn.jpg" alt="Avatar">
-    <div class="name">ngduyanh</div>
+    <div class="name">NgDuyAnh</div>
     <div class="info">Tuổi: 17</div>
     <div class="info">Sinh ngày: 09/11/2008</div>
     <div class="info">Sống tại: Cà Mau</div>
@@ -119,50 +149,121 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="heart-btn" id="heartBtn">❤️ <span id="heartCount">0</span></div>
 </div>
 
-<script>
-/* Lượt xem hồ sơ */
-if (!localStorage.getItem("profileViews")) {
-    localStorage.setItem("profileViews", "0");
-}
-let views = parseInt(localStorage.getItem("profileViews")) + 1;
-localStorage.setItem("profileViews", views);
-document.getElementById("viewCount").textContent = views;
-
-/* Thả tim */
-if (!localStorage.getItem("heartCount")) {
-    localStorage.setItem("heartCount", "0");
-}
-
-document.getElementById("heartBtn").addEventListener("click", () => {
-    let hearts = parseInt(localStorage.getItem("heartCount")) + 1;
-    localStorage.setItem("heartCount", hearts);
-    document.getElementById("heartCount").textContent = hearts;
-
-    // hiệu ứng nhỏ
-    document.getElementById("heartBtn").style.transform = "scale(1.4)";
-    setTimeout(() => {
-        document.getElementById("heartBtn").style.transform = "scale(1)";
-    }, 150);
-});
-
-document.getElementById("heartCount").textContent =
-    localStorage.getItem("heartCount");
-</script>
+<div id="explosionContainer"></div>
 
 <script>
-// Tuyết rơi
-function createSnow() {
+const npointURL = "https://api.npoint.io/65e720f113ff03e671a5";
+
+/* ========== Hiệu ứng tim nổ tung ========== */
+function explodeHeart(x, y) {
+    const container = document.body;
+
+    for (let i = 0; i < 12; i++) {
+        let h = document.createElement("div");
+        h.className = "explosion";
+        h.textContent = "❤️";
+
+        // random hướng nổ
+        h.style.setProperty("--x", (Math.random()*200 - 100) + "px");
+        h.style.setProperty("--y", (Math.random()*200 - 100) + "px");
+
+        h.style.left = x + "px";
+        h.style.top = y + "px";
+
+        container.appendChild(h);
+        setTimeout(() => h.remove(), 1000);
+    }
+}
+
+/* ========== Dark / Light Mode ========== */
+const themeBtn = document.getElementById("themeToggle");
+
+if (localStorage.getItem("theme") === "light") {
+    document.body.classList.add("light");
+}
+
+themeBtn.onclick = () => {
+    document.body.classList.toggle("light");
+
+    if (document.body.classList.contains("light"))
+        localStorage.setItem("theme", "light");
+    else
+        localStorage.setItem("theme", "dark");
+};
+
+/* ========== API Load ========== */
+async function loadData() {
+    let data = await fetch(npointURL).then(r => r.json());
+
+    document.getElementById("viewCount").textContent = data.views;
+    document.getElementById("heartCount").textContent = data.likes;
+}
+
+// Tăng lượt xem
+async function increaseView() {
+    let data = await fetch(npointURL).then(r => r.json());
+    data.views++;
+
+    await fetch(npointURL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+
+    document.getElementById("viewCount").textContent = data.views;
+}
+
+/* ========== Chỉ thả tim 1 lần ========== */
+function likedBefore() {
+    return localStorage.getItem("liked_profile") === "true";
+}
+
+function setLiked() {
+    localStorage.setItem("liked_profile", "true");
+}
+
+async function heartClick(e) {
+    if (likedBefore())
+        return alert("Bạn đã thả tim 1 lần rồi ❤️");
+
+    let data = await fetch(npointURL).then(r => r.json());
+    data.likes++;
+
+    await fetch(npointURL, {
+        method: "PUT",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify(data)
+    });
+
+    document.getElementById("heartCount").textContent = data.likes;
+
+    explodeHeart(e.clientX, e.clientY);
+
+    setLiked();
+}
+
+/* ========== Sự kiện click tim ========== */
+document.getElementById("heartBtn").onclick = heartClick;
+
+/* ========== Load & cập nhật view ========== */
+loadData();
+increaseView();
+
+/* ========== Tuyết 3D ========== */
+function snow3D() {
     const snow = document.createElement("div");
     snow.classList.add("snowflake");
     snow.textContent = "❄";
+
     snow.style.left = Math.random() * 100 + "vw";
-    snow.style.fontSize = Math.random() * 10 + 10 + "px";
-    snow.style.animationDuration = Math.random() * 3 + 2 + "s";
+    snow.style.fontSize = Math.random() * 14 + 10 + "px";
+    snow.style.animationDuration = Math.random() * 4 + 3 + "s";
+
     document.body.appendChild(snow);
-    setTimeout(() => snow.remove(), 5000);
+    setTimeout(() => snow.remove(), 6000);
 }
-setInterval(createSnow, 80);
+setInterval(snow3D, 80);
 </script>
 
 </body>
-</html> 
+</html>
