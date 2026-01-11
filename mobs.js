@@ -1,12 +1,16 @@
 import {isSolid} from "./world.js";
 export const mobs=[];
+
 export function spawnMob(x,y,type="zombie"){
   mobs.push({x,y,w:28,h:32,vx:Math.random()<0.5?-1:1,vy:0,hp:30,maxHp:30,type});
 }
+
+// demo spawn
 spawnMob(300,0,"zombie");
 spawnMob(400,0,"skeleton");
 spawnMob(500,0,"slime");
 spawnMob(600,0,"spider");
+
 export function updateMobs(){
   mobs.forEach(m=>{
     m.vy+=0.5;
@@ -17,10 +21,12 @@ export function updateMobs(){
     if(!isSolid(m.x,ny+m.h)) m.y=ny;
     else m.vy=0;
   });
+
   for(let i=mobs.length-1;i>=0;i--){
     if(mobs[i].hp<=0) mobs.splice(i,1);
   }
 }
+
 export function drawMob(ctx,m,camX,camY){
   switch(m.type){
     case"zombie":ctx.fillStyle="#228B22";break;
