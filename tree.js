@@ -1,19 +1,45 @@
-import {world, worldHP, TILE} from "./world.js";
+import {world, worldHP, W, H} from "./world.js";
 import {blocks,getBlockDrop} from "./block.js";
-import {inventory} from "./inventory.js";
+import {addItem} from "./inventory.js";
 
-export function breakTreeBlock(x,y){
+// phá block + rơi item
+export function breakBlockDropItem(x,y){
   const id = world[y][x];
+  if(id===0) return;
   const drop = getBlockDrop(id);
-  if(drop){
-    // thêm vào inventory (auto stack)
-    let slot = inventory.find(i => i.id===drop && i.count<64);
-    if(slot) slot.count++;
-    else{
-      let empty = inventory.find(i=>!i.id);
-      if(empty) { empty.id=drop; empty.count=1; }
-    }
-  }
+  if(drop) addItem(drop,1);
   world[y][x]=0;
   worldHP[y][x]=0;
+}
+
+// spawn cây ngẫu nhiên
+export function spawnTrees(){
+  for(let x=5;x<W;x+=5){
+    if(Math.random()<0.1){ 
+      let treeHeight = Math.floor(Math.random()*3)+3;
+      let groundY = 0;
+      for(let y=0;y<H;y++){
+        if(world[y][x]!==0){ groundY=y-1; break; }
+      }
+
+      for(let i=0;i<treeHeight;i++){
+        if(groundY-i>0){
+          world[groundY-i][x]=3;
+          worldHP[groundY-i][x]=4;
+        }
+      }
+
+      let leafLayers = treeHeight<=3?2:3;
+      for(let ly=-leafLayers;ly<0;ly++){
+        for(let lx=-2;lx<=2;lx++){
+          let px = x+lx;
+          let py = groundY+ly;
+          if(px>=0 && px<W && py>=0 && py<H && world[py][px]===0){
+            world[py][px]=4;
+            worldHP[py][px]=2;
+          }
+        }
+      }
+    }
+  }
 }
