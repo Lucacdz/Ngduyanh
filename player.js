@@ -1,6 +1,10 @@
-const player={x:100,y:0,w:28,h:32,vx:0,vy:0,speed:3,jump:-10,onGround:false,hp:100,maxHp:100,attackCooldown:0,breakCooldown:0};
-function spawnPlayer(){for(let y=0;y<H;y++){if(isSolid(player.x,y*TILE)){player.y=(y-1)*TILE;break;}}}
-function attack(){
+
+import {TILE,H} from "./world.js";
+import {isSolid,breakBlock} from "./world.js";
+import {mobs} from "./mobs.js";
+export const player={x:100,y:0,w:28,h:32,vx:0,vy:0,speed:3,jump:-10,onGround:false,hp:100,maxHp:100,attackCooldown:0,breakCooldown:0};
+export function spawnPlayer(){for(let y=0;y<H;y++){if(isSolid(player.x,y*TILE)){player.y=(y-1)*TILE;break;}}}
+export function attack(input){
   if(player.attackCooldown>0) return;
   player.attackCooldown=10;
   const range=40;
@@ -12,11 +16,11 @@ function attack(){
   const dir = input.left?-1:1;
   breakBlock(player.x+dir*40,player.y+10);
 }
-function updatePlayer(){
+export function updatePlayer(input){
   player.vx=0;
   if(input.left) player.vx=-player.speed;
   if(input.right) player.vx=player.speed;
-  if(input.attack) attack();
+  if(input.attack) attack(input);
   if(player.attackCooldown>0) player.attackCooldown--;
   if(player.breakCooldown>0) player.breakCooldown--;
   player.vy+=0.5;
@@ -33,13 +37,9 @@ function updatePlayer(){
     else player.vy=0;
   }
 }
-function drawPlayer(ctx,camX,camY){
+export function drawPlayer(ctx,camX,camY){
   ctx.fillStyle="#FF4500";
   ctx.fillRect(player.x-camX,player.y-camY,player.w,player.h);
   ctx.fillStyle="red";
   ctx.fillRect(player.x-camX,player.y-camY-6,player.w*(player.hp/player.maxHp),4);
 }
-window.player=player;
-window.updatePlayer=updatePlayer;
-window.drawPlayer=drawPlayer;
-window.spawnPlayer=spawnPlayer;
