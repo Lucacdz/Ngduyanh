@@ -4,7 +4,7 @@ export const blocks = {
   2: {name:"grass", solid:true, hp:2, drop:"dirt"},
   3: {name:"wood", solid:true, hp:4, drop:"wood"},
   4: {name:"leaves", solid:false, hp:2, drop:"leaves"},
-  5: {name:"stone", solid:true, hp:5, drop:"stone"} // đá
+  5: {name:"stone", solid:true, hp:5, drop:"stone"}
 };
 
 export function getBlockHP(id){ return blocks[id]?.hp || 0; }
