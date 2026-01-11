@@ -1,7 +1,6 @@
-const inventory=[];
+export const inventory=[];
 for(let i=0;i<9;i++) inventory.push({id:null,count:0});
-window.inventory=inventory;
-function drawHotbar(){
+export function drawHotbar(){
   const hb=document.getElementById("hotbar");
   hb.innerHTML="";
   inventory.forEach(item=>{
@@ -10,7 +9,7 @@ function drawHotbar(){
     hb.appendChild(div);
   });
 }
-function drawInventoryUI(){
+export function drawInventoryUI(){
   const invUI=document.getElementById("inventoryUI");
   invUI.innerHTML="";
   inventory.forEach((item)=>{
