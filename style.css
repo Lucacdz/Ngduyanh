@@ -1,0 +1,43 @@
+body { margin:0; overflow:hidden; background:#87ceeb; }
+canvas { display:block; }
+
+#hotbar {
+ position:fixed;
+ bottom:10px;
+ left:50%;
+ transform:translateX(-50%);
+ display:flex;
+ z-index:5;
+}
+.slot {
+ width:40px;height:40px;
+ border:2px solid #555;
+ background:#222;
+ color:white;
+ margin:2px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+}
+
+#controls {
+ position:fixed;
+ right:10px;
+ bottom:60px;
+ display:flex;
+ flex-direction:column;
+ z-index:10;
+}
+#controls button {
+ padding:14px;
+ margin:4px;
+ font-size:18px;
+}
+
+#night {
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,0);
+ pointer-events:none;
+ z-index:3;
+}
