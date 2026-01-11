@@ -1,26 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>2D Sandbox Survival</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Mini Minecraft</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-container">
-        <div id="world"></div>
-        <div id="ui">
-            <div id="hotbar"></div>
-            <div id="health-bar">
-                <div id="health-fill"></div>
-            </div>
-        </div>
-        <div id="mobile-controls">
-            <div id="left-btn" class="control-btn">◀</div>
-            <div id="right-btn" class="control-btn">▶</div>
-            <div id="jump-btn" class="control-btn">▲</div>
-        </div>
-    </div>
-    <script type="module" src="main.js"></script>
+
+<canvas id="game"></canvas>
+<div id="hotbar"></div>
+<div id="controls">
+  <button id="left">◀</button>
+  <button id="right">▶</button>
+  <button id="jump">⬆</button>
+  <button id="attack">⚔</button>
+  <button id="place">⬇</button>
+</div>
+
+<script src="world.js"></script>
+<script src="player.js"></script>
+<script src="mobs.js"></script>
+<script src="inventory.js"></script>
+<script src="crafting.js"></script>
+<script src="controls.js"></script>
+<script src="main.js"></script>
 </body>
 </html>
