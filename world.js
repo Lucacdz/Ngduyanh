@@ -1,5 +1,5 @@
-const TILE=32,W=200,H=80;
-const world=[];
+export const TILE=32,W=200,H=80;
+export const world=[];
 for(let y=0;y<H;y++){
   world[y]=[];
   for(let x=0;x<W;x++){
@@ -16,20 +16,14 @@ for(let x=5;x<W;x+=15){
     for(let lx=-2;lx<=2;lx++)
       world[g+ly][x+lx]=4;
 }
-function isSolid(px,py){
+export function isSolid(px,py){
   const x=Math.floor(px/TILE);
   const y=Math.floor(py/TILE);
   if(x<0||y<0||x>=W||y>=H) return true;
   return world[y][x]!==0;
 }
-function breakBlock(px,py){
+export function breakBlock(px,py){
   const x=Math.floor(px/TILE);
   const y=Math.floor(py/TILE);
   if(world[y]&&world[y][x]!==0) world[y][x]=0;
 }
-window.world=world;
-window.isSolid=isSolid;
-window.breakBlock=breakBlock;
-window.TILE=TILE;
-window.W=W;
-window.H=H;
