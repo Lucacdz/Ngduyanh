@@ -1,13 +1,13 @@
-
-const mobs=[];
-function spawnMob(x,y,type="zombie"){
+import {isSolid} from "./world.js";
+export const mobs=[];
+export function spawnMob(x,y,type="zombie"){
   mobs.push({x,y,w:28,h:32,vx:Math.random()<0.5?-1:1,vy:0,hp:30,maxHp:30,type});
 }
 spawnMob(300,0,"zombie");
 spawnMob(400,0,"skeleton");
 spawnMob(500,0,"slime");
 spawnMob(600,0,"spider");
-function updateMobs(){
+export function updateMobs(){
   mobs.forEach(m=>{
     m.vy+=0.5;
     let nx=m.x+m.vx;
@@ -21,7 +21,7 @@ function updateMobs(){
     if(mobs[i].hp<=0) mobs.splice(i,1);
   }
 }
-function drawMob(ctx,m,camX,camY){
+export function drawMob(ctx,m,camX,camY){
   switch(m.type){
     case"zombie":ctx.fillStyle="#228B22";break;
     case"skeleton":ctx.fillStyle="#EEE";break;
@@ -33,7 +33,3 @@ function drawMob(ctx,m,camX,camY){
   ctx.fillStyle="red";
   ctx.fillRect(m.x-camX,m.y-camY-6,m.w*(m.hp/m.maxHp),4);
 }
-window.mobs=mobs;
-window.spawnMob=spawnMob;
-window.updateMobs=updateMobs;
-window.drawMob=drawMob;
