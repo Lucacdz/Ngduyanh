@@ -9,4 +9,21 @@ document.getElementById("attack").addEventListener("touchstart",()=>input.attack
 document.getElementById("attack").addEventListener("touchend",()=>input.attack=false);
 document.getElementById("place").addEventListener("touchstart",()=>input.place=true);
 document.getElementById("place").addEventListener("touchend",()=>input.place=false);
+
+// inventory toggle
+document.getElementById("toggleInventory").addEventListener("click",()=>{
+  const inv=document.getElementById("inventoryUI");
+  inv.style.display=inv.style.display==="none"?"block":"none";
+});
+
+// joystick
+const joy=document.getElementById("joystick");
+let startX,startY;
+joy.addEventListener("touchstart",e=>{startX=e.touches[0].clientX; startY=e.touches[0].clientY;});
+joy.addEventListener("touchmove",e=>{
+  const dx=e.touches[0].clientX-startX;
+  input.left=dx<-20;
+  input.right=dx>20;
+});
+joy.addEventListener("touchend",e=>{input.left=false;input.right=false;});
 window.input=input;
