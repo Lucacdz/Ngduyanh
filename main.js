@@ -32,8 +32,9 @@ function loop(){
   requestAnimationFrame(loop);
 }
 
+// chỉ chạy khi bấm start
 document.getElementById("startGame").addEventListener("click",()=>{
   document.getElementById("startMenu").style.display="none";
-  spawnPlayer();
-  loop();
+  spawnPlayer();  // reset player
+  loop();         // bắt đầu vòng lặp game
 });
