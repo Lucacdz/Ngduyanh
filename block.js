@@ -1,0 +1,11 @@
+export const blocks = {
+  0: {name:"air", solid:false},
+  1: {name:"dirt", solid:true, hp:3, drop:"dirt"},
+  2: {name:"grass", solid:true, hp:2, drop:"dirt"},
+  3: {name:"wood", solid:true, hp:4, drop:"wood"},
+  4: {name:"leaves", solid:false, hp:2, drop:"leaves"}
+};
+
+export function getBlockHP(id){ return blocks[id]?.hp || 0; }
+export function getBlockDrop(id){ return blocks[id]?.drop || null; }
+export function isSolidBlock(id){ return blocks[id]?.solid || false; }
