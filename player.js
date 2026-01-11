@@ -1,98 +1,69 @@
-import { TILE_SIZE, TILE_TYPES, ItemDrop } from './world.js';
+const player = {
+  x: 100, y: 0, w: 28, h: 32,
+  vx: 0, vy: 0,
+  speed: 3, jump: -10,
+  onGround: false,
+  hp: 100, maxHp: 100,
+  attackCooldown: 0
+};
 
-export class Player {
-    constructor() {
-        this.x = 100;
-        this.y = 100;
-        this.width = 32;
-        this.height = 32;
-        this.vx = 0;
-        this.vy = 0;
-        this.speed = 2;
-        this.jumpStrength = 6;
-        this.onGround = false;
-        this.health = 100;
-        this.inventory = {}; // { blockType: count }
-
-        this.element = document.createElement('div');
-        this.element.className = 'tile player';
-        this.element.style.background = 'blue';
-        document.getElementById('world').appendChild(this.element);
+function spawnPlayer() {
+  for (let y = 0; y < H; y++) {
+    if (isSolid(player.x, y*TILE)) {
+      player.y = (y-1)*TILE;
+      break;
     }
-
-    update(keys, tiles) {
-        this.vx = 0;
-        if (keys.left) this.vx = -this.speed;
-        if (keys.right) this.vx = this.speed;
-        this.vy += 0.3;
-        if (keys.jump && this.onGround) {
-            this.vy = -this.jumpStrength;
-            this.onGround = false;
-        }
-        this.x += this.vx;
-        this.collide(tiles, 'x');
-        this.y += this.vy;
-        this.collide(tiles, 'y');
-        this.element.style.transform = `translate(${this.x}px, ${this.y}px)`;
-    }
-
-    collide(tiles, axis) {
-        for (const tile of tiles) {
-            if (tile.type === 'air') continue;
-            const tx = tile.x * TILE_SIZE;
-            const ty = tile.y * TILE_SIZE;
-            if (
-                this.x < tx + TILE_SIZE &&
-                this.x + this.width > tx &&
-                this.y < ty + TILE_SIZE &&
-                this.y + this.height > ty
-            ) {
-                if (axis === 'x') {
-                    if (this.vx > 0) this.x = tx - this.width;
-                    else if (this.vx < 0) this.x = tx + TILE_SIZE;
-                    this.vx = 0;
-                }
-                if (axis === 'y') {
-                    if (this.vy > 0) {
-                        this.y = ty - this.height;
-                        this.onGround = true;
-                    } else if (this.vy < 0) {
-                        this.y = ty + TILE_SIZE;
-                    }
-                    this.vy = 0;
-                }
-            }
-        }
-    }
-
-    digBlock(tiles) {
-        const tx = Math.floor((this.x + this.width/2)/TILE_SIZE);
-        const ty = Math.floor((this.y + this.height)/TILE_SIZE);
-        for (const tile of tiles) {
-            if (tile.x === tx && tile.y === ty && tile.type !== 'air') {
-                new ItemDrop(tile.x * TILE_SIZE, tile.y * TILE_SIZE, tile.type);
-                this.inventory[tile.type] = (this.inventory[tile.type] || 0) + 1;
-                tile.type = 'air';
-                if(tile.element) tile.element.remove();
-                return;
-            }
-        }
-    }
-
-    placeBlock(tiles, type) {
-        if(!this.inventory[type] || this.inventory[type] <= 0) return;
-        const tx = Math.floor((this.x + this.width/2)/TILE_SIZE);
-        const ty = Math.floor((this.y + this.height)/TILE_SIZE);
-        for (const tile of tiles) {
-            if (tile.x === tx && tile.y === ty && tile.type === 'air') {
-                const el = document.createElement('div');
-                el.className = 'tile ' + type;
-                el.style.transform = `translate(${tx*32}px, ${ty*32}px)`;
-                document.getElementById('world').appendChild(el);
-                tiles.push({x:tx, y:ty, type, element:el});
-                this.inventory[type]--;
-                return;
-            }
-        }
-    }
+  }
 }
+spawnPlayer();
+
+function attack() {
+  if (player.attackCooldown>0) return;
+  player.attackCooldown=20;
+
+  const range=40;
+  mobs.forEach(m=>{
+    const dx=Math.abs((m.x+m.w/2)-(player.x+player.w/2));
+    const dy=Math.abs((m.y+m.h/2)-(player.y+player.h/2));
+    if(dx<range && dy<range) m.hp-=10;
+  });
+
+  const dir = input.left?-1:1;
+  breakBlock(player.x + dir*40, player.y+10);
+}
+
+function updatePlayer(){
+  player.vx=0;
+  if(input.left) player.vx=-player.speed;
+  if(input.right) player.vx=player.speed;
+  if(input.attack) attack();
+  if(player.attackCooldown>0) player.attackCooldown--;
+
+  player.vy+=0.5;
+  if(player.vy>12) player.vy=12;
+
+  if(input.jump && player.onGround){player.vy=player.jump; player.onGround=false;}
+
+  let nx=player.x+player.vx;
+  if(!isSolid(nx,player.y) && !isSolid(nx,player.y+player.h)) player.x=nx;
+
+  let ny=player.y+player.vy;
+  if(player.vy>0){
+    if(!isSolid(player.x,ny+player.h)){player.y=ny; player.onGround=false;}
+    else {player.vy=0; player.onGround=true;}
+  }else{
+    if(!isSolid(player.x,ny)) player.y=ny;
+    else player.vy=0;
+  }
+}
+
+function drawPlayer(ctx, camX, camY){
+  ctx.fillStyle="#FF4500"; // player màu cam đỏ
+  ctx.fillRect(player.x-camX, player.y-camY, player.w, player.h);
+  ctx.fillStyle="red";
+  ctx.fillRect(player.x-camX, player.y-camY-6, player.w*(player.hp/player.maxHp), 4);
+}
+
+window.player=player;
+window.updatePlayer=updatePlayer;
+window.drawPlayer=drawPlayer;
