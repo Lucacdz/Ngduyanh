@@ -1,7 +1,9 @@
 export function initMenu(startCallback){
-  const menu=document.getElementById("startMenu");
-  document.getElementById("startGame").addEventListener("click",()=>{
-    menu.style.display="none";
+  const menu = document.getElementById("startMenu");
+  const btn = document.getElementById("startGame");
+
+  btn.addEventListener("click", () => {
+    menu.style.display = "none";
     startCallback();
   });
 }
