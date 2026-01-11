@@ -1,3 +1,4 @@
+
 const mobs=[];
 function spawnMob(x,y,type="zombie"){
   mobs.push({x,y,w:28,h:32,vx:Math.random()<0.5?-1:1,vy:0,hp:30,maxHp:30,type});
