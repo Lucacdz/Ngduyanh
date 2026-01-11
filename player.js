@@ -1,4 +1,4 @@
-import { TILE_SIZE } from './world.js';
+import { TILE_SIZE, TILE_TYPES, ItemDrop } from './world.js';
 
 export class Player {
     constructor() {
@@ -12,6 +12,8 @@ export class Player {
         this.jumpStrength = 6;
         this.onGround = false;
         this.health = 100;
+        this.inventory = {}; // { blockType: count }
+
         this.element = document.createElement('div');
         this.element.className = 'tile player';
         this.element.style.background = 'blue';
@@ -19,27 +21,18 @@ export class Player {
     }
 
     update(keys, tiles) {
-        // Horizontal movement
         this.vx = 0;
         if (keys.left) this.vx = -this.speed;
         if (keys.right) this.vx = this.speed;
-
-        // Gravity
         this.vy += 0.3;
-
-        // Jump
         if (keys.jump && this.onGround) {
             this.vy = -this.jumpStrength;
             this.onGround = false;
         }
-
-        // Collision
         this.x += this.vx;
         this.collide(tiles, 'x');
         this.y += this.vy;
         this.collide(tiles, 'y');
-
-        // Update element
         this.element.style.transform = `translate(${this.x}px, ${this.y}px)`;
     }
 
@@ -48,7 +41,6 @@ export class Player {
             if (tile.type === 'air') continue;
             const tx = tile.x * TILE_SIZE;
             const ty = tile.y * TILE_SIZE;
-
             if (
                 this.x < tx + TILE_SIZE &&
                 this.x + this.width > tx &&
@@ -69,6 +61,37 @@ export class Player {
                     }
                     this.vy = 0;
                 }
+            }
+        }
+    }
+
+    digBlock(tiles) {
+        const tx = Math.floor((this.x + this.width/2)/TILE_SIZE);
+        const ty = Math.floor((this.y + this.height)/TILE_SIZE);
+        for (const tile of tiles) {
+            if (tile.x === tx && tile.y === ty && tile.type !== 'air') {
+                new ItemDrop(tile.x * TILE_SIZE, tile.y * TILE_SIZE, tile.type);
+                this.inventory[tile.type] = (this.inventory[tile.type] || 0) + 1;
+                tile.type = 'air';
+                if(tile.element) tile.element.remove();
+                return;
+            }
+        }
+    }
+
+    placeBlock(tiles, type) {
+        if(!this.inventory[type] || this.inventory[type] <= 0) return;
+        const tx = Math.floor((this.x + this.width/2)/TILE_SIZE);
+        const ty = Math.floor((this.y + this.height)/TILE_SIZE);
+        for (const tile of tiles) {
+            if (tile.x === tx && tile.y === ty && tile.type === 'air') {
+                const el = document.createElement('div');
+                el.className = 'tile ' + type;
+                el.style.transform = `translate(${tx*32}px, ${ty*32}px)`;
+                document.getElementById('world').appendChild(el);
+                tiles.push({x:tx, y:ty, type, element:el});
+                this.inventory[type]--;
+                return;
             }
         }
     }
