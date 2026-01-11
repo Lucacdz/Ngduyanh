@@ -1,65 +1,26 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sandbox Survival Craft</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>2D Sandbox Survival</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
-        
-        <!-- UI Elements -->
-        <div id="healthBar">
-            <div id="healthFill"></div>
-        </div>
-        
-        <div id="debugInfo"></div>
-        
-        <!-- Mobile Controls -->
-        <div id="mobileControls">
-            <div id="leftControls">
-                <div id="joystickContainer">
-                    <div id="joystickBase"></div>
-                    <div id="joystick"></div>
-                </div>
-                <button id="jumpBtn" class="mobile-btn"><i class="fas fa-arrow-up"></i></button>
-            </div>
-            <div id="rightControls">
-                <button id="attackBtn" class="mobile-btn"><i class="fas fa-crosshairs"></i></button>
-                <button id="placeBtn" class="mobile-btn"><i class="fas fa-hand-rock"></i></button>
+    <div id="game-container">
+        <div id="world"></div>
+        <div id="ui">
+            <div id="hotbar"></div>
+            <div id="health-bar">
+                <div id="health-fill"></div>
             </div>
         </div>
-        
-        <!-- Hotbar -->
-        <div id="hotbar">
-            <div class="hotbar-slot active" data-slot="0"></div>
-            <div class="hotbar-slot" data-slot="1"></div>
-            <div class="hotbar-slot" data-slot="2"></div>
-            <div class="hotbar-slot" data-slot="3"></div>
-            <div class="hotbar-slot" data-slot="4"></div>
-            <div class="hotbar-slot" data-slot="5"></div>
-            <div class="hotbar-slot" data-slot="6"></div>
-            <div class="hotbar-slot" data-slot="7"></div>
-            <div class="hotbar-slot" data-slot="8"></div>
-        </div>
-        
-        <!-- Death Menu -->
-        <div id="deathMenu" class="menu">
-            <h2>Bạn đã chết!</h2>
-            <button id="respawnBtn">Hồi sinh</button>
-            <button id="menuBtn">Về Menu</button>
+        <div id="mobile-controls">
+            <div id="left-btn" class="control-btn">◀</div>
+            <div id="right-btn" class="control-btn">▶</div>
+            <div id="jump-btn" class="control-btn">▲</div>
         </div>
     </div>
-    
-    <script src="world.js"></script>
-    <script src="player.js"></script>
-    <script src="mobs.js"></script>
-    <script src="inventory.js"></script>
-    <script src="crafting.js"></script>
-    <script src="controls.js"></script>
-    <script src="main.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>
