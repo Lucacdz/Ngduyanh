@@ -3,16 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>Mini Minecraft</title>
+<title>Mini Minecraft Survival</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<div id="startMenu">
+  <h1>Mini Minecraft</h1>
+  <button id="startGame">Bắt đầu</button>
+</div>
+
 <canvas id="game"></canvas>
+
 <div id="hotbar"></div>
+
+<button id="toggleInventory">🎒</button>
+<div id="inventoryUI"></div>
+
 <div id="controls">
-  <button id="left">◀</button>
-  <button id="right">▶</button>
+  <div id="joystick"></div>
   <button id="jump">⬆</button>
   <button id="attack">⚔</button>
   <button id="place">⬇</button>
