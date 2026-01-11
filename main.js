@@ -1,3 +1,9 @@
+import {initMenu} from "./menu.js";
+import {spawnPlayer,updatePlayer,drawPlayer,player} from "./player.js";
+import {world,TILE,H,W} from "./world.js";
+import {updateMobs,drawMob,mobs} from "./mobs.js";
+import {input} from "./controls.js";
+
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 function resize(){canvas.width=innerWidth;canvas.height=innerHeight;}
@@ -22,7 +28,7 @@ function drawWorld(){
 
 function loop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  updatePlayer();
+  updatePlayer(input);
   updateMobs();
   camX=player.x-canvas.width/2;
   camY=player.y-canvas.height/2;
@@ -32,9 +38,7 @@ function loop(){
   requestAnimationFrame(loop);
 }
 
-// chỉ chạy khi bấm start
-document.getElementById("startGame").addEventListener("click",()=>{
-  document.getElementById("startMenu").style.display="none";
-  spawnPlayer();  // reset player
-  loop();         // bắt đầu vòng lặp game
+initMenu(()=>{
+  spawnPlayer();
+  loop();
 });
