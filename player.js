@@ -1,20 +1,15 @@
-const player={x:100,y:0,w:28,h:32,vx:0,vy:0,speed:3,jump:-10,onGround:false,hp:100,maxHp:100,attackCooldown:0};
-function spawnPlayer(){
-  for(let y=0;y<H;y++){
-    if(isSolid(player.x,y*TILE)){player.y=(y-1)*TILE;break;}
-  }
-}
-spawnPlayer();
+const player={x:100,y:0,w:28,h:32,vx:0,vy:0,speed:3,jump:-10,onGround:false,hp:100,maxHp:100,attackCooldown:0,breakCooldown:0};
+function spawnPlayer(){for(let y=0;y<H;y++){if(isSolid(player.x,y*TILE)){player.y=(y-1)*TILE;break;}}}
 function attack(){
   if(player.attackCooldown>0) return;
-  player.attackCooldown=20;
+  player.attackCooldown=10;
   const range=40;
   mobs.forEach(m=>{
     const dx=Math.abs((m.x+m.w/2)-(player.x+player.w/2));
     const dy=Math.abs((m.y+m.h/2)-(player.y+player.h/2));
     if(dx<range&&dy<range) m.hp-=10;
   });
-  const dir=input.left?-1:1;
+  const dir = input.left?-1:1;
   breakBlock(player.x+dir*40,player.y+10);
 }
 function updatePlayer(){
@@ -23,6 +18,7 @@ function updatePlayer(){
   if(input.right) player.vx=player.speed;
   if(input.attack) attack();
   if(player.attackCooldown>0) player.attackCooldown--;
+  if(player.breakCooldown>0) player.breakCooldown--;
   player.vy+=0.5;
   if(player.vy>12) player.vy=12;
   if(input.jump&&player.onGround){player.vy=player.jump;player.onGround=false;}
@@ -46,3 +42,4 @@ function drawPlayer(ctx,camX,camY){
 window.player=player;
 window.updatePlayer=updatePlayer;
 window.drawPlayer=drawPlayer;
+window.spawnPlayer=spawnPlayer;
