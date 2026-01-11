@@ -1,5 +1,6 @@
 export const inventory=[];
 for(let i=0;i<9;i++) inventory.push({id:null,count:0});
+
 export function drawHotbar(){
   const hb=document.getElementById("hotbar");
   hb.innerHTML="";
@@ -9,6 +10,7 @@ export function drawHotbar(){
     hb.appendChild(div);
   });
 }
+
 export function drawInventoryUI(){
   const invUI=document.getElementById("inventoryUI");
   invUI.innerHTML="";
@@ -20,5 +22,6 @@ export function drawInventoryUI(){
     invUI.appendChild(div);
   });
 }
+
 setInterval(drawHotbar,100);
 setInterval(drawInventoryUI,200);
