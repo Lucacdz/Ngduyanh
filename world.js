@@ -1,114 +1,40 @@
-export const TILE_SIZE = 32;
-export const CHUNK_WIDTH = 16;
-export const CHUNK_HEIGHT = 16;
+const TILE = 32, W = 200, H = 80;
+const world = [];
 
-export const TILE_TYPES = {
-    AIR: 'air',
-    GRASS: 'grass',
-    DIRT: 'dirt',
-    STONE: 'stone',
-    SAND: 'sand',
-    WOOD: 'wood',
-    LEAVES: 'leaves'
-};
-
-// Simple random terrain generation
-export function generateChunk(chunkX, chunkY) {
-    const tiles = [];
-    for (let y = 0; y < CHUNK_HEIGHT; y++) {
-        for (let x = 0; x < CHUNK_WIDTH; x++) {
-            const globalX = chunkX * CHUNK_WIDTH + x;
-            const globalY = chunkY * CHUNK_HEIGHT + y;
-
-            let type = TILE_TYPES.AIR;
-            const groundHeight = CHUNK_HEIGHT / 2 + Math.floor(Math.random() * 2);
-
-            if (globalY > groundHeight) type = TILE_TYPES.DIRT;
-            if (globalY === groundHeight) type = TILE_TYPES.GRASS;
-            if (globalY > groundHeight + 2) type = TILE_TYPES.STONE;
-
-            tiles.push({ x: globalX, y: globalY, type });
-        }
-    }
-    return tiles;
+for (let y = 0; y < H; y++) {
+  world[y] = [];
+  for (let x = 0; x < W; x++) {
+    if (y > 40) world[y][x] = 1; // dirt
+    else if (y === 40) world[y][x] = 2; // grass
+    else world[y][x] = 0; // air
+  }
 }
 
-// --- Thêm vào cuối world.js ---
-
-export const drops = []; // Mảng lưu ItemDrop hiện tại
-
-export class ItemDrop {
-    constructor(x, y, type) {
-        this.x = x;
-        this.y = y;
-        this.vy = 0;
-        this.type = type;
-        this.width = 20;
-        this.height = 20;
-        this.element = document.createElement('div');
-        this.element.className = 'tile ' + type;
-        this.element.style.width = this.width + 'px';
-        this.element.style.height = this.height + 'px';
-        this.element.style.position = 'absolute';
-        document.getElementById('world').appendChild(this.element);
-        drops.push(this);
-    }
-
-    update(tiles) {
-        this.vy += 0.3;
-        this.y += this.vy;
-
-        // Collision với tile
-        for (const tile of tiles) {
-            if (tile.type === 'air') continue;
-            const tx = tile.x * TILE_SIZE;
-            const ty = tile.y * TILE_SIZE;
-            if (
-                this.x < tx + TILE_SIZE &&
-                this.x + this.width > tx &&
-                this.y < ty + TILE_SIZE &&
-                this.y + this.height > ty
-            ) {
-                this.y = ty - this.height;
-                this.vy = 0;
-            }
-        }
-
-        this.element.style.transform = `translate(${this.x}px, ${this.y}px)`;
-    }
+// Spawn cây (thân + lá)
+for (let x = 5; x < W; x += 15) {
+  let ground = 40;
+  for (let i = 1; i <= 4; i++) world[ground - i][x] = 3; // wood
+  for (let ly = -6; ly <= -4; ly++)
+    for (let lx = -2; lx <= 2; lx++)
+      world[ground + ly][x + lx] = 4; // leaf
 }
 
-// Sinh cây thật sự (không hardcode)
-export function maybeSpawnTree(chunkTiles) {
-    // Mỗi chunk chọn vài vị trí grass để sinh cây
-    const grassTiles = chunkTiles.filter(t => t.type === TILE_TYPES.GRASS);
-    for (const tile of grassTiles) {
-        if (Math.random() < 0.2) { // 20% chance
-            const height = 3 + Math.floor(Math.random() * 3);
-            // Thân gỗ
-            for (let i = 0; i < height; i++) {
-                const newTile = { x: tile.x, y: tile.y - i, type: TILE_TYPES.WOOD };
-                const el = document.createElement('div');
-                el.className = 'tile wood';
-                el.style.transform = `translate(${newTile.x * TILE_SIZE}px, ${newTile.y * TILE_SIZE}px)`;
-                document.getElementById('world').appendChild(el);
-                newTile.element = el;
-                chunkTiles.push(newTile);
-            }
-            // Lá
-            for (let dx = -1; dx <=1; dx++) {
-                for (let dy = -1; dy <=1; dy++) {
-                    const lx = tile.x + dx;
-                    const ly = tile.y - height + dy;
-                    const newTile = { x: lx, y: ly, type: TILE_TYPES.LEAVES };
-                    const el = document.createElement('div');
-                    el.className = 'tile leaves';
-                    el.style.transform = `translate(${lx * TILE_SIZE}px, ${ly * TILE_SIZE}px)`;
-                    document.getElementById('world').appendChild(el);
-                    newTile.element = el;
-                    chunkTiles.push(newTile);
-                }
-            }
-        }
-    }
+function isSolid(px, py) {
+  const x = Math.floor(px / TILE);
+  const y = Math.floor(py / TILE);
+  if (x < 0 || y < 0 || x >= W || y >= H) return true;
+  return world[y][x] !== 0;
 }
+
+function breakBlock(px, py) {
+  const x = Math.floor(px / TILE);
+  const y = Math.floor(py / TILE);
+  if (world[y] && world[y][x] !== 0) world[y][x] = 0;
+}
+
+window.world = world;
+window.isSolid = isSolid;
+window.breakBlock = breakBlock;
+window.TILE = TILE;
+window.W = W;
+window.H = H;
