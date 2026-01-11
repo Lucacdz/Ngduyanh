@@ -3,6 +3,7 @@ const ctx=canvas.getContext("2d");
 function resize(){canvas.width=innerWidth;canvas.height=innerHeight;}
 resize();addEventListener("resize",resize);
 let camX=0,camY=0;
+
 function drawWorld(){
   for(let y=0;y<H;y++){
     for(let x=0;x<W;x++){
@@ -18,6 +19,7 @@ function drawWorld(){
     }
   }
 }
+
 function loop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   updatePlayer();
@@ -29,4 +31,9 @@ function loop(){
   mobs.forEach(m=>drawMob(ctx,m,camX,camY));
   requestAnimationFrame(loop);
 }
-loop();
+
+document.getElementById("startGame").addEventListener("click",()=>{
+  document.getElementById("startMenu").style.display="none";
+  spawnPlayer();
+  loop();
+});
