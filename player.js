@@ -1,74 +1,116 @@
-import {TILE,H,W,world,worldHP} from "./world.js";
-import {breakBlockDropItem} from "./blockActions.js";
-import {input} from "./controls.js";
+import { keys } from "./controls.js";
+import { world, W, H, tileSize } from "./world.js";
+import { breakBlockDropItem } from "./block.js";
+import { spawnHighlight } from "./hud.js";
 
 export const player = {
-  x: 100, y: 100, w:28, h:28,
-  vx:0, vy:0, speed:2, jumpPower:6,
-  onGround:false,
-  hp:20
+  x: 100,
+  y: 100,
+  width: 28,
+  height: 28,
+  vx: 0,
+  vy: 0,
+  speed: 2,
+  jumpPower: 5,
+  onGround: false,
+  health: 100,
+  maxHealth: 100,
 };
 
-export function spawnPlayer(){
-  player.x = 50*TILE;
-  player.y = 30*TILE;
-}
+// Camera
+export const camera = {
+  x: 0,
+  y: 0
+};
 
-export function updatePlayer(){
-  // Di chuyển
-  player.vx = input.x*player.speed;
-  player.vy += 0.3; // gravity
+const gravity = 0.25;
+const friction = 0.8;
 
-  if(input.jump && player.onGround){
+// Player update (di chuyển + physics)
+export function updatePlayer() {
+  // Di chuyển ngang
+  if(keys.left) player.vx = -player.speed;
+  else if(keys.right) player.vx = player.speed;
+  else player.vx *= friction;
+
+  // Nhảy
+  if(keys.jump && player.onGround){
     player.vy = -player.jumpPower;
-    player.onGround=false;
+    player.onGround = false;
   }
 
-  // Tính toán va chạm với block
-  let nextX = player.x + player.vx;
-  let nextY = player.y + player.vy;
+  // Áp dụng trọng lực
+  player.vy += gravity;
 
-  // đơn giản check collision với solid block
-  player.onGround=false;
-  for(let y=Math.floor(nextY/TILE);y<Math.ceil((nextY+player.h)/TILE);y++){
-    for(let x=Math.floor(nextX/TILE);x<Math.ceil((nextX+player.w)/TILE);x++){
-      if(world[y] && world[y][x] && world[y][x]!==0){
-        const blockSolid = true;
-        if(nextY+player.h > y*TILE && player.y+player.h <= y*TILE){
-          nextY = y*TILE - player.h;
-          player.vy=0;
-          player.onGround=true;
-        }
-        if(nextY < (y+1)*TILE && player.y >= (y+1)*TILE){
-          nextY = (y+1)*TILE;
-          player.vy=0;
-        }
-        if(nextX+player.w > x*TILE && player.x+player.w <= x*TILE){
-          nextX = x*TILE - player.w;
-          player.vx=0;
-        }
-        if(nextX < x*TILE+TILE && player.x >= x*TILE+TILE){
-          nextX = x*TILE+TILE;
-          player.vx=0;
-        }
-      }
+  // Collision
+  movePlayer(player.vx, player.vy);
+
+  // Cập nhật camera (center player)
+  camera.x = player.x - innerWidth/2 + player.width/2;
+  camera.y = player.y - innerHeight/2 + player.height/2;
+
+  // Highlight block phía trước
+  spawnHighlight(player, camera);
+}
+
+// Move & collision
+function movePlayer(vx, vy){
+  // X ngang
+  player.x += vx;
+  if(checkCollision()){
+    if(vx>0) player.x = Math.floor(player.x/tileSize)*tileSize + tileSize - player.width -0.1;
+    if(vx<0) player.x = Math.floor(player.x/tileSize)*tileSize + tileSize +0.1;
+    player.vx=0;
+  }
+
+  // Y dọc
+  player.y += vy;
+  player.onGround = false;
+  if(checkCollision()){
+    if(vy>0){ // rơi xuống
+      player.y = Math.floor(player.y/tileSize)*tileSize - player.height;
+      player.onGround = true;
+    }
+    if(vy<0){ // nhảy lên
+      player.y = Math.floor(player.y/tileSize)*tileSize + tileSize;
+    }
+    player.vy=0;
+  }
+}
+
+// Check collision với block solid
+function checkCollision(){
+  const px = player.x;
+  const py = player.y;
+  const w = player.width;
+  const h = player.height;
+
+  const left = Math.floor(px/tileSize);
+  const right = Math.floor((px+w)/tileSize);
+  const top = Math.floor(py/tileSize);
+  const bottom = Math.floor((py+h)/tileSize);
+
+  for(let y=top; y<=bottom; y++){
+    for(let x=left; x<=right; x++){
+      if(x<0 || y<0 || x>=W || y>=H) continue;
+      if(world[y][x] !== 0) return true;
     }
   }
-
-  player.x=nextX;
-  player.y=nextY;
-
-  // Đào block
-  if(input.attack){
-    const range=32;
-    let dirX = input.x!==0? input.x:1;
-    let targetX = Math.floor((player.x + player.w/2 + dirX*range)/TILE);
-    let targetY = Math.floor((player.y + player.h/2)/TILE);
-    breakBlockDropItem(targetX,targetY);
-  }
+  return false;
 }
 
-export function drawPlayer(ctx,camX,camY){
-  ctx.fillStyle="red";
-  ctx.fillRect(player.x-camX,player.y-camY,player.w,player.h);
+// Đập block trước mặt
+export function playerAttack(){
+  const px = Math.floor((player.x+player.width/2)/tileSize);
+  const py = Math.floor((player.y+player.height/2)/tileSize);
+  breakBlockDropItem(px,py);
+}
+
+// Reset player khi chết
+export function respawnPlayer(){
+  player.x = 100;
+  player.y = 100;
+  player.vx = 0;
+  player.vy = 0;
+  player.health = player.maxHealth;
 }
