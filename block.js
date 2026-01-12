@@ -1,23 +1,17 @@
-import { world, worldHP, W, H, tileSize } from "./world.js";
+import { world, worldHP, W, H } from "./world.js";
 import { addItem } from "./inventory.js";
+import { tileSize } from "./world.js";
 
-// Block types
+// Danh sách block
 export const blocks = {
-  0: { name: "Air", solid: false },
-  1: { name: "Dirt", solid: true, drop: "Dirt" },
-  2: { name: "Grass", solid: true, drop: "Dirt" },
-  3: { name: "Stone", solid: true, drop: "Stone" },
-  4: { name: "Wood", solid: true, drop: "Wood" },
-  5: { name: "Sand", solid: true, drop: "Sand" },
-  6: { name: "Cactus", solid: true, drop: "Cactus" },
-  7: { name: "Seaweed", solid: true, drop: "Seaweed" }
+  1: { name:"Dirt", durability:3, color:"#654321", drop:"Dirt" },
+  2: { name:"Grass", durability:3, color:"#00aa00", drop:"Grass" },
+  3: { name:"Stone", durability:5, color:"#888888", drop:"Stone" },
+  4: { name:"Wood", durability:4, color:"#deb887", drop:"Wood" },
+  5: { name:"Sand", durability:2, color:"#f4e58c", drop:"Sand" },
+  6: { name:"Cactus", durability:2, color:"#228b22", drop:"Cactus" },
+  7: { name:"Seaweed", durability:1, color:"#1e90ff", drop:"Seaweed" }
 };
-
-// Lấy item drop từ block
-export function getBlockDrop(id){
-  if(blocks[id] && blocks[id].drop) return blocks[id].drop;
-  return null;
-}
 
 // Break block và rớt item
 export function breakBlockDropItem(x,y){
@@ -26,17 +20,14 @@ export function breakBlockDropItem(x,y){
   if(id===0) return;
 
   const drop = getBlockDrop(id);
-  if(drop) addItem(drop,1);
+  if(drop) addItem(drop,1); // Rớt item khi break
 
-  world[y][x] = 0;
-  worldHP[y][x] = 0;
+  world[y][x]=0;
+  worldHP[y][x]=0;
 }
 
-// Place block
-export function placeBlock(x,y,id){
-  if(x<0 || y<0 || x>=W || y>=H) return;
-  if(world[y][x]===0){
-    world[y][x] = id;
-    worldHP[y][x] = 10;
-  }
+// Lấy item rớt từ block
+export function getBlockDrop(id){
+  if(blocks[id]) return blocks[id].drop;
+  return null;
 }
