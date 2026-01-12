@@ -1,47 +1,64 @@
-import {initMenu} from "./menu.js";
-import {spawnPlayer, updatePlayer, drawPlayer, player} from "./player.js";
-import {generateBiomes, generateBlocks} from "./biome.js";
-import {spawnTrees} from "./tree.js";
-import {updateInput} from "./controls.js";
+import { initMenu } from './menu.js';
 
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+function startGame(){
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+  // Demo world
+  const W = Math.floor(canvas.width/32);
+  const H = Math.floor(canvas.height/32);
+  let world = Array.from({length:H},()=>Array(W).fill(0));
 
-let camX=0, camY=0;
+  // Demo: tạo mặt đất
+  for(let x=0;x<W;x++){
+    world[H-2][x]=1; // block đất
+    world[H-1][x]=1;
+  }
 
-initMenu(()=>{
-  // Khi nhấn Start
-  generateBiomes();
-  generateBlocks();
-  spawnTrees();
-  spawnPlayer();
-  requestAnimationFrame(gameLoop);
-});
+  // Player
+  let player = {x:5, y:H-3, w:32, h:32, color:"red"};
 
-function gameLoop(){
-  updateInput();
-  updatePlayer();
+  function drawWorld(){
+    for(let y=0;y<H;y++){
+      for(let x=0;x<W;x++){
+        if(world[y][x]===1){
+          ctx.fillStyle="brown";
+          ctx.fillRect(x*32, y*32, 32, 32);
+        }
+      }
+    }
+  }
 
-  // camera theo player
-  camX = player.x - canvas.width/2 + player.w/2;
-  camY = player.y - canvas.height/2 + player.h/2;
+  function drawPlayer(){
+    ctx.fillStyle=player.color;
+    ctx.fillRect(player.x*32, player.y*32, player.w, player.h);
+  }
 
-  // render
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  let keys = {};
+  window.addEventListener("keydown",e=>keys[e.key]=true);
+  window.addEventListener("keyup",e=>keys[e.key]=false);
 
-  // world
-  drawWorld(ctx, camX, camY);
+  function update(){
+    if(keys["ArrowLeft"]) player.x-=0.1;
+    if(keys["ArrowRight"]) player.x+=0.1;
+    if(keys["ArrowUp"]) player.y-=0.1;
+    if(keys["ArrowDown"]) player.y+=0.1;
 
-  // player
-  drawPlayer(ctx, camX, camY);
+    // gravity
+    if(player.y+1<H && world[Math.floor(player.y+1)][Math.floor(player.x)]===0) player.y+=0.1;
+  }
 
-  requestAnimationFrame(gameLoop);
+  function loop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawWorld();
+    update();
+    drawPlayer();
+    requestAnimationFrame(loop);
+  }
+
+  loop();
 }
 
-// ví dụ hàm drawWorld
-function drawWorld(ctx, camX, camY){
-  // tùy bạn implement: world[y][x] -> fillRect/block image
-}
+initMenu(startGame);
