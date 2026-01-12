@@ -1,10 +1,10 @@
-
 export const input = {x:0,y:0,jump:false,attack:false};
 const keys = {left:false,right:false,up:false,down:false,jump:false,attack:false};
 
 ["left","right","up","down","jump","attack"].forEach(id=>{
-  document.getElementById(id).addEventListener("touchstart",()=>keys[id]=true);
-  document.getElementById(id).addEventListener("touchend",()=>keys[id]=false);
+  const btn = document.getElementById(id);
+  btn.addEventListener("touchstart",e=>{ e.preventDefault(); keys[id]=true; });
+  btn.addEventListener("touchend",e=>{ e.preventDefault(); keys[id]=false; });
 });
 
 export function updateInput(){
