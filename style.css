@@ -1,210 +1,655 @@
-/* ===========================
-   RESET & CANVAS
-=========================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    touch-action: manipulation;
+}
+
 body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  font-family: sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #1a1a2e;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    color: #fff;
 }
 
-canvas {
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
+/* Menu Styles */
+.menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.9)), 
+                url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
-/* ===========================
-   MENU
-=========================== */
-#menu {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
+.menu.hidden {
+    display: none;
 }
 
-#menuBackground {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url('images/menu_bg.jpg') no-repeat center center;
-  background-size: cover;
-  filter: brightness(0.6);
+.menu-content {
+    background: rgba(26, 26, 46, 0.9);
+    padding: 2.5rem;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    border: 2px solid #00adb5;
+    max-width: 90%;
+    width: 400px;
 }
 
-#menuContent {
-  position: relative;
-  color: white;
-  text-align: center;
-  z-index: 2;
+.menu h1 {
+    font-size: 3rem;
+    color: #00adb5;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 10px rgba(0, 173, 181, 0.5);
 }
 
-#menuContent h1 {
-  font-size: 48px;
-  margin-bottom: 20px;
-  text-shadow: 2px 2px 8px #000;
+.menu h1 i {
+    margin-right: 10px;
 }
 
-#menuContent button {
-  width: 180px;
-  height: 50px;
-  margin: 10px;
-  font-size: 20px;
-  border: none;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.7);
-  cursor: pointer;
-  transition: 0.2s;
+.menu h2 {
+    font-size: 2rem;
+    color: #00adb5;
+    margin-bottom: 1.5rem;
 }
 
-#menuContent button:hover {
-  background: rgba(255, 255, 255, 1);
+.version {
+    color: #eeeeee;
+    font-size: 1rem;
+    margin-bottom: 2rem;
 }
 
-/* SETTINGS */
-#settings {
-  margin-top: 20px;
-  display: none;
+.menu-btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    background: linear-gradient(45deg, #00adb5, #0097a7);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0, 173, 181, 0.3);
 }
 
-#settings label {
-  font-size: 18px;
-  display: block;
-  margin-bottom: 10px;
+.menu-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 173, 181, 0.4);
 }
 
-/* ===========================
-   HOTBAR / INVENTORY
-=========================== */
-#hotbar {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 5px;
-  z-index: 1000;
+.menu-btn:active {
+    transform: translateY(1px);
+}
+
+.menu-btn i {
+    margin-right: 10px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    margin: 15px 0;
+    font-size: 1.1rem;
+}
+
+.setting-item i {
+    margin-right: 10px;
+    color: #00adb5;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 30px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #393e46;
+    border-radius: 34px;
+    transition: .4s;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    border-radius: 50%;
+    transition: .4s;
+}
+
+input:checked + .toggle-slider {
+    background-color: #00adb5;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(30px);
+}
+
+/* Game Container */
+#gameContainer {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+#gameContainer.hidden {
+    display: none;
+}
+
+/* Canvas */
+#gameCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+/* Day/Night Overlay */
+#dayNightOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+    transition: background 2s ease;
+}
+
+/* HUD */
+.hud {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.health-bar {
+    width: 200px;
+    height: 30px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 15px;
+    border: 2px solid #333;
+    overflow: hidden;
+    position: relative;
+}
+
+.health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff0000, #ff6b6b);
+    width: 100%;
+    border-radius: 13px;
+    transition: width 0.3s ease;
+}
+
+.health-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+}
+
+.day-counter {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #00adb5;
+}
+
+.day-counter i {
+    color: #ffd700;
+}
+
+/* Hotbar */
+.hotbar {
+    position: absolute;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 15px;
+    border: 2px solid #00adb5;
+}
+
+.hotbar-slots {
+    display: flex;
+    gap: 5px;
 }
 
 .hotbar-slot {
-  width: 50px;
-  height: 50px;
-  background: rgba(200,200,200,0.7);
-  border: 2px solid #555;
-  border-radius: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #393e46;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    transition: all 0.2s ease;
 }
 
-/* ===========================
-   CONTROLS TAY TRÁI
-=========================== */
-#controls {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  z-index: 1000;
+.hotbar-slot.active {
+    border-color: #00adb5;
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(0, 173, 181, 0.5);
 }
 
-#controls button {
-  width: 60px;
-  height: 60px;
-  font-size: 28px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255,255,255,0.7);
+.hotbar-slot img {
+    width: 40px;
+    height: 40px;
+    image-rendering: pixelated;
 }
 
-/* ===========================
-   CONTROLS TAY PHẢI
-=========================== */
-.rightControls {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  z-index: 1000;
+.slot-count {
+    position: absolute;
+    bottom: 2px;
+    right: 5px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 2px black;
 }
 
-.rightControls button {
-  width: 60px;
-  height: 60px;
-  font-size: 28px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255,255,255,0.7);
+/* Mobile Controls */
+.controls {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 20;
 }
 
-/* ===========================
-   HIGHLIGHT BLOCK
-=========================== */
-#highlightBlock {
-  position: absolute;
-  border: 2px solid yellow;
-  pointer-events: none;
-  z-index: 1500;
+/* Left Controls (DPad) */
+.left-controls {
+    position: relative;
+    width: 150px;
+    height: 150px;
 }
 
-/* ===========================
-   HUD
-=========================== */
-#hud {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: white;
-  font-size: 18px;
-  text-shadow: 2px 2px 5px #000;
-  z-index: 1200;
+.dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 50px);
+    grid-template-rows: repeat(3, 50px);
+    gap: 0;
 }
 
-#healthBar {
-  width: 200px;
-  height: 20px;
-  background: rgba(255,0,0,0.3);
-  border: 2px solid #555;
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-#healthBarInner {
-  height: 100%;
-  width: 100%;
-  background: red;
-}
-
-/* ===========================
-   RESPONSIVE MOBILE
-=========================== */
-@media (max-width: 600px){
-  #controls, .rightControls {
-    gap: 3px;
-  }
-  #controls button, .rightControls button {
+.dpad-btn {
     width: 50px;
     height: 50px;
-    font-size: 24px;
-  }
-  #menuContent h1 {
-    font-size: 36px;
-  }
-  #menuContent p, #menuContent label {
-    font-size: 16px;
-  }
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    color: white;
+    transition: all 0.1s ease;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.dpad-btn:active {
+    background: rgba(0, 173, 181, 0.5);
+    transform: scale(0.95);
+}
+
+.dpad-btn i {
+    pointer-events: none;
+}
+
+.up {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.center {
+    grid-column: 2;
+    grid-row: 2;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+}
+
+.right {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+.down {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+/* Right Controls (Action Buttons) */
+.right-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+.action-btn {
+    width: 70px;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    color: white;
+    transition: all 0.1s ease;
+    touch-action: manipulation;
+}
+
+.action-btn:active {
+    transform: scale(0.95);
+}
+
+.jump {
+    background: rgba(76, 175, 80, 0.3);
+    border-color: rgba(76, 175, 80, 0.5);
+}
+
+.attack {
+    background: rgba(244, 67, 54, 0.3);
+    border-color: rgba(244, 67, 54, 0.5);
+}
+
+.inventory {
+    background: rgba(33, 150, 243, 0.3);
+    border-color: rgba(33, 150, 243, 0.5);
+}
+
+/* Inventory Panel */
+.inventory-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    background: rgba(26, 26, 46, 0.95);
+    border-radius: 20px;
+    border: 3px solid #00adb5;
+    padding: 20px;
+    z-index: 100;
+    overflow-y: auto;
+}
+
+.inventory-panel.hidden {
+    display: none;
+}
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #00adb5;
+}
+
+.inventory-header h3 {
+    color: #00adb5;
+    font-size: 1.5rem;
+}
+
+.close-btn {
+    background: #ff4757;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.inventory-slot {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #393e46;
+    border-radius: 10px;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.inventory-slot:hover {
+    border-color: #00adb5;
+    transform: scale(1.05);
+}
+
+.crafting-section {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 15px;
+    border: 2px solid #0097a7;
+}
+
+.crafting-section h4 {
+    color: #00adb5;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.crafting-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.crafting-recipe {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #393e46;
+    transition: all 0.2s ease;
+}
+
+.crafting-recipe:hover {
+    border-color: #00adb5;
+    transform: translateY(-3px);
+}
+
+.craft-btn {
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+    background: linear-gradient(45deg, #00adb5, #0097a7);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.craft-btn:hover:not(:disabled) {
+    background: linear-gradient(45deg, #0097a7, #00838f);
+}
+
+.craft-btn:disabled {
+    background: #666;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Highlight Block */
+.block-highlight {
+    position: absolute;
+    pointer-events: none;
+    z-index: 5;
+    border: 2px solid gold;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    border-radius: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .menu-content {
+        padding: 1.5rem;
+        width: 90%;
+    }
+    
+    .menu h1 {
+        font-size: 2.2rem;
+    }
+    
+    .health-bar {
+        width: 150px;
+        height: 25px;
+    }
+    
+    .hotbar-slot {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .hotbar-slot img {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .dpad-btn {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .action-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 1.3rem;
+    }
+    
+    .inventory-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .menu h1 {
+        font-size: 1.8rem;
+    }
+    
+    .menu-btn {
+        padding: 12px;
+        font-size: 1rem;
+    }
+    
+    .hotbar {
+        bottom: 100px;
+    }
+    
+    .hotbar-slot {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .hotbar-slot img {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .dpad {
+        grid-template-columns: repeat(3, 40px);
+        grid-template-rows: repeat(3, 40px);
+    }
+    
+    .dpad-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .action-btn {
+        width: 55px;
+        height: 55px;
+        font-size: 1.2rem;
+    }
+    
+    .inventory-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
