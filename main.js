@@ -9,11 +9,17 @@ const ctx=canvas.getContext("2d");
 function resize(){canvas.width=innerWidth;canvas.height=innerHeight;}
 resize(); window.addEventListener("resize",resize);
 
-spawnTrees();
-spawnPlayer();
-renderInventory();
-
-document.getElementById("inventoryBtn").addEventListener("click",toggleInventory);
+// menu
+const menu=document.getElementById("menu");
+const startBtn=document.getElementById("startBtn");
+startBtn.addEventListener("click",()=>{
+  menu.style.display="none";
+  canvas.style.display="block";
+  document.getElementById("controls").style.display="block";
+  spawnTrees();
+  spawnPlayer();
+  renderInventory();
+});
 
 let camX=0, camY=0;
 
@@ -35,30 +41,33 @@ function drawWorld(){
 }
 
 function loop(){
-  updateInput();
-  updatePlayer(input);
+  if(menu.style.display==="none"){ // chỉ chạy game khi start
+    updateInput();
+    updatePlayer(input);
 
-  camX = player.x - canvas.width/2;
-  camY = player.y - canvas.height/2;
+    camX = player.x - canvas.width/2;
+    camY = player.y - canvas.height/2;
 
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  drawWorld();
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawWorld();
 
-  // highlight block
-  const range=40;
-  let dirX=input.x, dirY=input.y;
-  if(dirX===0 && dirY===0) dirX=1;
-  const targetX=Math.floor((player.x+player.w/2 + dirX*range)/TILE);
-  const targetY=Math.floor((player.y+player.h/2 + dirY*range)/TILE);
-  if(targetY>=0 && targetY<H && targetX>=0 && targetX<W){
-    ctx.strokeStyle="yellow";
-    ctx.lineWidth=2;
-    ctx.strokeRect(targetX*TILE-camX,targetY*TILE-camY,TILE,TILE);
+    // highlight block
+    const range=40;
+    let dirX=input.x, dirY=input.y;
+    if(dirX===0 && dirY===0) dirX=1;
+    const targetX=Math.floor((player.x+player.w/2 + dirX*range)/TILE);
+    const targetY=Math.floor((player.y+player.h/2 + dirY*range)/TILE);
+    if(targetY>=0 && targetY<H && targetX>=0 && targetX<W){
+      ctx.strokeStyle="yellow";
+      ctx.lineWidth=2;
+      ctx.strokeRect(targetX*TILE-camX,targetY*TILE-camY,TILE,TILE);
+    }
+
+    drawPlayer(ctx,camX,camY);
   }
-
-  drawPlayer(ctx,camX,camY);
-
   requestAnimationFrame(loop);
 }
 
 loop();
+
+document.getElementById("inventoryBtn").addEventListener("click",toggleInventory);
