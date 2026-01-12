@@ -1,90 +1,51 @@
-import {world, worldHP, W, H} from "./world.js";
-import {getBiome} from "./biome.js";
+import { world, W, H, worldHP } from "./world.js";
+import { blocks } from "./block.js";
 
-// block IDs
-// 3: wood, 4: leaves, 8: cactus, 9: seaweed, 10: small_tree
-
-export function spawnTrees(){
-  for(let x=5;x<W;x+=5){
-    const biome = getBiome(x);
-
-    if(biome==="mountain" && Math.random()<0.1){
-      spawnMountainTree(x);
-    }
-    if(biome==="desert" && Math.random()<0.05){
-      spawnCactus(x);
-    }
-    if(biome==="ocean" && Math.random()<0.08){
-      spawnSeaweed(x);
-    }
-    if(biome==="plains" && Math.random()<0.12){
-      spawnSmallTree(x);
-    }
-  }
-}
-
-// --- Mountain Tree ---
-function spawnMountainTree(x){
-  let treeHeight = Math.floor(Math.random()*3)+3;
-  let groundY = findGroundY(x);
-  for(let i=0;i<treeHeight;i++){
-    if(groundY-i>0){ world[groundY-i][x]=3; worldHP[groundY-i][x]=4; }
-  }
-  let leafTop = groundY - treeHeight -1;
-  let leafLayers = 2;
-  for(let ly=leafTop;ly<groundY-treeHeight+1;ly++){
-    for(let lx=-2;lx<=2;lx++){
-      let px=x+lx, py=ly;
-      if(px>=0 && px<W && py>=0 && py<H && world[py][px]===0){
-        world[py][px]=4; worldHP[py][px]=2;
+// Sinh cây ngẫu nhiên
+export function generateTrees(world) {
+  for (let x = 0; x < W; x++) {
+    // Xác suất 10% cây trên đồng bằng
+    if(Math.random() < 0.1){
+      let y = findSurface(x);
+      if(y>0){
+        spawnTree(x,y);
       }
     }
   }
 }
 
-// --- Desert Cactus ---
-function spawnCactus(x){
-  let height = Math.floor(Math.random()*2)+2;
-  let groundY = findGroundY(x);
+// Tìm bề mặt để đặt cây
+function findSurface(x){
+  for(let y=0; y<H; y++){
+    if(world[y][x]===2) return y-1; // phía trên cỏ
+  }
+  return -1;
+}
+
+// Spawn cây theo dạng nhỏ hoặc lớn
+function spawnTree(x,y){
+  const type = Math.random()<0.5 ? "small":"big";
+
+  // Gỗ
+  const height = type==="small"?2:4;
   for(let i=0;i<height;i++){
-    if(groundY-i>0){ world[groundY-i][x]=8; worldHP[groundY-i][x]=3; }
+    if(y-i>=0){
+      world[y-i][x]=4; // Wood
+      worldHP[y-i][x]=10;
+    }
   }
-}
 
-// --- Ocean Seaweed ---
-function spawnSeaweed(x){
-  let height = Math.floor(Math.random()*3)+2;
-  let waterY = findWaterY(x);
-  for(let i=0;i<height;i++){
-    if(waterY-i>0){ world[waterY-i][x]=9; worldHP[waterY-i][x]=1; }
+  // Lá
+  const leafY = y-height;
+  const leafWidth = type==="small"?1:2;
+  for(let dx=-leafWidth; dx<=leafWidth; dx++){
+    for(let dy=-leafWidth; dy<=leafWidth; dy++){
+      const lx = x+dx;
+      const ly = leafY+dy;
+      if(lx>=0 && lx<W && ly>=0 && ly<H && world[ly][lx]===0){
+        world[ly][lx]=2; // dùng Grass làm lá tạm
+        worldHP[ly][lx]=5;
+      }
+    }
   }
-}
-
-// --- Plains Small Tree ---
-function spawnSmallTree(x){
-  let treeHeight = 2; // cây thấp
-  let groundY = findGroundY(x);
-  for(let i=0;i<treeHeight;i++){
-    if(groundY-i>0){ world[groundY-i][x]=10; worldHP[groundY-i][x]=2; }
-  }
-  // lá 1 block
-  let leafY = groundY-treeHeight-1;
-  if(leafY>=0 && world[leafY][x]===0){
-    world[leafY][x]=4; worldHP[leafY][x]=2;
-  }
-}
-
-// --- Helpers ---
-function findGroundY(x){
-  for(let y=0;y<H;y++){
-    if(world[y][x]!==0 && world[y][x]!==7) return y-1;
-  }
-  return H-1;
-}
-
-function findWaterY(x){
-  for(let y=0;y<H;y++){
-    if(world[y][x]===7) return y-1;
-  }
-  return H-1;
 }
