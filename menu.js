@@ -1,13 +1,12 @@
-export function initMenu(onStart){
-  const menu = document.getElementById("menu");
-  const startBtn = document.getElementById("startBtn");
-  const settingsBtn = document.getElementById("settingsBtn");
-  const settingsDiv = document.getElementById("settings");
-  const backBtn = document.getElementById("backBtn");
-  const musicToggle = document.getElementById("musicToggle");
+export const menu = document.getElementById("menu");
+export const startBtn = document.getElementById("startBtn");
+export const settingsBtn = document.getElementById("settingsBtn");
+export const settingsDiv = document.getElementById("settings");
+export const backBtn = document.getElementById("backBtn");
 
+export function initMenu(onStart){
   const startHandler = ()=>{
-    menu.style.display="none";
+    menu.style.display = "none";
     onStart();
   };
   startBtn.addEventListener("click", startHandler);
@@ -28,14 +27,4 @@ export function initMenu(onStart){
   };
   backBtn.addEventListener("click", hideSettings);
   backBtn.addEventListener("touchstart", e=>{ e.preventDefault(); hideSettings(); });
-
-  musicToggle.addEventListener("change", ()=>{
-    if(musicToggle.checked) playMusic();
-    else pauseMusic();
-  });
 }
-
-let bgMusic = new Audio("music/bg.mp3");
-bgMusic.loop = true;
-export function playMusic(){ bgMusic.play(); }
-export function pauseMusic(){ bgMusic.pause(); }
