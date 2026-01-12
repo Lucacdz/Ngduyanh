@@ -1,55 +1,141 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>Mini Minecraft</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>BlockCraft - Survival Sandbox</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-
-<!-- Menu -->
-<div id="menu">
-  <div id="menuBackground"></div>
-  <div id="menuContent">
-    <h1>Mini Minecraft</h1>
-    <button id="startBtn">Bắt đầu</button>
-    <button id="settingsBtn">Cài đặt</button>
-
-    <div id="settings">
-      <label><input type="checkbox" id="musicToggle"> Nhạc nền</label>
-      <button id="backBtn">Quay lại</button>
-      <p>Phiên bản tạm thời: 0.1</p>
+    <!-- Start Menu -->
+    <div id="startMenu" class="menu">
+        <div class="menu-content">
+            <h1><i class="fas fa-cube"></i> BLOCKCRAFT</h1>
+            <p class="version">v1.0.0</p>
+            <button id="startBtn" class="menu-btn">
+                <i class="fas fa-play"></i> Bắt đầu
+            </button>
+            <button id="settingsBtn" class="menu-btn">
+                <i class="fas fa-cog"></i> Settings
+            </button>
+        </div>
     </div>
-  </div>
-</div>
 
-<canvas id="game"></canvas>
-<div id="hotbar"></div>
+    <!-- Settings Menu -->
+    <div id="settingsMenu" class="menu hidden">
+        <div class="menu-content">
+            <h2><i class="fas fa-cog"></i> SETTINGS</h2>
+            <div class="setting-item">
+                <span><i class="fas fa-volume-up"></i> Music</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="musicToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <button id="backBtn" class="menu-btn">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+        </div>
+    </div>
 
-<!-- Controls tay trái -->
-<div id="controls">
-  <button id="left">◀</button>
-  <button id="right">▶</button>
-  <button id="up">⬆</button>
-  <button id="down">⬇</button>
-</div>
+    <!-- Game Container -->
+    <div id="gameContainer" class="hidden">
+        <!-- Canvas for game rendering -->
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- Day/Night Overlay -->
+        <div id="dayNightOverlay"></div>
+        
+        <!-- HUD Elements -->
+        <div class="hud">
+            <div class="health-bar">
+                <div class="health-fill" id="healthFill"></div>
+                <span class="health-text" id="healthText">100/100</span>
+            </div>
+            <div class="day-counter">
+                <i class="fas fa-sun"></i> <span id="dayCounter">Day 1</span>
+            </div>
+        </div>
+        
+        <!-- Hotbar -->
+        <div class="hotbar">
+            <div class="hotbar-slots">
+                <!-- Hotbar slots will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Mobile Controls -->
+        <div class="controls">
+            <!-- Left Hand Controls (Movement) -->
+            <div class="left-controls">
+                <div class="dpad">
+                    <div class="dpad-btn up" id="moveUp">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                    <div class="dpad-btn left" id="moveLeft">
+                        <i class="fas fa-arrow-left"></i>
+                    </div>
+                    <div class="dpad-btn center"></div>
+                    <div class="dpad-btn right" id="moveRight">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div class="dpad-btn down" id="moveDown">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Hand Controls (Actions) -->
+            <div class="right-controls">
+                <div class="action-btn jump" id="jumpBtn">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div class="action-btn attack" id="attackBtn">
+                    <i class="fas fa-fist-raised"></i>
+                </div>
+                <div class="action-btn inventory" id="inventoryBtn">
+                    <i class="fas fa-bag-shopping"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Inventory Panel -->
+        <div id="inventoryPanel" class="inventory-panel hidden">
+            <div class="inventory-header">
+                <h3><i class="fas fa-bag-shopping"></i> INVENTORY</h3>
+                <button id="closeInventory" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="inventory-grid">
+                <!-- Inventory slots will be populated by JavaScript -->
+            </div>
+            <div class="crafting-section">
+                <h4><i class="fas fa-hammer"></i> CRAFTING</h4>
+                <div class="crafting-grid">
+                    <!-- Crafting recipes will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
 
-<!-- Controls tay phải -->
-<div class="rightControls">
-  <button id="jump">⤴</button>
-  <button id="attack">⚔</button>
-  <button id="inventoryBtn">🎒</button>
-</div>
+    <!-- Audio for background music -->
+    <audio id="bgMusic" loop>
+        <source src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3" type="audio/mpeg">
+    </audio>
 
-<script type="module" src="menu.js"></script>
-<script type="module" src="controls.js"></script>
-<script type="module" src="player.js"></script>
-<script type="module" src="world.js"></script>
-<script type="module" src="block.js"></script>
-<script type="module" src="tree.js"></script>
-<script type="module" src="inventory.js"></script>
-<script type="module" src="crafting.js"></script>
-<script type="module" src="main.js"></script>
+    <!-- Load all ES6 modules -->
+    <script type="module" src="main.js"></script>
+    <script type="module" src="player.js"></script>
+    <script type="module" src="world.js"></script>
+    <script type="module" src="controls.js"></script>
+    <script type="module" src="menu.js"></script>
+    <script type="module" src="block.js"></script>
+    <script type="module" src="tree.js"></script>
+    <script type="module" src="biomes.js"></script>
+    <script type="module" src="inventory.js"></script>
+    <script type="module" src="crafting.js"></script>
+    <script type="module" src="mobs.js"></script>
 </body>
 </html>
