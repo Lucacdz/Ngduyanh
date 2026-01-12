@@ -1,9 +1,17 @@
-export function initMenu(startCallback){
-  const menu = document.getElementById("startMenu");
-  const btn = document.getElementById("startGame");
+export const menu = document.getElementById("menu");
+export const startBtn = document.getElementById("startBtn");
 
-  btn.addEventListener("click", () => {
-    menu.style.display = "none";
-    startCallback();
+export function initMenu(onStart){
+  // bật/tắt menu
+  startBtn.addEventListener("click", ()=>{
+    menu.style.display="none";
+    onStart(); // gọi khi nhấn bắt đầu
+  });
+
+  // touch trên mobile
+  startBtn.addEventListener("touchstart", e=>{
+    e.preventDefault();
+    menu.style.display="none";
+    onStart();
   });
 }
