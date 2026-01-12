@@ -3,6 +3,12 @@ import {world,TILE,H,W} from "./world.js";
 import {spawnTrees} from "./tree.js";
 import {updateInput,input} from "./controls.js";
 import {toggleInventory,renderInventory} from "./inventory.js";
+import {generateBiomes,generateBlocks} from "./biome.js";
+
+// trước khi spawnPlayer()
+
+generateBiomes();
+generateBlocks();
 
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
