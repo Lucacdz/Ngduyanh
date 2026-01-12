@@ -1,4 +1,3 @@
-
 export const inventory = Array(20).fill().map(()=>({id:null,count:0}));
 
 export function addItem(id,count){
