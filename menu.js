@@ -1,50 +1,90 @@
-// Menu DOM
-export const menu = document.getElementById("menu");
-export const startBtn = document.getElementById("startBtn");
-export const settingsBtn = document.getElementById("settingsBtn");
-export const settingsDiv = document.getElementById("settings");
-export const backBtn = document.getElementById("backBtn");
-export const musicToggle = document.getElementById("musicToggle");
-
-// Nhạc nền (bỏ qua nếu chưa có folder music)
-let bgMusic = new Audio("music/bg.mp3");
-bgMusic.loop = true;
-
-// Hàm play/pause nhạc
-export function playMusic(){ bgMusic.play(); }
-export function pauseMusic(){ bgMusic.pause(); }
-
-// Khởi tạo menu
-export function initMenu(onStart){
-  // Bắt đầu game
-  const startHandler = ()=>{
-    menu.style.display="none";
-    onStart();
-  };
-  startBtn.addEventListener("click", startHandler);
-  startBtn.addEventListener("touchstart", e=>{ e.preventDefault(); startHandler(); });
-
-  // Mở settings
-  const showSettings = ()=>{
-    settingsDiv.style.display="block";
-    startBtn.style.display="none";
-    settingsBtn.style.display="none";
-  };
-  settingsBtn.addEventListener("click", showSettings);
-  settingsBtn.addEventListener("touchstart", e=>{ e.preventDefault(); showSettings(); });
-
-  // Quay lại menu chính
-  const hideSettings = ()=>{
-    settingsDiv.style.display="none";
-    startBtn.style.display="block";
-    settingsBtn.style.display="block";
-  };
-  backBtn.addEventListener("click", hideSettings);
-  backBtn.addEventListener("touchstart", e=>{ e.preventDefault(); hideSettings(); });
-
-  // Nhạc toggle
-  musicToggle.addEventListener("change", ()=>{
-    if(musicToggle.checked) playMusic();
-    else pauseMusic();
-  });
+// Menu module for handling game menu and settings
+export class Menu {
+    constructor() {
+        this.startMenu = document.getElementById('startMenu');
+        this.settingsMenu = document.getElementById('settingsMenu');
+        this.gameContainer = document.getElementById('gameContainer');
+        this.startBtn = document.getElementById('startBtn');
+        this.settingsBtn = document.getElementById('settingsBtn');
+        this.backBtn = document.getElementById('backBtn');
+        this.musicToggle = document.getElementById('musicToggle');
+        this.bgMusic = document.getElementById('bgMusic');
+        
+        this.init();
+    }
+    
+    init() {
+        // Start button event
+        this.startBtn.addEventListener('click', () => {
+            this.hideStartMenu();
+            this.showGame();
+            
+            // Try to play music if enabled
+            if (this.musicToggle.checked) {
+                this.bgMusic.play().catch(e => console.log("Autoplay prevented:", e));
+            }
+        });
+        
+        // Settings button event
+        this.settingsBtn.addEventListener('click', () => {
+            this.showSettings();
+        });
+        
+        // Back button event
+        this.backBtn.addEventListener('click', () => {
+            this.hideSettings();
+        });
+        
+        // Music toggle event
+        this.musicToggle.addEventListener('change', () => {
+            if (this.musicToggle.checked) {
+                this.bgMusic.play().catch(e => console.log("Autoplay prevented:", e));
+            } else {
+                this.bgMusic.pause();
+            }
+        });
+        
+        // Initialize music state
+        this.bgMusic.volume = 0.3;
+    }
+    
+    hideStartMenu() {
+        this.startMenu.classList.add('hidden');
+    }
+    
+    showStartMenu() {
+        this.startMenu.classList.remove('hidden');
+        this.settingsMenu.classList.add('hidden');
+        this.gameContainer.classList.add('hidden');
+    }
+    
+    showSettings() {
+        this.startMenu.classList.add('hidden');
+        this.settingsMenu.classList.remove('hidden');
+    }
+    
+    hideSettings() {
+        this.settingsMenu.classList.add('hidden');
+        this.startMenu.classList.remove('hidden');
+    }
+    
+    showGame() {
+        this.gameContainer.classList.remove('hidden');
+    }
+    
+    hideGame() {
+        this.gameContainer.classList.add('hidden');
+    }
+    
+    isMusicEnabled() {
+        return this.musicToggle.checked;
+    }
+    
+    toggleMusic() {
+        this.musicToggle.checked = !this.musicToggle.checked;
+        this.musicToggle.dispatchEvent(new Event('change'));
+    }
 }
+
+// Export a singleton instance
+export const menu = new Menu();
