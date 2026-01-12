@@ -1,15 +1,4 @@
 import {world, worldHP, W, H} from "./world.js";
-import {blocks,getBlockDrop} from "./block.js";
-import {addItem} from "./inventory.js";
-
-export function breakBlockDropItem(x,y){
-  const id = world[y][x];
-  if(id===0) return;
-  const drop = getBlockDrop(id);
-  if(drop) addItem(drop,1);
-  world[y][x]=0;
-  worldHP[y][x]=0;
-}
 
 export function spawnTrees(){
   for(let x=5;x<W;x+=5){
