@@ -1,6 +1,5 @@
 import {TILE,H,world,worldHP} from "./world.js";
 import {breakBlockDropItem} from "./tree.js";
-import {mobs} from "./mobs.js";
 
 export const player={
   x:100,y:0,w:28,h:32,vx:0,vy:0,speed:3,jump:-10,onGround:false,
@@ -24,11 +23,6 @@ export function attack(input){
   const targetX = Math.floor((player.x+player.w/2 + dirX*range)/TILE);
   const targetY = Math.floor((player.y+player.h/2 + dirY*range)/TILE);
   breakBlockDropItem(targetX,targetY);
-  mobs.forEach(m=>{
-    const dx=Math.abs((m.x+m.w/2)-(player.x+player.w/2));
-    const dy=Math.abs((m.y+m.h/2)-(player.y+player.h/2));
-    if(dx<range && dy<range) m.hp-=10;
-  });
 }
 
 export function updatePlayer(input){
@@ -41,8 +35,7 @@ export function updatePlayer(input){
   player.vy+=0.5; if(player.vy>12) player.vy=12;
 
   let nx=player.x+player.vx;
-  if(!world[Math.floor(player.y/TILE)] || !world[Math.floor((player.y+player.h)/TILE)]) player.x=nx;
-  else if(!world[Math.floor(player.y/TILE)][Math.floor(nx/TILE)] && !world[Math.floor((player.y+player.h)/TILE)][Math.floor(nx/TILE)]) player.x=nx;
+  if(!world[Math.floor(player.y/TILE)][Math.floor(nx/TILE)] && !world[Math.floor((player.y+player.h)/TILE)][Math.floor(nx/TILE)]) player.x=nx;
 
   let ny=player.y+player.vy;
   if(player.vy>0){
