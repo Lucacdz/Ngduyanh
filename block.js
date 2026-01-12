@@ -1,14 +1,42 @@
+import { world, worldHP, W, H, tileSize } from "./world.js";
+import { addItem } from "./inventory.js";
+
+// Block types
 export const blocks = {
-  0: {name:"air", solid:false},
-  1: {name:"dirt", solid:true, hp:3, drop:"dirt"},
-  2: {name:"grass", solid:true, hp:2, drop:"dirt"},
-  3: {name:"wood", solid:true, hp:4, drop:"wood"},
-  4: {name:"leaves", solid:false, hp:2, drop:"leaves"},
-  5: {name:"stone", solid:true, hp:5, drop:"stone"},
-  6: {name:"sand", solid:true, hp:2, drop:"sand"},
-  7: {name:"water", solid:false, hp:1, drop:null}
+  0: { name: "Air", solid: false },
+  1: { name: "Dirt", solid: true, drop: "Dirt" },
+  2: { name: "Grass", solid: true, drop: "Dirt" },
+  3: { name: "Stone", solid: true, drop: "Stone" },
+  4: { name: "Wood", solid: true, drop: "Wood" },
+  5: { name: "Sand", solid: true, drop: "Sand" },
+  6: { name: "Cactus", solid: true, drop: "Cactus" },
+  7: { name: "Seaweed", solid: true, drop: "Seaweed" }
 };
 
-export function getBlockHP(id){ return blocks[id]?.hp || 0; }
-export function getBlockDrop(id){ return blocks[id]?.drop || null; }
-export function isSolidBlock(id){ return blocks[id]?.solid || false; }
+// Lấy item drop từ block
+export function getBlockDrop(id){
+  if(blocks[id] && blocks[id].drop) return blocks[id].drop;
+  return null;
+}
+
+// Break block và rớt item
+export function breakBlockDropItem(x,y){
+  if(x<0 || y<0 || x>=W || y>=H) return;
+  const id = world[y][x];
+  if(id===0) return;
+
+  const drop = getBlockDrop(id);
+  if(drop) addItem(drop,1);
+
+  world[y][x] = 0;
+  worldHP[y][x] = 0;
+}
+
+// Place block
+export function placeBlock(x,y,id){
+  if(x<0 || y<0 || x>=W || y>=H) return;
+  if(world[y][x]===0){
+    world[y][x] = id;
+    worldHP[y][x] = 10;
+  }
+}
