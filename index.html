@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>Mini Minecraft 0.2</title>
+<title>Mini Minecraft</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,15 +14,11 @@
   <div id="menuContent">
     <h1>Mini Minecraft</h1>
     <p>Phiên bản: 0.2</p>
-
     <button id="startBtn">Bắt đầu</button>
     <button id="settingsBtn">Cài đặt</button>
 
-    <!-- Settings -->
     <div id="settings" style="display:none; margin-top:10px;">
-      <label>
-        <input type="checkbox" id="musicToggle" checked> Nhạc
-      </label>
+      <label><input type="checkbox" id="musicToggle" checked> Nhạc</label>
       <p>Phiên bản: 0.2</p>
       <button id="backBtn">Quay lại</button>
     </div>
@@ -31,7 +27,6 @@
 
 <!-- Canvas game -->
 <canvas id="game"></canvas>
-<div id="night"></div>
 <div id="hotbar"></div>
 
 <!-- Controls tay trái -->
@@ -51,7 +46,14 @@
 
 <script type="module" src="menu.js"></script>
 <script type="module" src="controls.js"></script>
+<script type="module" src="block.js"></script>
+<script type="module" src="item.js"></script>
+<script type="module" src="tree.js"></script>
+<script type="module" src="world.js"></script>
+<script type="module" src="inventory.js"></script>
 <script type="module" src="player.js"></script>
+<script type="module" src="crafting.js"></script>
 <script type="module" src="main.js"></script>
+
 </body>
 </html>
