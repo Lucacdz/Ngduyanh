@@ -1,38 +1,210 @@
-body { margin:0; padding:0; overflow:hidden; font-family:sans-serif; }
-canvas { display:block; position:absolute; top:0; left:0; }
+/* ===========================
+   RESET & CANVAS
+=========================== */
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: sans-serif;
+}
 
+canvas {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* ===========================
+   MENU
+=========================== */
 #menu {
-  position:absolute; top:0; left:0; width:100%; height:100%;
-  display:flex; justify-content:center; align-items:center;
-  z-index:2000;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
 }
+
 #menuBackground {
-  position:absolute; top:0; left:0; width:100%; height:100%;
-  background: #333; filter: brightness(0.6);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('images/menu_bg.jpg') no-repeat center center;
+  background-size: cover;
+  filter: brightness(0.6);
 }
-#menuContent { position:relative; color:white; text-align:center; z-index:2; }
-#menuContent h1 { font-size:48px; margin-bottom:20px; }
-#menuContent button { width:180px; height:50px; margin:10px; font-size:20px; border:none; border-radius:10px; background:rgba(255,255,255,0.7); cursor:pointer; }
-#menuContent button:hover { background:rgba(255,255,255,1); }
-#settings { margin-top:20px; display:none; }
 
-#hotbar { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:5px; z-index:1000; }
-.hotbar-slot { width:50px; height:50px; background:rgba(200,200,200,0.7); border:2px solid #555; border-radius:5px; display:flex; justify-content:center; align-items:center; }
+#menuContent {
+  position: relative;
+  color: white;
+  text-align: center;
+  z-index: 2;
+}
 
-#controls { position:absolute; bottom:10px; left:10px; display:flex; flex-wrap:wrap; gap:5px; z-index:1000; }
-#controls button { width:60px; height:60px; font-size:28px; border-radius:50%; border:none; background:rgba(255,255,255,0.7); }
+#menuContent h1 {
+  font-size: 48px;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 8px #000;
+}
 
-.rightControls { position:absolute; bottom:10px; right:10px; display:flex; flex-wrap:wrap; gap:5px; z-index:1000; }
-.rightControls button { width:60px; height:60px; font-size:28px; border-radius:50%; border:none; background:rgba(255,255,255,0.7); }
+#menuContent button {
+  width: 180px;
+  height: 50px;
+  margin: 10px;
+  font-size: 20px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: 0.2s;
+}
 
-#highlightBlock { position:absolute; border:2px solid yellow; pointer-events:none; z-index:1500; }
-#hud { position:absolute; top:10px; left:50%; transform:translateX(-50%); color:white; font-size:18px; text-shadow:2px 2px 5px #000; z-index:1200; }
-#healthBar { width:200px; height:20px; background:rgba(255,0,0,0.3); border:2px solid #555; border-radius:5px; overflow:hidden; }
-#healthBarInner { height:100%; width:100%; background:red; }
+#menuContent button:hover {
+  background: rgba(255, 255, 255, 1);
+}
 
-@media (max-width:600px){
-  #controls, .rightControls { gap:3px; }
-  #controls button, .rightControls button { width:50px; height:50px; font-size:24px; }
-  #menuContent h1 { font-size:36px; }
-  #menuContent label { font-size:16px; }
+/* SETTINGS */
+#settings {
+  margin-top: 20px;
+  display: none;
+}
+
+#settings label {
+  font-size: 18px;
+  display: block;
+  margin-bottom: 10px;
+}
+
+/* ===========================
+   HOTBAR / INVENTORY
+=========================== */
+#hotbar {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  z-index: 1000;
+}
+
+.hotbar-slot {
+  width: 50px;
+  height: 50px;
+  background: rgba(200,200,200,0.7);
+  border: 2px solid #555;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ===========================
+   CONTROLS TAY TRÁI
+=========================== */
+#controls {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  z-index: 1000;
+}
+
+#controls button {
+  width: 60px;
+  height: 60px;
+  font-size: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.7);
+}
+
+/* ===========================
+   CONTROLS TAY PHẢI
+=========================== */
+.rightControls {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  z-index: 1000;
+}
+
+.rightControls button {
+  width: 60px;
+  height: 60px;
+  font-size: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.7);
+}
+
+/* ===========================
+   HIGHLIGHT BLOCK
+=========================== */
+#highlightBlock {
+  position: absolute;
+  border: 2px solid yellow;
+  pointer-events: none;
+  z-index: 1500;
+}
+
+/* ===========================
+   HUD
+=========================== */
+#hud {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 18px;
+  text-shadow: 2px 2px 5px #000;
+  z-index: 1200;
+}
+
+#healthBar {
+  width: 200px;
+  height: 20px;
+  background: rgba(255,0,0,0.3);
+  border: 2px solid #555;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+#healthBarInner {
+  height: 100%;
+  width: 100%;
+  background: red;
+}
+
+/* ===========================
+   RESPONSIVE MOBILE
+=========================== */
+@media (max-width: 600px){
+  #controls, .rightControls {
+    gap: 3px;
+  }
+  #controls button, .rightControls button {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
+  #menuContent h1 {
+    font-size: 36px;
+  }
+  #menuContent p, #menuContent label {
+    font-size: 16px;
+  }
 }
