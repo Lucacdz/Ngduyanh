@@ -1,46 +1,25 @@
-body, html {
-  margin:0; padding:0;
-  width:100%; height:100%;
-  overflow:hidden;
-  touch-action:none;
-  font-family:sans-serif;
-}
-
-#game { display:block; background:#87ceeb; }
-
-#menu {
-  position:absolute; width:100%; height:100%;
-  display:flex; flex-direction:column;
-  justify-content:center; align-items:center;
-  background:#333; color:white; z-index:1000;
-}
+body{margin:0;overflow:hidden;font-family:sans-serif;}
+canvas{display:block;position:absolute;top:0;left:0;}
 
 #controls {
   position:absolute;
-  bottom:10px; left:10px; /* đổi sang trái */
+  bottom:10px; left:10px;
   display:flex; flex-wrap:wrap; gap:5px; z-index:1000;
 }
 
-#controls button {
-  width:50px; height:50px;
-  font-size:24px;
-  border-radius:10px;
-  background:rgba(255,255,255,0.8);
-  border:none;
-  touch-action:none;
-}
-
-#hotbar {
-  position:absolute; bottom:10px; left:50%;
-  transform:translateX(-50%);
+.rightControls {
+  position:absolute;
+  bottom:10px; right:10px;
   display:flex; gap:5px; z-index:1000;
 }
 
-.slot {
-  width:40px; height:40px;
-  background:rgba(0,0,0,0.5);
-  color:white;
-  text-align:center;
-  line-height:40px;
-  font-size:12px;
+button{
+  width:60px; height:60px;
+  font-size:24px; border-radius:10px;
+  border:none; background:rgba(255,255,255,0.6);
+}
+
+#menu{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
 }
