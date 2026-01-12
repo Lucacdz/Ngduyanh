@@ -6,16 +6,16 @@ import {toggleInventory,renderInventory} from "./inventory.js";
 
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
-function resize(){canvas.width=innerWidth;canvas.height=innerHeight;}
-resize(); window.addEventListener("resize",resize);
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+window.addEventListener("resize",resize);
+resize();
 
-// menu
 const menu=document.getElementById("menu");
 const startBtn=document.getElementById("startBtn");
 startBtn.addEventListener("click",()=>{
   menu.style.display="none";
   canvas.style.display="block";
-  document.getElementById("controls").style.display="block";
+  document.getElementById("controls").style.display="flex";
   spawnTrees();
   spawnPlayer();
   renderInventory();
@@ -41,7 +41,7 @@ function drawWorld(){
 }
 
 function loop(){
-  if(menu.style.display==="none"){ // chỉ chạy game khi start
+  if(menu.style.display==="none"){
     updateInput();
     updatePlayer(input);
 
@@ -51,7 +51,6 @@ function loop(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     drawWorld();
 
-    // highlight block
     const range=40;
     let dirX=input.x, dirY=input.y;
     if(dirX===0 && dirY===0) dirX=1;
