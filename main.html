@@ -1,0 +1,642 @@
+Đây là mã HTML cho một trò chơi Minecraft góc nhìn thứ nhất với các tính năng bạn yêu cầu.
+
+```html
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Minecraft góc nhìn thứ nhất - Thế giới mở</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Minecraft', 'Courier New', monospace;
+        }
+        /* Thanh công cụ kho đồ */
+        #hotbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 600px;
+            background: rgba(0,0,0,0.7);
+            border: 3px solid #8b8b8b;
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+            z-index: 10;
+            pointer-events: auto;
+        }
+        .slot {
+            width: 50px;
+            height: 50px;
+            background: #2c2c2c;
+            border: 2px solid #5a5a5a;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            transition: 0.1s linear;
+            position: relative;
+        }
+        .slot.selected {
+            border: 3px solid yellow;
+            background: #3c3c3c;
+            box-shadow: 0 0 10px yellow;
+        }
+        .slot span {
+            font-size: 12px;
+            background: black;
+            padding: 2px 4px;
+            border-radius: 4px;
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+        }
+        /* Nút điều khiển di động (hiển thị trên màn hình cảm ứng) */
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 20;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 50px;
+            backdrop-filter: blur(4px);
+        }
+        .ctrl-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid white;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            transition: 0.05s linear;
+        }
+        .ctrl-btn:active {
+            background: rgba(255,255,255,0.5);
+            transform: scale(0.95);
+        }
+        #action-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 20;
+        }
+        .action-btn {
+            width: 70px;
+            height: 70px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #ffaa00;
+            border-radius: 50%;
+            color: #ffaa00;
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+        }
+        .info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: black;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            z-index: 30;
+            pointer-events: none;
+            background: rgba(0,0,0,0.6);
+        }
+        @media (max-width: 768px) {
+            .slot { width: 40px; height: 40px; font-size: 20px; }
+            .ctrl-btn { width: 50px; height: 50px; font-size: 20px; }
+            .action-btn { width: 60px; height: 60px; font-size: 24px; }
+        }
+        @keyframes damageFlash {
+            0% { background-color: rgba(255,0,0,0); }
+            50% { background-color: rgba(255,0,0,0.6); }
+            100% { background-color: rgba(255,0,0,0); }
+        }
+        .damage-effect {
+            position: fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            pointer-events: none;
+            z-index: 100;
+            animation: damageFlash 0.2s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div id="info" class="info">
+        🧱 Block: <span id="selectedBlock">Cỏ</span> | 🪓 Chế độ: Đặt/Đào | 💎 Quặng sắt & than
+    </div>
+    <div id="hotbar">
+        <div class="slot selected" data-block="grass">🌿<span>Cỏ</span></div>
+        <div class="slot" data-block="dirt">🟫<span>Đất</span></div>
+        <div class="slot" data-block="stone">⛰️<span>Đá</span></div>
+        <div class="slot" data-block="wood">🪵<span>Gỗ</span></div>
+        <div class="slot" data-block="oreIron">⚙️<span>Quặng Sắt</span></div>
+        <div class="slot" data-block="oreCoal">⚫<span>Than</span></div>
+    </div>
+    <div class="controls">
+        <div class="ctrl-btn" id="btnFwd">▲</div>
+        <div class="ctrl-btn" id="btnLeft">◀</div>
+        <div class="ctrl-btn" id="btnBack">▼</div>
+        <div class="ctrl-btn" id="btnRight">▶</div>
+    </div>
+    <div id="action-buttons">
+        <div class="action-btn" id="btnBreak">⛏️ Đào</div>
+        <div class="action-btn" id="btnPlace">🧱 Đặt</div>
+    </div>
+
+    <!-- Import Three.js và các thư viện -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // --- Khởi tạo scene, camera, renderer ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+        scene.fog = new THREE.Fog(0x87CEEB, 100, 200);
+
+        // Camera góc nhìn thứ nhất
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(15, 5, 15);
+        camera.rotation.order = 'YXZ';
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        // CSS2DRenderer cho tên mob
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+
+        // Ánh sáng
+        const ambientLight = new THREE.AmbientLight(0x404060);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(30, 40, 20);
+        dirLight.castShadow = true;
+        dirLight.receiveShadow = true;
+        scene.add(dirLight);
+        const fillLight = new THREE.PointLight(0x8866ff, 0.3);
+        fillLight.position.set(10, 20, 10);
+        scene.add(fillLight);
+
+        // --- World generation (Biome: biển, đảo, đồng bằng, hang động)---
+        const worldSize = 80;
+        const blockSize = 1;
+        const blocks = new Map(); // key "x,y,z" -> block data {type, health?}
+        
+        // Định nghĩa block types
+        const BLOCK_TYPES = {
+            air: { id: 0, name: 'Không khí', color: 0x000000, transparent: true, hardness: 0 },
+            grass: { id: 1, name: 'Cỏ', color: 0x6b8e23, hardness: 1 },
+            dirt: { id: 2, name: 'Đất', color: 0x8b5a2b, hardness: 1 },
+            stone: { id: 3, name: 'Đá', color: 0x808080, hardness: 2 },
+            wood: { id: 4, name: 'Gỗ', color: 0xbc9a6c, hardness: 1.5 },
+            oreIron: { id: 5, name: 'Quặng Sắt', color: 0xc0c0c0, hardness: 2.5 },
+            oreCoal: { id: 6, name: 'Than', color: 0x2c2c2c, hardness: 2 },
+            sand: { id: 7, name: 'Cát', color: 0xf4e4a0, hardness: 0.8 },
+            water: { id: 8, name: 'Nước', color: 0x3399ff, transparent: true, hardness: 0.5 }
+        };
+
+        function addBlock(x, y, z, typeId) {
+            if (x < -worldSize/2 || x > worldSize/2 || y < 0 || y > 20 || z < -worldSize/2 || z > worldSize/2) return;
+            const key = `${x},${y},${z}`;
+            const type = Object.values(BLOCK_TYPES).find(t => t.id === typeId);
+            if (!type || (type.transparent && type.id !== 8)) {
+                // Nếu air thì xóa
+                if (typeId === 0) blocks.delete(key);
+                else return;
+            }
+            // Nếu là nước hoặc block đặc
+            if (typeId === 0) {
+                blocks.delete(key);
+                // xóa mesh nếu có
+                const meshToRemove = scene.getObjectByName(`block_${key}`);
+                if(meshToRemove) scene.remove(meshToRemove);
+                return;
+            }
+            const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
+            const material = new THREE.MeshStandardMaterial({ color: type.color });
+            const cube = new THREE.Mesh(geometry, material);
+            cube.position.set(x, y, z);
+            cube.castShadow = true;
+            cube.receiveShadow = true;
+            cube.userData = { blockType: type.id, hardness: type.hardness };
+            cube.name = `block_${key}`;
+            // remove cũ
+            const old = scene.getObjectByName(`block_${key}`);
+            if(old) scene.remove(old);
+            scene.add(cube);
+            blocks.set(key, { type: type.id, mesh: cube });
+        }
+
+        function removeBlock(x, y, z) {
+            const key = `${x},${y},${z}`;
+            const entry = blocks.get(key);
+            if(entry && entry.mesh) {
+                scene.remove(entry.mesh);
+                blocks.delete(key);
+            }
+            addBlock(x,y,z,0); // đặt air
+        }
+
+        // Tạo thế giới thủ công: đồng bằng, núi, biển, đảo, hang
+        for (let x = -worldSize/2; x <= worldSize/2; x++) {
+            for (let z = -worldSize/2; z <= worldSize/2; z++) {
+                // noise đơn giản bằng sin/cos
+                let height = 3;
+                let biome = "plain";
+                const distToCenter = Math.sqrt(x*x + z*z);
+                // Biển phía nam (z dương)
+                if (z > 15 && distToCenter > 10) {
+                    height = 0; // mực nước biển
+                    biome = "ocean";
+                }
+                // Đảo: tạo đảo nhỏ tại (-20, -20)
+                else if (Math.hypot(x+20, z+20) < 8) {
+                    height = 2 + Math.sin(x*0.5)*Math.cos(z*0.5)*2;
+                    biome = "island";
+                }
+                // đồng bằng + cây
+                else {
+                    height = 2 + Math.sin(x*0.3)*Math.cos(z*0.3)*1.5;
+                    if (height < 1.5) height = 2;
+                    biome = "plain";
+                }
+                
+                const surfaceY = Math.floor(height);
+                // Đất nền
+                for (let y = 0; y <= surfaceY; y++) {
+                    if (y === surfaceY) {
+                        if (biome === "ocean") addBlock(x, y, z, BLOCK_TYPES.sand.id);
+                        else addBlock(x, y, z, BLOCK_TYPES.grass.id);
+                    } else if (y > surfaceY - 3) {
+                        addBlock(x, y, z, BLOCK_TYPES.dirt.id);
+                    } else {
+                        addBlock(x, y, z, BLOCK_TYPES.stone.id);
+                    }
+                }
+                // Nước biển
+                if (biome === "ocean") {
+                    for (let y = surfaceY+1; y <= 1; y++) {
+                        addBlock(x, y, z, BLOCK_TYPES.water.id);
+                    }
+                }
+                // Cây trên đồng bằng và đảo
+                if ((biome === "plain" || biome === "island") && Math.random() < 0.05 && surfaceY >= 2) {
+                    const treeX = x;
+                    const treeZ = z;
+                    const treeY = surfaceY+1;
+                    if (Math.abs(treeX) < worldSize/2-1 && Math.abs(treeZ) < worldSize/2-1) {
+                        addBlock(treeX, treeY, treeZ, BLOCK_TYPES.wood.id);
+                        addBlock(treeX, treeY+1, treeZ, BLOCK_TYPES.wood.id);
+                        for (let ix = -1; ix<=1; ix++) for (let iz=-1; iz<=1; iz++) {
+                            if (ix===0 && iz===0) continue;
+                            addBlock(treeX+ix, treeY+2, treeZ+iz, BLOCK_TYPES.grass.id);
+                        }
+                        addBlock(treeX, treeY+3, treeZ, BLOCK_TYPES.grass.id);
+                    }
+                }
+                // Quặng ngầm
+                for (let y = 1; y <= 6; y++) {
+                    if (Math.random() < 0.03 && y > 2) {
+                        const oreType = Math.random() < 0.6 ? BLOCK_TYPES.oreCoal.id : BLOCK_TYPES.oreIron.id;
+                        addBlock(x, y, z, oreType);
+                    }
+                }
+            }
+        }
+        
+        // Hang động đơn giản: tạo khoảng trống ngầm
+        for(let i=0;i<200;i++) {
+            const cx = (Math.random() - 0.5) * 50;
+            const cz = (Math.random() - 0.5) * 50;
+            const cy = 3 + Math.random() * 5;
+            for(let dx=-2;dx<=2;dx++)
+                for(let dy=-2;dy<=2;dy++)
+                    for(let dz=-2;dz<=2;dz++) {
+                        if(Math.random()<0.6) removeBlock(cx+dx, cy+dy, cz+dz);
+                    }
+        }
+
+        // --- Các thực thể động: động vật và quái vật ---
+        const entities = [];
+        const mobTypes = [
+            { name: '🐑 Cừu', color: 0xeeeeaa, scale: 0.7, health: 10, type: 'sheep' },
+            { name: '🐄 Bò', color: 0xcc8866, scale: 0.8, health: 15, type: 'cow' },
+            { name: '🐖 Heo', color: 0xffaabb, scale: 0.7, health: 12, type: 'pig' },
+            { name: '🐔 Gà', color: 0xffcc88, scale: 0.5, health: 5, type: 'chicken' },
+            { name: '🧟 Zombie', color: 0x336633, scale: 0.9, health: 20, type: 'zombie', hostile: true },
+            { name: '💀 Skeleton', color: 0xccccdd, scale: 0.9, health: 18, type: 'skeleton', hostile: true },
+            { name: '💥 Creeper', color: 0x55aa55, scale: 0.85, health: 20, type: 'creeper', hostile: true }
+        ];
+        
+        function createMob(typeDef, x, z) {
+            const geometry = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+            const material = new THREE.MeshStandardMaterial({ color: typeDef.color });
+            const mobMesh = new THREE.Mesh(geometry, material);
+            mobMesh.castShadow = true;
+            mobMesh.receiveShadow = true;
+            const yPos = 1;
+            mobMesh.position.set(x, yPos, z);
+            scene.add(mobMesh);
+            // Label CSS2D
+            const div = document.createElement('div');
+            div.textContent = `${typeDef.name} ❤️${typeDef.health}`;
+            div.style.color = 'white';
+            div.style.backgroundColor = 'rgba(0,0,0,0.6)';
+            div.style.padding = '2px 6px';
+            div.style.borderRadius = '12px';
+            div.style.fontSize = '12px';
+            div.style.fontFamily = 'monospace';
+            const label = new CSS2DObject(div);
+            label.position.set(x, yPos+0.8, z);
+            scene.add(label);
+            
+            const entity = {
+                mesh: mobMesh,
+                label: label,
+                type: typeDef.type,
+                health: typeDef.health,
+                maxHealth: typeDef.health,
+                hostile: typeDef.hostile || false,
+                speed: 0.03,
+                name: typeDef.name,
+                pos: { x, z },
+                update: (dt, playerPos) => {
+                    // Di chuyển đơn giản: nếu hostile thì đuổi, không thì đi lang thang
+                    let dx=0, dz=0;
+                    if(entity.hostile) {
+                        const angleToPlayer = Math.atan2(playerPos.z - entity.pos.z, playerPos.x - entity.pos.x);
+                        dx = Math.cos(angleToPlayer) * entity.speed;
+                        dz = Math.sin(angleToPlayer) * entity.speed;
+                    } else {
+                        // đi lang thang
+                        if(Math.random() < 0.02) {
+                            entity.wanderDir = Math.random() * Math.PI * 2;
+                        }
+                        const wander = entity.wanderDir || 0;
+                        dx = Math.cos(wander) * 0.02;
+                        dz = Math.sin(wander) * 0.02;
+                    }
+                    let newX = entity.pos.x + dx;
+                    let newZ = entity.pos.z + dz;
+                    // giới hạn world
+                    newX = Math.min(worldSize/2-1, Math.max(-worldSize/2+1, newX));
+                    newZ = Math.min(worldSize/2-1, Math.max(-worldSize/2+1, newZ));
+                    entity.pos.x = newX;
+                    entity.pos.z = newZ;
+                    entity.mesh.position.set(newX, 1, newZ);
+                    entity.label.position.set(newX, 1.2, newZ);
+                },
+                wanderDir: 0,
+                takeDamage: (dmg) => {
+                    entity.health -= dmg;
+                    if(entity.label.element) entity.label.element.textContent = `${entity.name} ❤️${Math.max(0,entity.health)}`;
+                    if(entity.health <= 0) {
+                        scene.remove(entity.mesh);
+                        scene.remove(entity.label);
+                        const idx = entities.indexOf(entity);
+                        if(idx !== -1) entities.splice(idx,1);
+                    }
+                    return entity.health <= 0;
+                }
+            };
+            entities.push(entity);
+            return entity;
+        }
+        
+        // Sinh mobs
+        for(let i=0;i<20;i++) {
+            let randX = (Math.random() - 0.5) * 60;
+            let randZ = (Math.random() - 0.5) * 60;
+            let typeIdx = Math.floor(Math.random() * mobTypes.length);
+            createMob(mobTypes[typeIdx], randX, randZ);
+        }
+        
+        // --- Player và điều khiển ---
+        let playerPos = { x: 15, z: 15 };
+        let playerYaw = -Math.PI/4;
+        let playerPitch = 0;
+        let moveForward = false, moveBack = false, moveLeft = false, moveRight = false;
+        let keys = {};
+        
+        // cập nhật camera
+        function updateCamera() {
+            const speed = 0.15;
+            let dx = 0, dz = 0;
+            if(moveForward) { dx += Math.sin(playerYaw); dz += Math.cos(playerYaw); }
+            if(moveBack) { dx -= Math.sin(playerYaw); dz -= Math.cos(playerYaw); }
+            if(moveLeft) { dx -= Math.cos(playerYaw); dz += Math.sin(playerYaw); }
+            if(moveRight) { dx += Math.cos(playerYaw); dz -= Math.sin(playerYaw); }
+            if(dx !==0 || dz !==0) {
+                const len = Math.hypot(dx,dz);
+                dx /= len; dz /= len;
+                playerPos.x += dx * speed;
+                playerPos.z += dz * speed;
+                // giới hạn
+                playerPos.x = Math.min(worldSize/2-1, Math.max(-worldSize/2+1, playerPos.x));
+                playerPos.z = Math.min(worldSize/2-1, Math.max(-worldSize/2+1, playerPos.z));
+            }
+            // tìm độ cao mặt đất tại vị trí player
+            let groundY = 2;
+            for(let y=5; y>=0; y--) {
+                const key = `${Math.floor(playerPos.x)},${y},${Math.floor(playerPos.z)}`;
+                if(blocks.has(key) && blocks.get(key).type !== 8) { groundY = y+1; break; }
+            }
+            camera.position.set(playerPos.x, groundY + 1.6, playerPos.z);
+            camera.rotation.order = 'YXZ';
+            camera.rotation.y = playerYaw;
+            camera.rotation.x = playerPitch;
+        }
+        
+        // Raycaster để đào/đặt block
+        const raycaster = new THREE.Raycaster();
+        let currentBlockType = BLOCK_TYPES.grass.id;
+        
+        function getLookedBlock() {
+            const direction = new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
+            raycaster.set(camera.position, direction);
+            const intersects = raycaster.intersectObjects(Array.from(blocks.values()).map(b=>b.mesh).filter(m=>m));
+            if(intersects.length > 0) {
+                const hit = intersects[0];
+                const pos = hit.point;
+                const blockPos = {
+                    x: Math.floor(hit.object.position.x),
+                    y: Math.floor(hit.object.position.y),
+                    z: Math.floor(hit.object.position.z)
+                };
+                return { hit, blockPos };
+            }
+            return null;
+        }
+        
+        function breakBlock() {
+            const look = getLookedBlock();
+            if(look && look.hit.distance < 5) {
+                const {x,y,z} = look.blockPos;
+                const key = `${x},${y},${z}`;
+                const block = blocks.get(key);
+                if(block && block.type !== BLOCK_TYPES.water.id && block.type !== 0) {
+                    removeBlock(x, y, z);
+                }
+            }
+        }
+        
+        function placeBlock() {
+            const look = getLookedBlock();
+            if(look && look.hit.distance < 5) {
+                const normal = look.hit.face.normal;
+                const adjX = look.blockPos.x + Math.round(normal.x);
+                const adjY = look.blockPos.y + Math.round(normal.y);
+                const adjZ = look.blockPos.z + Math.round(normal.z);
+                const existing = blocks.get(`${adjX},${adjY},${adjZ}`);
+                if(!existing && adjY >=0 && adjY < 20) {
+                    addBlock(adjX, adjY, adjZ, currentBlockType);
+                }
+            }
+        }
+        
+        // --- Giao diện hotbar và chọn block ---
+        document.querySelectorAll('.slot').forEach(slot => {
+            slot.addEventListener('click', () => {
+                document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+                slot.classList.add('selected');
+                const blockName = slot.getAttribute('data-block');
+                if(blockName === 'grass') currentBlockType = BLOCK_TYPES.grass.id;
+                else if(blockName === 'dirt') currentBlockType = BLOCK_TYPES.dirt.id;
+                else if(blockName === 'stone') currentBlockType = BLOCK_TYPES.stone.id;
+                else if(blockName === 'wood') currentBlockType = BLOCK_TYPES.wood.id;
+                else if(blockName === 'oreIron') currentBlockType = BLOCK_TYPES.oreIron.id;
+                else if(blockName === 'oreCoal') currentBlockType = BLOCK_TYPES.oreCoal.id;
+                document.getElementById('selectedBlock').innerText = slot.innerText.trim() || blockName;
+            });
+        });
+        
+        // Nút đào / đặt
+        document.getElementById('btnBreak').addEventListener('click', () => breakBlock());
+        document.getElementById('btnPlace').addEventListener('click', () => placeBlock());
+        // Điều khiển phím
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if(e.key === 'w') moveForward=true;
+            if(e.key === 's') moveBack=true;
+            if(e.key === 'a') moveLeft=true;
+            if(e.key === 'd') moveRight=true;
+            if(e.key === ' ') { e.preventDefault(); /* có thể nhảy nhưng bỏ qua */ }
+            if(e.key === 'q') breakBlock();
+            if(e.key === 'e') placeBlock();
+        });
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+            if(e.key === 'w') moveForward=false;
+            if(e.key === 's') moveBack=false;
+            if(e.key === 'a') moveLeft=false;
+            if(e.key === 'd') moveRight=false;
+        });
+        // chuột xoay
+        let mouseDown = false;
+        document.addEventListener('mousemove', (e) => {
+            if(document.pointerLockElement === renderer.domElement) {
+                playerYaw -= e.movementX * 0.002;
+                playerPitch -= e.movementY * 0.002;
+                playerPitch = Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, playerPitch));
+            }
+        });
+        renderer.domElement.addEventListener('click', () => {
+            renderer.domElement.requestPointerLock();
+        });
+        
+        // nút di chuyển màn hình cảm ứng
+        document.getElementById('btnFwd').addEventListener('mousedown', () => moveForward=true);
+        document.getElementById('btnFwd').addEventListener('mouseup', () => moveForward=false);
+        document.getElementById('btnBack').addEventListener('mousedown', () => moveBack=true);
+        document.getElementById('btnBack').addEventListener('mouseup', () => moveBack=false);
+        document.getElementById('btnLeft').addEventListener('mousedown', () => moveLeft=true);
+        document.getElementById('btnLeft').addEventListener('mouseup', () => moveLeft=false);
+        document.getElementById('btnRight').addEventListener('mousedown', () => moveRight=true);
+        document.getElementById('btnRight').addEventListener('mouseup', () => moveRight=false);
+        
+        // Vòng lặp game
+        let lastTime = performance.now();
+        function animate() {
+            const now = performance.now();
+            let dt = Math.min(0.033, (now - lastTime) / 1000);
+            lastTime = now;
+            
+            updateCamera();
+            // cập nhật entities
+            for(let ent of entities) {
+                ent.update(dt, playerPos);
+                // tấn công đơn giản: nếu hostile và khoảng cách < 1.5
+                if(ent.hostile && Math.hypot(ent.pos.x - playerPos.x, ent.pos.z - playerPos.z) < 1.5) {
+                    // hiệu ứng damage
+                    const dmgDiv = document.createElement('div');
+                    dmgDiv.className = 'damage-effect';
+                    document.body.appendChild(dmgDiv);
+                    setTimeout(() => dmgDiv.remove(), 200);
+                    // làm giảm health player (demo: reset vị trí)
+                    playerPos.x = 15; playerPos.z = 15;
+                }
+            }
+            
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+        animate();
+        
+        // Khởi tạo thêm một vài cây cối, trang trí
+        console.log("Thế giới Minecraft đã sẵn sàng! Dùng chuột nhìn, W/A/S/D hoặc nút ảo, đào đặt block.");
+    </script>
+</body>
+</html>
+```
