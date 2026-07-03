@@ -70,6 +70,34 @@
   #jumpBtn   { right: 26px; bottom: 26px;  width: 72px; height: 72px; }
   #breakBtn  { right: 118px; bottom: 100px; width: 60px; height: 60px; }
   #placeBtn  { right: 26px; bottom: 118px; width: 60px; height: 60px; }
+
+  /* ----- Cài đặt độ nhạy ----- */
+  #settingsBtn {
+    position: absolute; top: 14px; right: 14px; z-index: 7;
+    width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.5); color: white; font-size: 18px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  #settingsPanel {
+    display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 9; color: white; align-items: center; justify-content: center;
+  }
+  #settingsPanel .box {
+    background: rgba(30,30,30,0.95); padding: 24px 28px; border-radius: 10px;
+    width: 280px; text-align: left;
+  }
+  #settingsPanel h3 { margin: 0 0 16px; text-align: center; }
+  #settingsPanel label { display: block; margin: 14px 0 6px; font-size: 13px; }
+  #settingsPanel input[type=range] { width: 100%; }
+  #settingsPanel .val { float: right; opacity: 0.8; }
+  #settingsPanel button {
+    margin-top: 20px; width: 100%; padding: 10px; border-radius: 6px; border: none;
+    background: #4caf50; color: white; font-weight: bold; cursor: pointer;
+  }
+  .hotbarCount {
+    position: absolute; bottom: 1px; right: 3px; font-size: 10px; color: white;
+    text-shadow: 1px 1px 1px #000; pointer-events: none;
+  }
 </style>
 </head>
 <body>
@@ -79,9 +107,21 @@
   <div id="healthBarBg"><div id="healthBarFill"></div></div>
   <span id="healthText">100</span>
 </div>
-<div id="hint">WASD: di chuyển | Chuột: nhìn | Space: nhảy<br>Chuột trái: phá khối | Chuột phải: đặt khối | 1-5: chọn khối</div>
+<div id="hint">WASD: di chuyển | Chuột: nhìn | Space: nhảy<br>Chuột trái: phá khối | Chuột phải: đặt khối | 1-6: chọn khối | ⚙️: chỉnh độ nhạy</div>
 <div id="hotbar"></div>
 <div id="blocker"><h2>Mini Minecraft</h2><p>Nhấn để bắt đầu chơi</p></div>
+
+<div id="settingsBtn">⚙️</div>
+<div id="settingsPanel">
+  <div class="box">
+    <h3>Cài đặt độ nhạy</h3>
+    <label>Độ nhạy chuột (PC) <span class="val" id="mouseSensVal">1.0x</span></label>
+    <input type="range" id="mouseSensSlider" min="0.2" max="3" step="0.1" value="1">
+    <label>Độ nhạy chạm (Mobile) <span class="val" id="touchSensVal">1.0x</span></label>
+    <input type="range" id="touchSensSlider" min="0.2" max="3" step="0.1" value="1">
+    <button id="closeSettings">Đóng</button>
+  </div>
+</div>
 
 <div id="mobileControls">
   <div id="lookArea"></div>
@@ -94,15 +134,17 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // ----- Cấu hình cơ bản -----
-const WORLD_SIZE = 24;          // kích thước bản đồ (WORLD_SIZE x WORLD_SIZE)
+const WORLD_SIZE = 40;          // kích thước bản đồ (WORLD_SIZE x WORLD_SIZE)
 const BLOCK_TYPES = [
   { name: 'Cỏ',  color: 0x4caf50 },
   { name: 'Đất', color: 0x8d6e42 },
   { name: 'Đá',  color: 0x888888 },
   { name: 'Cát', color: 0xe0d18f },
   { name: 'Gỗ',  color: 0x6b4423 },
+  { name: 'Lá',  color: 0x2e7d32 },
 ];
 let selectedBlock = 0;
+const inventory = new Array(BLOCK_TYPES.length).fill(0); // số block đang có, tăng lên khi đào
 
 // ----- Scene / Camera / Renderer -----
 const scene = new THREE.Scene();
@@ -163,14 +205,48 @@ function removeBlockAt(x,y,z){
   }
 }
 
+// Hàm giả-ngẫu nhiên ổn định theo tọa độ (để tạo cùng 1 bản đồ mỗi lần chạy)
+function hashRandom(x, z, seed) {
+  let h = Math.sin(x * 127.1 + z * 311.7 + seed * 74.7) * 43758.5453;
+  return h - Math.floor(h);
+}
+
+function isVoidPit(x, z) {
+  // Vài hố trống rải rác trên bản đồ (không tính gần điểm xuất phát)
+  if (Math.hypot(x, z) < 5) return false;
+  return hashRandom(x, z, 1) < 0.025;
+}
+
+function addTree(x, y, z) {
+  const trunkHeight = 3 + Math.floor(hashRandom(x, z, 2) * 2); // 3-4 khối gỗ
+  for (let i = 1; i <= trunkHeight; i++) addBlock(x, y + i, z, 4, false);
+  const leafY = y + trunkHeight;
+  for (let lx = -2; lx <= 2; lx++) {
+    for (let lz = -2; lz <= 2; lz++) {
+      for (let ly = 0; ly <= 2; ly++) {
+        const dist = Math.abs(lx) + Math.abs(lz) + Math.abs(ly - 1) * 0.7;
+        if (dist <= 2.4 && !(lx === 0 && lz === 0 && ly === 0)) {
+          const bx = x + lx, by = leafY + ly, bz = z + lz;
+          if (!world.has(key(bx, by, bz))) addBlock(bx, by, bz, 5, false);
+        }
+      }
+    }
+  }
+}
+
 for (let x = -WORLD_SIZE/2; x < WORLD_SIZE/2; x++) {
   for (let z = -WORLD_SIZE/2; z < WORLD_SIZE/2; z++) {
+    if (isVoidPit(x, z)) continue; // để trống -> tạo void/hố
     const h = heightAt(x, z);
     for (let y = 0; y <= h; y++) {
       let type = 2; // đá
       if (y === h) type = z > 4 ? 3 : 0; // mặt trên: cát hoặc cỏ
       else if (y > h - 2) type = 1; // đất ngay dưới mặt
       addBlock(x, y, z, type);
+    }
+    // Cây mọc trên cỏ, thưa thớt, tránh sát điểm xuất phát
+    if (z <= 4 && Math.hypot(x, z) > 4 && hashRandom(x, z, 3) < 0.012) {
+      addTree(x, h, z);
     }
   }
 }
@@ -181,13 +257,24 @@ BLOCK_TYPES.forEach((b, i) => {
   const el = document.createElement('div');
   el.className = 'slot' + (i === selectedBlock ? ' active' : '');
   el.style.background = '#' + b.color.toString(16).padStart(6,'0');
+  el.style.position = 'relative';
+  el.title = b.name;
+  const count = document.createElement('span');
+  count.className = 'hotbarCount';
+  count.textContent = '0';
+  el.appendChild(count);
+  el.addEventListener('click', () => { selectedBlock = i; updateHotbar(); });
   hotbar.appendChild(el);
 });
 function updateHotbar() {
-  [...hotbar.children].forEach((el, i) => el.classList.toggle('active', i === selectedBlock));
+  [...hotbar.children].forEach((el, i) => {
+    el.classList.toggle('active', i === selectedBlock);
+    el.querySelector('.hotbarCount').textContent = inventory[i];
+  });
 }
+updateHotbar();
 window.addEventListener('keydown', (e) => {
-  if (e.key >= '1' && e.key <= '5') {
+  if (e.key >= '1' && e.key <= String(BLOCK_TYPES.length)) {
     selectedBlock = parseInt(e.key) - 1;
     updateHotbar();
   }
@@ -204,8 +291,38 @@ const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 if (isMobile) {
   mobileControls.style.display = 'block';
   document.getElementById('hint').innerHTML =
-    'Joystick trái: di chuyển | Vuốt bên phải: nhìn quanh<br>Nút Phá / Đặt / Nhảy ở góc phải';
+    'Joystick trái: di chuyển | Vuốt bên phải: nhìn quanh<br>Nút Phá / Đặt / Nhảy ở góc phải | ⚙️ để chỉnh độ nhạy';
 }
+
+// ----- Cài đặt độ nhạy -----
+let mouseSensitivity = 1, touchSensitivity = 1;
+let settingsOpen = false;
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsPanel = document.getElementById('settingsPanel');
+const mouseSensSlider = document.getElementById('mouseSensSlider');
+const touchSensSlider = document.getElementById('touchSensSlider');
+const mouseSensVal = document.getElementById('mouseSensVal');
+const touchSensVal = document.getElementById('touchSensVal');
+
+mouseSensSlider.addEventListener('input', () => {
+  mouseSensitivity = parseFloat(mouseSensSlider.value);
+  mouseSensVal.textContent = mouseSensitivity.toFixed(1) + 'x';
+});
+touchSensSlider.addEventListener('input', () => {
+  touchSensitivity = parseFloat(touchSensSlider.value);
+  touchSensVal.textContent = touchSensitivity.toFixed(1) + 'x';
+});
+
+settingsBtn.addEventListener('click', () => {
+  settingsOpen = true;
+  settingsPanel.style.display = 'flex';
+  if (!isMobile && document.pointerLockElement) document.exitPointerLock();
+});
+document.getElementById('closeSettings').addEventListener('click', () => {
+  settingsOpen = false;
+  settingsPanel.style.display = 'none';
+  if (!isMobile && locked) document.body.requestPointerLock();
+});
 
 blocker.addEventListener('click', () => {
   if (isMobile) {
@@ -218,12 +335,12 @@ blocker.addEventListener('click', () => {
 document.addEventListener('pointerlockchange', () => {
   if (isMobile) return;
   locked = document.pointerLockElement === document.body;
-  blocker.style.display = locked ? 'none' : 'flex';
+  if (!settingsOpen) blocker.style.display = locked ? 'none' : 'flex';
 });
 document.addEventListener('mousemove', (e) => {
-  if (!locked || isMobile) return;
-  yaw -= e.movementX * 0.0022;
-  pitch -= e.movementY * 0.0022;
+  if (!locked || isMobile || settingsOpen) return;
+  yaw -= e.movementX * 0.0022 * mouseSensitivity;
+  pitch -= e.movementY * 0.0022 * mouseSensitivity;
   pitch = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, pitch));
 });
 
@@ -236,12 +353,13 @@ lookArea.addEventListener('touchstart', (e) => {
   lastLookX = t.clientX; lastLookY = t.clientY;
 }, { passive: true });
 lookArea.addEventListener('touchmove', (e) => {
+  if (settingsOpen) return;
   for (const t of e.changedTouches) {
     if (t.identifier !== lookTouchId) continue;
     const dx = t.clientX - lastLookX, dy = t.clientY - lastLookY;
     lastLookX = t.clientX; lastLookY = t.clientY;
-    yaw -= dx * 0.0045;
-    pitch -= dy * 0.0045;
+    yaw -= dx * 0.0045 * touchSensitivity;
+    pitch -= dy * 0.0045 * touchSensitivity;
     pitch = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, pitch));
   }
 }, { passive: true });
@@ -266,6 +384,7 @@ joyBase.addEventListener('touchstart', (e) => {
   joyTouchId = t.identifier;
 }, { passive: true });
 joyBase.addEventListener('touchmove', (e) => {
+  if (settingsOpen) return;
   for (const t of e.changedTouches) {
     if (t.identifier !== joyTouchId) continue;
     const rect = joyBase.getBoundingClientRect();
@@ -292,11 +411,11 @@ jumpBtn.addEventListener('touchend', (e) => { e.preventDefault(); keys['Space'] 
 
 document.getElementById('breakBtn').addEventListener('touchstart', (e) => {
   e.preventDefault();
-  if (locked) breakBlock();
+  if (locked && !settingsOpen) breakBlock();
 }, { passive: false });
 document.getElementById('placeBtn').addEventListener('touchstart', (e) => {
   e.preventDefault();
-  if (locked) placeBlock();
+  if (locked && !settingsOpen) placeBlock();
 }, { passive: false });
 
 // ----- Di chuyển -----
@@ -421,14 +540,45 @@ function getTargetBlock() {
   return hits.length ? hits[0] : null;
 }
 
+// ----- Hiệu ứng item rớt ra khi đào -----
+const dropEffects = [];
+function spawnDropEffect(x, y, z, typeIndex) {
+  const mat = new THREE.MeshLambertMaterial({ color: BLOCK_TYPES[typeIndex].color, transparent: true });
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), mat);
+  mesh.position.set(x, y, z);
+  scene.add(mesh);
+  dropEffects.push({ mesh, start: performance.now(), duration: 450 });
+}
+function updateDropEffects() {
+  const now = performance.now();
+  for (let i = dropEffects.length - 1; i >= 0; i--) {
+    const d = dropEffects[i];
+    const t = Math.min(1, (now - d.start) / d.duration);
+    d.mesh.position.y += 0.012;
+    d.mesh.scale.setScalar(1 - t * 0.8);
+    d.mesh.material.opacity = 1 - t;
+    if (t >= 1) {
+      scene.remove(d.mesh);
+      d.mesh.geometry.dispose();
+      d.mesh.material.dispose();
+      dropEffects.splice(i, 1);
+    }
+  }
+}
+
 function breakBlock() {
   const hit = getTargetBlock();
   if (!hit) return;
   const p = hit.object.position;
+  const typeIndex = hit.object.userData.type;
   removeBlockAt(p.x, p.y, p.z);
+  inventory[typeIndex]++;
+  updateHotbar();
+  spawnDropEffect(p.x, p.y, p.z, typeIndex);
 }
 
 function placeBlock() {
+  if (inventory[selectedBlock] <= 0) return; // không còn block để đặt
   const hit = getTargetBlock();
   if (!hit) return;
   const n = hit.face.normal;
@@ -438,11 +588,13 @@ function placeBlock() {
   const dist = Math.hypot(nx - player.pos.x, ny - (player.pos.y - 1), nz - player.pos.z);
   if (dist > 0.6 && !world.get(key(nx,ny,nz))) {
     addBlock(nx, ny, nz, selectedBlock);
+    inventory[selectedBlock]--;
+    updateHotbar();
   }
 }
 
 window.addEventListener('mousedown', (e) => {
-  if (!locked || isMobile) return;
+  if (!locked || isMobile || settingsOpen) return;
   if (e.button === 0) breakBlock();       // trái: phá
   else if (e.button === 2) placeBlock();  // phải: đặt
 });
@@ -451,7 +603,8 @@ window.addEventListener('contextmenu', e => e.preventDefault());
 // ----- Vòng lặp chính -----
 function animate() {
   requestAnimationFrame(animate);
-  if (locked) updatePlayer();
+  if (locked && !settingsOpen) updatePlayer();
+  updateDropEffects();
   renderer.render(scene, camera);
 }
 animate();
