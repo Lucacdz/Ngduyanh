@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Mini Minecraft - Map Siêu To + Nước</title>
+<title>Mini Minecraft - Map Siêu To + Nước Tối Ưu</title>
 <style>
   html, body { margin: 0; padding: 0; overflow: hidden; background:#87CEEB; font-family: 'Courier New', monospace; }
   #crosshair {
@@ -287,6 +287,8 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// Giảm chất lượng shadow để tăng hiệu suất
+renderer.shadowMap.bias = 0.0001;
 document.body.appendChild(renderer.domElement);
 
 window.addEventListener('resize', () => {
@@ -296,11 +298,11 @@ window.addEventListener('resize', () => {
 });
 
 // ----- Ánh sáng -----
-scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const sun = new THREE.DirectionalLight(0xffffff, 0.8);
 sun.position.set(50, 80, 30);
 sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.mapSize.set(1024, 1024); // Giảm kích thước shadow map
 sun.shadow.camera.left = -80; sun.shadow.camera.right = 80;
 sun.shadow.camera.top = 80; sun.shadow.camera.bottom = -80;
 sun.shadow.camera.near = 0.5;
@@ -311,13 +313,16 @@ scene.add(sun);
 const blockGeo = new THREE.BoxGeometry(1, 1, 1);
 const materials = BLOCK_TYPES.map(b => new THREE.MeshLambertMaterial({ color: b.color }));
 
-// Material cho nước
+// Material cho nước - tối ưu bằng cách dùng material chung
 const waterMat = new THREE.MeshLambertMaterial({
   color: WATER_COLOR,
   transparent: true,
   opacity: WATER_TRANSPARENCY,
   side: THREE.DoubleSide
 });
+
+// Dùng chung geometry cho nước để tiết kiệm bộ nhớ
+const waterGeo = new THREE.BoxGeometry(1, 1, 1);
 
 const world = new Map();
 function key(x,y,z){ return `${x},${y},${z}`; }
@@ -337,9 +342,11 @@ function addBlock(x, y, z, typeIndex, castShadow=true) {
 }
 
 function addWater(x, y, z) {
-  const mesh = new THREE.Mesh(blockGeo, waterMat);
+  // Sử dụng chung geometry để tiết kiệm bộ nhớ
+  const mesh = new THREE.Mesh(waterGeo, waterMat);
   mesh.position.set(x, y, z);
-  mesh.receiveShadow = true;
+  mesh.receiveShadow = false; // Nước không nhận shadow để tăng hiệu suất
+  mesh.castShadow = false;
   mesh.userData.isWater = true;
   mesh.userData.type = 6; // Index của nước
   scene.add(mesh);
@@ -386,8 +393,9 @@ function addTree(x, y, z) {
   }
 }
 
-// Tạo thế giới với nước
-console.log('Đang tạo map siêu to với nước...');
+// Tạo thế giới với nước - GIẢM SỐ LƯỢNG NƯỚC
+console.log('Đang tạo map siêu to với nước tối ưu...');
+let waterCount = 0;
 for (let x = -WORLD_SIZE/2; x < WORLD_SIZE/2; x++) {
   for (let z = -WORLD_SIZE/2; z < WORLD_SIZE/2; z++) {
     if (isVoidPit(x, z)) continue;
@@ -404,9 +412,21 @@ for (let x = -WORLD_SIZE/2; x < WORLD_SIZE/2; x++) {
       addBlock(x, y, z, type);
     }
     
-    // Nước
-    for (let y = h + 1; y <= WATER_LEVEL; y++) {
-      addWater(x, y, z);
+    // Nước - chỉ thêm nước nếu mặt đất thấp hơn mực nước và không quá sâu
+    if (h < WATER_LEVEL) {
+      // Chỉ thêm nước ở những vùng đất thấp, giảm số lượng nước
+      for (let y = h + 1; y <= WATER_LEVEL; y++) {
+        // Kiểm tra xem có nước xung quanh không để tạo thành hồ nước thay vì đầm lầy
+        const hasWaterNearby = 
+          world.has(key(x+1, y, z)) || world.has(key(x-1, y, z)) ||
+          world.has(key(x, y, z+1)) || world.has(key(x, y, z-1));
+        
+        // Chỉ thêm nước nếu đây là hồ nước hoặc nằm ở vùng trũng rộng
+        if (waterCount < 3000 || hasWaterNearby) {
+          addWater(x, y, z);
+          waterCount++;
+        }
+      }
     }
     
     // Cây trên cỏ (chỉ khi mặt đất cao hơn nước)
@@ -415,7 +435,7 @@ for (let x = -WORLD_SIZE/2; x < WORLD_SIZE/2; x++) {
     }
   }
 }
-console.log('Map đã được tạo!');
+console.log('Map đã được tạo! Số khối nước:', waterCount);
 
 // ----- Động vật với thịt khác nhau -----
 const animals = [];
