@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Mini Minecraft</title>
+<style>
+  html, body { margin: 0; padding: 0; overflow: hidden; background:#87CEEB; font-family: sans-serif; }
+  #crosshair {
+    position: absolute; top: 50%; left: 50%; width: 6px; height: 6px;
+    background: white; border-radius: 50%; transform: translate(-50%, -50%);
+    pointer-events: none; mix-blend-mode: difference; z-index: 5;
+  }
+  #hint {
+    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    color: white; background: rgba(0,0,0,0.5); padding: 8px 14px; border-radius: 8px;
+    font-size: 13px; z-index: 5; text-align: center; line-height: 1.5;
+  }
+  #hotbar {
+    position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 4px; z-index: 5;
+  }
+  .slot {
+    width: 40px; height: 40px; border: 2px solid #fff8; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+  }
+  .slot.active { border-color: #fff; }
+  #healthContainer {
+    position: absolute; top: 14px; left: 14px; z-index: 5;
+    display: flex; align-items: center; gap: 8px;
+  }
+  #healthIcon { font-size: 20px; }
+  #healthBarBg {
+    width: 160px; height: 16px; background: rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.5); border-radius: 8px; overflow: hidden;
+  }
+  #healthBarFill {
+    height: 100%; width: 100%; background: linear-gradient(90deg,#ff4d4d,#e60000);
+    transition: width 0.2s ease;
+  }
+  #healthText {
+    color: white; font-size: 13px; font-weight: bold; text-shadow: 1px 1px 2px #000;
+  }
+  #blocker {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.6); color: white;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    cursor: pointer; z-index: 10; text-align: center;
+  }
+
+  /* ----- Điều khiển mobile ----- */
+  #mobileControls { display: none; }
+  #lookArea {
+    position: absolute; right: 0; top: 0; width: 55%; height: 100%; z-index: 3;
+    touch-action: none;
+  }
+  #joystickBase {
+    position: absolute; left: 26px; bottom: 26px; width: 120px; height: 120px;
+    border-radius: 50%; background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.45); z-index: 6; touch-action: none;
+  }
+  #joystickKnob {
+    position: absolute; left: 35px; top: 35px; width: 50px; height: 50px;
+    border-radius: 50%; background: rgba(255,255,255,0.65); pointer-events: none;
+  }
+  .actionBtn {
+    position: absolute; border-radius: 50%; background: rgba(255,255,255,0.25);
+    border: 2px solid rgba(255,255,255,0.5); color: white; z-index: 6;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold; user-select: none; touch-action: none;
+  }
+  #jumpBtn   { right: 26px; bottom: 26px;  width: 72px; height: 72px; }
+  #breakBtn  { right: 118px; bottom: 100px; width: 60px; height: 60px; }
+  #placeBtn  { right: 26px; bottom: 118px; width: 60px; height: 60px; }
+</style>
+</head>
+<body>
+<div id="crosshair"></div>
+<div id="healthContainer">
+  <span id="healthIcon">❤️</span>
+  <div id="healthBarBg"><div id="healthBarFill"></div></div>
+  <span id="healthText">100</span>
+</div>
+<div id="hint">WASD: di chuyển | Chuột: nhìn | Space: nhảy<br>Chuột trái: phá khối | Chuột phải: đặt khối | 1-5: chọn khối</div>
+<div id="hotbar"></div>
+<div id="blocker"><h2>Mini Minecraft</h2><p>Nhấn để bắt đầu chơi</p></div>
+
+<div id="mobileControls">
+  <div id="lookArea"></div>
+  <div id="joystickBase"><div id="joystickKnob"></div></div>
+  <div id="breakBtn" class="actionBtn">Phá</div>
+  <div id="placeBtn" class="actionBtn">Đặt</div>
+  <div id="jumpBtn" class="actionBtn">Nhảy</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ----- Cấu hình cơ bản -----
+const WORLD_SIZE = 24;          // kích thước bản đồ (WORLD_SIZE x WORLD_SIZE)
+const BLOCK_TYPES = [
+  { name: 'Cỏ',  color: 0x4caf50 },
+  { name: 'Đất', color: 0x8d6e42 },
+  { name: 'Đá',  color: 0x888888 },
+  { name: 'Cát', color: 0xe0d18f },
+  { name: 'Gỗ',  color: 0x6b4423 },
+];
+let selectedBlock = 0;
+
+// ----- Scene / Camera / Renderer -----
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87CEEB);
+scene.fog = new THREE.Fog(0x87CEEB, 30, 90);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ----- Ánh sáng -----
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+sun.position.set(50, 80, 30);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+sun.shadow.camera.left = -40; sun.shadow.camera.right = 40;
+sun.shadow.camera.top = 40; sun.shadow.camera.bottom = -40;
+scene.add(sun);
+
+// ----- Sinh thế giới -----
+const blockGeo = new THREE.BoxGeometry(1, 1, 1);
+const materials = BLOCK_TYPES.map(b => new THREE.MeshLambertMaterial({ color: b.color }));
+
+// Lưu block đã đặt/xóa theo key "x,y,z" -> mesh (null nghĩa là đã bị phá)
+const world = new Map();
+function key(x,y,z){ return `${x},${y},${z}`; }
+
+function heightAt(x, z) {
+  return Math.floor(2 + Math.sin(x/5)*2 + Math.cos(z/5)*2);
+}
+
+function addBlock(x, y, z, typeIndex, castShadow=true) {
+  const mesh = new THREE.Mesh(blockGeo, materials[typeIndex]);
+  mesh.position.set(x, y, z);
+  mesh.castShadow = castShadow;
+  mesh.receiveShadow = true;
+  mesh.userData.type = typeIndex;
+  scene.add(mesh);
+  world.set(key(x,y,z), mesh);
+}
+
+function removeBlockAt(x,y,z){
+  const k = key(x,y,z);
+  const mesh = world.get(k);
+  if (mesh) {
+    scene.remove(mesh);
+    world.set(k, null); // đánh dấu là trống, khác với "chưa từng tồn tại"
+  }
+}
+
+for (let x = -WORLD_SIZE/2; x < WORLD_SIZE/2; x++) {
+  for (let z = -WORLD_SIZE/2; z < WORLD_SIZE/2; z++) {
+    const h = heightAt(x, z);
+    for (let y = 0; y <= h; y++) {
+      let type = 2; // đá
+      if (y === h) type = z > 4 ? 3 : 0; // mặt trên: cát hoặc cỏ
+      else if (y > h - 2) type = 1; // đất ngay dưới mặt
+      addBlock(x, y, z, type);
+    }
+  }
+}
+
+// ----- Hotbar UI -----
+const hotbar = document.getElementById('hotbar');
+BLOCK_TYPES.forEach((b, i) => {
+  const el = document.createElement('div');
+  el.className = 'slot' + (i === selectedBlock ? ' active' : '');
+  el.style.background = '#' + b.color.toString(16).padStart(6,'0');
+  hotbar.appendChild(el);
+});
+function updateHotbar() {
+  [...hotbar.children].forEach((el, i) => el.classList.toggle('active', i === selectedBlock));
+}
+window.addEventListener('keydown', (e) => {
+  if (e.key >= '1' && e.key <= '5') {
+    selectedBlock = parseInt(e.key) - 1;
+    updateHotbar();
+  }
+});
+
+// ----- Điều khiển góc nhìn (Pointer Lock) -----
+const blocker = document.getElementById('blocker');
+const mobileControls = document.getElementById('mobileControls');
+let yaw = 0, pitch = 0;
+let locked = false;
+
+const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
+if (isMobile) {
+  mobileControls.style.display = 'block';
+  document.getElementById('hint').innerHTML =
+    'Joystick trái: di chuyển | Vuốt bên phải: nhìn quanh<br>Nút Phá / Đặt / Nhảy ở góc phải';
+}
+
+blocker.addEventListener('click', () => {
+  if (isMobile) {
+    locked = true;
+    blocker.style.display = 'none';
+  } else {
+    document.body.requestPointerLock();
+  }
+});
+document.addEventListener('pointerlockchange', () => {
+  if (isMobile) return;
+  locked = document.pointerLockElement === document.body;
+  blocker.style.display = locked ? 'none' : 'flex';
+});
+document.addEventListener('mousemove', (e) => {
+  if (!locked || isMobile) return;
+  yaw -= e.movementX * 0.0022;
+  pitch -= e.movementY * 0.0022;
+  pitch = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, pitch));
+});
+
+// ----- Nhìn quanh bằng vuốt tay (mobile) -----
+const lookArea = document.getElementById('lookArea');
+let lookTouchId = null, lastLookX = 0, lastLookY = 0;
+lookArea.addEventListener('touchstart', (e) => {
+  const t = e.changedTouches[0];
+  lookTouchId = t.identifier;
+  lastLookX = t.clientX; lastLookY = t.clientY;
+}, { passive: true });
+lookArea.addEventListener('touchmove', (e) => {
+  for (const t of e.changedTouches) {
+    if (t.identifier !== lookTouchId) continue;
+    const dx = t.clientX - lastLookX, dy = t.clientY - lastLookY;
+    lastLookX = t.clientX; lastLookY = t.clientY;
+    yaw -= dx * 0.0045;
+    pitch -= dy * 0.0045;
+    pitch = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, pitch));
+  }
+}, { passive: true });
+lookArea.addEventListener('touchend', (e) => {
+  for (const t of e.changedTouches) if (t.identifier === lookTouchId) lookTouchId = null;
+});
+
+// ----- Joystick di chuyển (mobile) -----
+const joyBase = document.getElementById('joystickBase');
+const joyKnob = document.getElementById('joystickKnob');
+let joyTouchId = null;
+let joyVec = { x: 0, y: 0 }; // x: trái/phải, y: trước/sau (-1..1)
+const JOY_RADIUS = 45;
+
+function joyReset() {
+  joyVec = { x: 0, y: 0 };
+  joyKnob.style.left = '35px';
+  joyKnob.style.top = '35px';
+}
+joyBase.addEventListener('touchstart', (e) => {
+  const t = e.changedTouches[0];
+  joyTouchId = t.identifier;
+}, { passive: true });
+joyBase.addEventListener('touchmove', (e) => {
+  for (const t of e.changedTouches) {
+    if (t.identifier !== joyTouchId) continue;
+    const rect = joyBase.getBoundingClientRect();
+    const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+    let dx = t.clientX - cx, dy = t.clientY - cy;
+    const dist = Math.min(Math.hypot(dx, dy), JOY_RADIUS);
+    const angle = Math.atan2(dy, dx);
+    dx = Math.cos(angle) * dist; dy = Math.sin(angle) * dist;
+    joyKnob.style.left = (35 + dx) + 'px';
+    joyKnob.style.top = (35 + dy) + 'px';
+    joyVec = { x: dx / JOY_RADIUS, y: dy / JOY_RADIUS };
+  }
+}, { passive: true });
+joyBase.addEventListener('touchend', (e) => {
+  for (const t of e.changedTouches) {
+    if (t.identifier === joyTouchId) { joyTouchId = null; joyReset(); }
+  }
+});
+
+// ----- Nút Nhảy / Phá / Đặt (mobile) -----
+const jumpBtn = document.getElementById('jumpBtn');
+jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); keys['Space'] = true; }, { passive: false });
+jumpBtn.addEventListener('touchend', (e) => { e.preventDefault(); keys['Space'] = false; }, { passive: false });
+
+document.getElementById('breakBtn').addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (locked) breakBlock();
+}, { passive: false });
+document.getElementById('placeBtn').addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (locked) placeBlock();
+}, { passive: false });
+
+// ----- Di chuyển -----
+const keys = {};
+window.addEventListener('keydown', e => keys[e.code] = true);
+window.addEventListener('keyup', e => keys[e.code] = false);
+
+const player = {
+  pos: new THREE.Vector3(0, heightAt(0,0) + 3, 0),
+  vel: new THREE.Vector3(0,0,0),
+  onGround: false,
+};
+const SPAWN_POS = player.pos.clone();
+
+// ----- Máu -----
+const MAX_HEALTH = 100;
+let health = MAX_HEALTH;
+const healthBarFill = document.getElementById('healthBarFill');
+const healthText = document.getElementById('healthText');
+
+function updateHealthUI() {
+  const pct = Math.max(0, health / MAX_HEALTH * 100);
+  healthBarFill.style.width = pct + '%';
+  healthText.textContent = Math.max(0, Math.round(health));
+}
+
+function takeDamage(amount) {
+  if (amount <= 0) return;
+  health = Math.max(0, health - amount);
+  updateHealthUI();
+  if (health <= 0) respawnPlayer();
+}
+
+function healOverTime() {
+  if (health < MAX_HEALTH && health > 0) {
+    health = Math.min(MAX_HEALTH, health + 1);
+    updateHealthUI();
+  }
+}
+setInterval(healOverTime, 3000);
+
+function respawnPlayer() {
+  player.pos.copy(SPAWN_POS);
+  player.vel.set(0, 0, 0);
+  health = MAX_HEALTH;
+  updateHealthUI();
+}
+updateHealthUI();
+
+function isSolid(x,y,z){
+  const k = key(Math.round(x), Math.round(y), Math.round(z));
+  const v = world.get(k);
+  return v !== undefined && v !== null;
+}
+
+const GRAVITY = -0.018;
+const JUMP_SPEED = 0.28;
+const MOVE_SPEED = 0.11;
+
+function updatePlayer() {
+  const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+  const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+
+  let move = new THREE.Vector3();
+  if (keys['KeyW']) move.add(forward);
+  if (keys['KeyS']) move.sub(forward);
+  if (keys['KeyD']) move.add(right);
+  if (keys['KeyA']) move.sub(right);
+
+  // Joystick mobile: joyVec.y < 0 nghĩa là đẩy lên (tiến), joyVec.x là trái/phải
+  if (joyVec.x !== 0 || joyVec.y !== 0) {
+    move.add(forward.clone().multiplyScalar(-joyVec.y));
+    move.add(right.clone().multiplyScalar(joyVec.x));
+  }
+
+  if (move.lengthSq() > 1) move.normalize();
+  move.multiplyScalar(MOVE_SPEED);
+
+  // Va chạm ngang đơn giản
+  const nx = player.pos.x + move.x;
+  const nz = player.pos.z + move.z;
+  if (!isSolid(nx, player.pos.y, player.pos.z) && !isSolid(nx, player.pos.y - 1, player.pos.z)) player.pos.x = nx;
+  if (!isSolid(player.pos.x, player.pos.y, nz) && !isSolid(player.pos.x, player.pos.y - 1, nz)) player.pos.z = nz;
+
+  // Trọng lực
+  player.vel.y += GRAVITY;
+  if (keys['Space'] && player.onGround) {
+    player.vel.y = JUMP_SPEED;
+    player.onGround = false;
+  }
+  const ny = player.pos.y + player.vel.y;
+  if (isSolid(player.pos.x, ny - 1.6, player.pos.z) && player.vel.y < 0) {
+    if (player.vel.y < -0.35) {
+      const damage = Math.round((Math.abs(player.vel.y) - 0.35) * 60);
+      takeDamage(damage);
+    }
+    player.vel.y = 0;
+    player.onGround = true;
+  } else if (isSolid(player.pos.x, ny + 0.2, player.pos.z) && player.vel.y > 0) {
+    player.vel.y = 0;
+  } else {
+    player.pos.y = ny;
+    player.onGround = false;
+  }
+
+  camera.position.set(player.pos.x, player.pos.y, player.pos.z);
+  camera.rotation.order = 'YXZ';
+  camera.rotation.y = yaw;
+  camera.rotation.x = pitch;
+
+  if (player.pos.y < -20) respawnPlayer();
+}
+
+// ----- Phá / Đặt khối -----
+const raycaster = new THREE.Raycaster();
+raycaster.far = 6;
+
+function getTargetBlock() {
+  raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+  const meshes = [...world.values()].filter(m => m);
+  const hits = raycaster.intersectObjects(meshes);
+  return hits.length ? hits[0] : null;
+}
+
+function breakBlock() {
+  const hit = getTargetBlock();
+  if (!hit) return;
+  const p = hit.object.position;
+  removeBlockAt(p.x, p.y, p.z);
+}
+
+function placeBlock() {
+  const hit = getTargetBlock();
+  if (!hit) return;
+  const n = hit.face.normal;
+  const p = hit.object.position;
+  const nx = p.x + n.x, ny = p.y + n.y, nz = p.z + n.z;
+  // không đặt đè lên vị trí người chơi
+  const dist = Math.hypot(nx - player.pos.x, ny - (player.pos.y - 1), nz - player.pos.z);
+  if (dist > 0.6 && !world.get(key(nx,ny,nz))) {
+    addBlock(nx, ny, nz, selectedBlock);
+  }
+}
+
+window.addEventListener('mousedown', (e) => {
+  if (!locked || isMobile) return;
+  if (e.button === 0) breakBlock();       // trái: phá
+  else if (e.button === 2) placeBlock();  // phải: đặt
+});
+window.addEventListener('contextmenu', e => e.preventDefault());
+
+// ----- Vòng lặp chính -----
+function animate() {
+  requestAnimationFrame(animate);
+  if (locked) updatePlayer();
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>
