@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Mini Minecraft - Map Siêu To + Nước Tối Ưu</title>
+<title>Mini Minecraft - Nước Không Lag</title>
 <style>
   html, body { margin: 0; padding: 0; overflow: hidden; background:#87CEEB; font-family: 'Courier New', monospace; }
   #crosshair {
@@ -25,7 +25,7 @@
   .slot {
     width: 44px; height: 44px; border: 2px solid #555; border-radius: 2px;
     display: flex; align-items: center; justify-content: center; box-sizing: border-box;
-    background: rgba(0,0,0,0.3); position: relative;
+    background: rgba(0,0,0,0.3); position: relative; cursor: pointer;
   }
   .slot.active { border-color: #fff; background: rgba(255,255,255,0.15); }
   .slot:hover { border-color: #aaa; }
@@ -57,7 +57,7 @@
   #blocker h2 { font-size: 48px; margin: 0; text-shadow: 4px 4px 0 #2d2d2d; }
   #blocker p { font-size: 18px; opacity: 0.8; }
 
-  /* ----- Điều khiển mobile (Minecraft style) ----- */
+  /* ----- Điều khiển mobile ----- */
   #mobileControls { display: none; }
   #lookArea {
     position: absolute; right: 0; top: 0; width: 55%; height: 100%; z-index: 3;
@@ -89,34 +89,45 @@
   #runMobileBtn { right: 190px; bottom: 26px; width: 60px; height: 60px; font-size: 12px; }
   .actionBtn.toggledOn { background: #2e7d32 !important; border-color: #fff; }
 
-  /* ----- Nút trên PC (Minecraft style) ----- */
-  #settingsBtn {
-    position: absolute; top: 14px; right: 14px; z-index: 7;
-    width: 44px; height: 44px; background: rgba(0,0,0,0.7);
-    border: 3px solid rgba(255,255,255,0.4); color: white; font-size: 20px;
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    border-radius: 4px; font-family: 'Courier New', monospace;
-    transition: all 0.15s;
+  /* ----- Nút trên PC ----- */
+  .topBtn {
+    position: absolute; top: 14px; z-index: 7; width: 44px; height: 44px;
+    background: rgba(0,0,0,0.7); border: 3px solid rgba(255,255,255,0.4);
+    color: white; font-size: 20px; display: flex; align-items: center;
+    justify-content: center; cursor: pointer; border-radius: 4px;
+    font-family: 'Courier New', monospace; transition: all 0.15s;
   }
-  #settingsBtn:hover { background: rgba(0,0,0,0.9); border-color: #fff; }
-  #settingsPanel {
+  .topBtn:hover { background: rgba(0,0,0,0.9); border-color: #fff; }
+  #fullscreenBtn { right: 14px; }
+  #settingsBtn   { right: 66px; }
+  #inventoryBtn  { right: 118px; }
+
+  #settingsPanel, #inventoryPanel {
     display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.8);
     z-index: 9; color: white; align-items: center; justify-content: center;
     font-family: 'Courier New', monospace;
   }
-  #settingsPanel .box {
+  .box {
     background: rgba(30,30,30,0.95); padding: 24px 28px; border-radius: 4px;
     width: 280px; text-align: left; border: 3px solid #555;
   }
-  #settingsPanel h3 { margin: 0 0 16px; text-align: center; font-size: 20px; }
-  #settingsPanel label { display: block; margin: 14px 0 6px; font-size: 13px; }
-  #settingsPanel input[type=range] { width: 100%; accent-color: #4caf50; }
-  #settingsPanel .val { float: right; opacity: 0.8; }
-  #settingsPanel button {
+  .box h3 { margin: 0 0 16px; text-align: center; font-size: 20px; }
+  .box label { display: block; margin: 14px 0 6px; font-size: 13px; }
+  .box input[type=range] { width: 100%; accent-color: #4caf50; }
+  .box .val { float: right; opacity: 0.8; }
+  .box button {
     margin-top: 20px; width: 100%; padding: 10px; border-radius: 4px; border: none;
     background: #4caf50; color: white; font-weight: bold; cursor: pointer;
     font-family: 'Courier New', monospace; font-size: 14px;
   }
+  
+  #invGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .invItem {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    background: rgba(255,255,255,0.06); border-radius: 4px; padding: 8px 4px; font-size: 12px;
+    border: 2px solid #444;
+  }
+  .invSwatch { width: 28px; height: 28px; border-radius: 2px; border: 2px solid #555; }
   .hotbarCount {
     position: absolute; bottom: 1px; right: 3px; font-size: 10px; color: white;
     text-shadow: 2px 2px 0 #000; pointer-events: none;
@@ -147,39 +158,6 @@
   }
   #eatBtn:disabled { opacity: 0.4; cursor: default; }
 
-  /* ----- Túi đồ ----- */
-  #inventoryBtn {
-    position: absolute; top: 14px; right: 66px; z-index: 7;
-    width: 44px; height: 44px; background: rgba(0,0,0,0.7);
-    border: 3px solid rgba(255,255,255,0.4); color: white; font-size: 20px;
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    border-radius: 4px; font-family: 'Courier New', monospace;
-    transition: all 0.15s;
-  }
-  #inventoryBtn:hover { background: rgba(0,0,0,0.9); border-color: #fff; }
-  #inventoryPanel {
-    display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.8);
-    z-index: 9; color: white; align-items: center; justify-content: center;
-    font-family: 'Courier New', monospace;
-  }
-  #inventoryPanel .box {
-    background: rgba(30,30,30,0.95); padding: 24px 28px; border-radius: 4px;
-    width: 300px; text-align: left; border: 3px solid #555;
-  }
-  #inventoryPanel h3 { margin: 0 0 16px; text-align: center; font-size: 20px; }
-  #invGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .invItem {
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-    background: rgba(255,255,255,0.06); border-radius: 4px; padding: 8px 4px; font-size: 12px;
-    border: 2px solid #444;
-  }
-  .invSwatch { width: 28px; height: 28px; border-radius: 2px; border: 2px solid #555; }
-  #inventoryPanel button {
-    margin-top: 20px; width: 100%; padding: 10px; border-radius: 4px; border: none;
-    background: #4caf50; color: white; font-weight: bold; cursor: pointer;
-    font-family: 'Courier New', monospace; font-size: 14px;
-  }
-
   /* ----- Ngồi / Chạy (PC) ----- */
   #moveModeButtons {
     position: absolute; top: 88px; left: 14px; z-index: 5; display: flex; gap: 4px;
@@ -191,17 +169,6 @@
   }
   #moveModeButtons button:hover { background: rgba(0,0,0,0.8); }
   #moveModeButtons button.toggledOn { background: #2e7d32; border-color: #fff; }
-
-  /* ----- Nút toàn màn hình ----- */
-  #fullscreenBtn {
-    position: absolute; top: 14px; right: 118px; z-index: 7;
-    width: 44px; height: 44px; background: rgba(0,0,0,0.7);
-    border: 3px solid rgba(255,255,255,0.4); color: white; font-size: 20px;
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    border-radius: 4px; font-family: 'Courier New', monospace;
-    transition: all 0.15s;
-  }
-  #fullscreenBtn:hover { background: rgba(0,0,0,0.9); border-color: #fff; }
 </style>
 </head>
 <body>
@@ -225,9 +192,9 @@
 <div id="hotbar"></div>
 <div id="blocker"><h2>MINECRAFT</h2><p>Click để bắt đầu</p></div>
 
-<div id="fullscreenBtn">⛶</div>
-<div id="settingsBtn">⚙</div>
-<div id="inventoryBtn">🎒</div>
+<div id="fullscreenBtn" class="topBtn">⛶</div>
+<div id="settingsBtn" class="topBtn">⚙</div>
+<div id="inventoryBtn" class="topBtn">🎒</div>
 <div id="inventoryPanel">
   <div class="box">
     <h3>📦 Túi đồ</h3>
@@ -259,36 +226,30 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // ----- Cấu hình cơ bản -----
-const WORLD_SIZE = 100; // Map siêu to
-const WATER_LEVEL = 2; // Mực nước
+const WORLD_SIZE = 100;
+const WATER_LEVEL = 2;
 const BLOCK_TYPES = [
-  { name: 'Cỏ',  color: 0x4caf50 },
-  { name: 'Đất', color: 0x8d6e42 },
-  { name: 'Đá',  color: 0x888888 },
-  { name: 'Cát', color: 0xe0d18f },
-  { name: 'Gỗ',  color: 0x6b4423 },
-  { name: 'Lá',  color: 0x2e7d32 },
-  { name: 'Nước', color: 0x1e88e5 },
+  { name: 'Cỏ',  color: 0x4caf50, transparent: false },
+  { name: 'Đất', color: 0x8d6e42, transparent: false },
+  { name: 'Đá',  color: 0x888888, transparent: false },
+  { name: 'Cát', color: 0xe0d18f, transparent: false },
+  { name: 'Gỗ',  color: 0x6b4423, transparent: false },
+  { name: 'Lá',  color: 0x2e7d32, transparent: false },
+  { name: 'Nước', color: 0x1e88e5, transparent: true, opacity: 0.6 }
 ];
-const WATER_COLOR = 0x2196F3;
-const WATER_TRANSPARENCY = 0.6;
 
 let selectedBlock = 0;
-const inventory = new Array(BLOCK_TYPES.length).fill(0);
+const inventory = new Array(BLOCK_TYPES.length).fill(10);
 
 // ----- Scene / Camera / Renderer -----
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87CEEB);
-scene.fog = new THREE.Fog(0x87CEEB, 50, 150);
+scene.fog = new THREE.Fog(0x87CEEB, 40, 120);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: false });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-// Giảm chất lượng shadow để tăng hiệu suất
-renderer.shadowMap.bias = 0.0001;
+renderer.shadowMap.enabled = false; // Tắt shadow để tối ưu
 document.body.appendChild(renderer.domElement);
 
 window.addEventListener('resize', () => {
@@ -298,68 +259,34 @@ window.addEventListener('resize', () => {
 });
 
 // ----- Ánh sáng -----
-scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-const sun = new THREE.DirectionalLight(0xffffff, 0.8);
-sun.position.set(50, 80, 30);
-sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024); // Giảm kích thước shadow map
-sun.shadow.camera.left = -80; sun.shadow.camera.right = 80;
-sun.shadow.camera.top = 80; sun.shadow.camera.bottom = -80;
-sun.shadow.camera.near = 0.5;
-sun.shadow.camera.far = 200;
+scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+const sun = new THREE.DirectionalLight(0xffffff, 0.4);
+sun.position.set(30, 80, 20);
 scene.add(sun);
 
-// ----- Sinh thế giới -----
+// ----- Hệ thống InstancedMesh (không lag) -----
 const blockGeo = new THREE.BoxGeometry(1, 1, 1);
-const materials = BLOCK_TYPES.map(b => new THREE.MeshLambertMaterial({ color: b.color }));
+const materials = BLOCK_TYPES.map(b => new THREE.MeshLambertMaterial({ 
+  color: b.color, 
+  transparent: b.transparent, 
+  opacity: b.opacity !== undefined ? b.opacity : 1 
+}));
 
-// Material cho nước - tối ưu bằng cách dùng material chung
-const waterMat = new THREE.MeshLambertMaterial({
-  color: WATER_COLOR,
-  transparent: true,
-  opacity: WATER_TRANSPARENCY,
-  side: THREE.DoubleSide
+const maxInstances = WORLD_SIZE * WORLD_SIZE * 15;
+const instancedMeshes = BLOCK_TYPES.map((_, i) => {
+  const im = new THREE.InstancedMesh(blockGeo, materials[i], maxInstances);
+  im.count = 0;
+  scene.add(im);
+  return im;
 });
 
-// Dùng chung geometry cho nước để tiết kiệm bộ nhớ
-const waterGeo = new THREE.BoxGeometry(1, 1, 1);
+const worldData = new Map();
+const worldVisuals = new Map();
 
-const world = new Map();
-function key(x,y,z){ return `${x},${y},${z}`; }
+function key(x,y,z){ return `${Math.round(x)},${Math.round(y)},${Math.round(z)}`; }
 
 function heightAt(x, z) {
   return Math.floor(3 + Math.sin(x/8)*3 + Math.cos(z/8)*3 + Math.sin(x/15 + z/12)*2);
-}
-
-function addBlock(x, y, z, typeIndex, castShadow=true) {
-  const mesh = new THREE.Mesh(blockGeo, materials[typeIndex]);
-  mesh.position.set(x, y, z);
-  mesh.castShadow = castShadow;
-  mesh.receiveShadow = true;
-  mesh.userData.type = typeIndex;
-  scene.add(mesh);
-  world.set(key(x,y,z), mesh);
-}
-
-function addWater(x, y, z) {
-  // Sử dụng chung geometry để tiết kiệm bộ nhớ
-  const mesh = new THREE.Mesh(waterGeo, waterMat);
-  mesh.position.set(x, y, z);
-  mesh.receiveShadow = false; // Nước không nhận shadow để tăng hiệu suất
-  mesh.castShadow = false;
-  mesh.userData.isWater = true;
-  mesh.userData.type = 6; // Index của nước
-  scene.add(mesh);
-  world.set(key(x,y,z), mesh);
-}
-
-function removeBlockAt(x,y,z){
-  const k = key(x,y,z);
-  const mesh = world.get(k);
-  if (mesh) {
-    scene.remove(mesh);
-    world.set(k, null);
-  }
 }
 
 function hashRandom(x, z, seed) {
@@ -372,72 +299,84 @@ function isVoidPit(x, z) {
   return hashRandom(x, z, 1) < 0.02;
 }
 
-function addTree(x, y, z) {
-  const trunkHeight = 3 + Math.floor(hashRandom(x, z, 2) * 3);
-  for (let i = 1; i <= trunkHeight; i++) {
-    if (y + i > WATER_LEVEL) addBlock(x, y + i, z, 4, false);
-  }
-  const leafY = y + trunkHeight;
-  for (let lx = -2; lx <= 2; lx++) {
-    for (let lz = -2; lz <= 2; lz++) {
-      for (let ly = 0; ly <= 2; ly++) {
-        const dist = Math.abs(lx) + Math.abs(lz) + Math.abs(ly - 1) * 0.7;
-        if (dist <= 2.4 && !(lx === 0 && lz === 0 && ly === 0)) {
-          const bx = x + lx, by = leafY + ly, bz = z + lz;
-          if (by > WATER_LEVEL && !world.has(key(bx, by, bz))) {
-            addBlock(bx, by, bz, 5, false);
-          }
-        }
-      }
-    }
-  }
-}
-
-// Tạo thế giới với nước - GIẢM SỐ LƯỢNG NƯỚC
-console.log('Đang tạo map siêu to với nước tối ưu...');
+// ----- Khởi tạo Map dữ liệu địa hình -----
+console.log('Đang tạo map siêu to với nước không lag...');
 let waterCount = 0;
+
 for (let x = -WORLD_SIZE/2; x < WORLD_SIZE/2; x++) {
   for (let z = -WORLD_SIZE/2; z < WORLD_SIZE/2; z++) {
     if (isVoidPit(x, z)) continue;
     const h = heightAt(x, z);
     
     // Đất và đá
-    for (let y = -2; y <= h; y++) {
-      let type = 2; // đá
+    for (let y = -2; y <= Math.max(h, 1); y++) {
+      let type = 2; // Đá
       if (y === h) {
-        if (h <= WATER_LEVEL) type = 3; // cát ở vùng nước
-        else type = 0; // cỏ
+        if (h <= WATER_LEVEL) type = 3; // Cát ở vùng nước
+        else type = 0; // Cỏ
+      } else if (y > h - 2) {
+        type = 1; // Đất
       }
-      else if (y > h - 2) type = 1; // đất
-      addBlock(x, y, z, type);
+      worldData.set(key(x,y,z), type);
     }
     
-    // Nước - chỉ thêm nước nếu mặt đất thấp hơn mực nước và không quá sâu
+    // Nước - chỉ thêm ở vùng trũng
     if (h < WATER_LEVEL) {
-      // Chỉ thêm nước ở những vùng đất thấp, giảm số lượng nước
       for (let y = h + 1; y <= WATER_LEVEL; y++) {
-        // Kiểm tra xem có nước xung quanh không để tạo thành hồ nước thay vì đầm lầy
+        // Chỉ thêm nước nếu tạo thành hồ nước hoặc nằm ở vùng trũng rộng
         const hasWaterNearby = 
-          world.has(key(x+1, y, z)) || world.has(key(x-1, y, z)) ||
-          world.has(key(x, y, z+1)) || world.has(key(x, y, z-1));
+          worldData.has(key(x+1, y, z)) || worldData.has(key(x-1, y, z)) ||
+          worldData.has(key(x, y, z+1)) || worldData.has(key(x, y, z-1));
         
-        // Chỉ thêm nước nếu đây là hồ nước hoặc nằm ở vùng trũng rộng
         if (waterCount < 3000 || hasWaterNearby) {
-          addWater(x, y, z);
+          worldData.set(key(x,y,z), 6); // Index của nước
           waterCount++;
         }
       }
     }
-    
-    // Cây trên cỏ (chỉ khi mặt đất cao hơn nước)
-    if (h > WATER_LEVEL + 1 && z <= 10 && Math.hypot(x, z) > 6 && hashRandom(x, z, 3) < 0.008) {
-      addTree(x, h, z);
-    }
   }
 }
-console.log('Map đã được tạo! Số khối nước:', waterCount);
+console.log('Số khối nước:', waterCount);
 
-// ----- Động vật với thịt khác nhau -----
+// ----- Xây dựng visual bằng InstancedMesh -----
+function rebuildVisuals() {
+  instancedMeshes.forEach(im => im.count = 0);
+  worldVisuals.clear();
+  const dummy = new THREE.Object3D();
+  const counts = new Array(BLOCK_TYPES.length).fill(0);
+
+  for (let [kStr, type] of worldData.entries()) {
+    const [x, y, z] = kStr.split(',').map(Number);
+    
+    // Culling để tối ưu hiệu năng
+    if (type !== 6) { // Không cull nước
+      const top = worldData.has(key(x, y+1, z));
+      const bottom = worldData.has(key(x, y-1, z));
+      const left = worldData.has(key(x-1, y, z));
+      const right = worldData.has(key(x+1, y, z));
+      const front = worldData.has(key(x, y, z+1));
+      const back = worldData.has(key(x, y, z-1));
+      if (top && bottom && left && right && front && back) continue;
+    }
+
+    const im = instancedMeshes[type];
+    const idx = counts[type];
+    dummy.position.set(x, y, z);
+    dummy.updateMatrix();
+    im.setMatrixAt(idx, dummy.matrix);
+    
+    worldVisuals.set(kStr, { type, instanceIdx: idx });
+    counts[type]++;
+  }
+  
+  instancedMeshes.forEach((im, i) => {
+    im.count = counts[i];
+    im.instanceMatrix.needsUpdate = true;
+  });
+}
+rebuildVisuals();
+
+// ----- Động vật -----
 const animals = [];
 const MEAT_TYPES = {
   pig: { color: 0xe8a0b4, name: 'Thịt heo' },
@@ -454,7 +393,7 @@ function createAnimalMesh(kind) {
   } else if (kind === 'cow') {
     bodyColor = 0xf5f0e6; headColor = 0x3b2a20; legColor = 0x3b2a20;
     bodySize = [1.0, 0.65, 1.4]; headSize = [0.5, 0.5, 0.5];
-  } else { // sheep
+  } else {
     bodyColor = 0xffffff; headColor = 0x2b2b2b; legColor = 0x2b2b2b;
     bodySize = [0.9, 0.6, 1.1]; headSize = [0.4, 0.4, 0.4];
   }
@@ -463,31 +402,21 @@ function createAnimalMesh(kind) {
   const legMat = new THREE.MeshLambertMaterial({ color: legColor });
 
   const body = new THREE.Mesh(new THREE.BoxGeometry(...bodySize), bodyMat);
-  body.position.y = 0.55;
-  body.castShadow = true;
-  group.add(body);
-
+  body.position.y = 0.55; body.castShadow = true; group.add(body);
   const head = new THREE.Mesh(new THREE.BoxGeometry(...headSize), headMat);
-  head.position.set(0, 0.65, bodySize[2]/2 + headSize[2]/2 - 0.05);
-  head.castShadow = true;
-  group.add(head);
-
+  head.position.set(0, 0.65, bodySize[2]/2 + headSize[2]/2 - 0.05); head.castShadow = true; group.add(head);
   const legGeo = new THREE.BoxGeometry(0.15, 0.4, 0.15);
   const ox = bodySize[0]/2 - 0.1, oz = bodySize[2]/2 - 0.15;
   [[ox,oz],[-ox,oz],[ox,-oz],[-ox,-oz]].forEach(([lx, lz]) => {
-    const leg = new THREE.Mesh(legGeo, legMat);
-    leg.position.set(lx, 0.2, lz);
-    leg.castShadow = true;
-    group.add(leg);
+    const leg = new THREE.Mesh(legGeo, legMat); leg.position.set(lx, 0.2, lz); leg.castShadow = true; group.add(leg);
   });
-
   group.traverse(c => { if (c.isMesh) c.userData.isAnimalPart = true; });
   return group;
 }
 
 function spawnAnimalAt(kind, x, z) {
   const h = heightAt(x, z);
-  if (h <= WATER_LEVEL) return; // Không spawn dưới nước
+  if (h <= WATER_LEVEL) return;
   const mesh = createAnimalMesh(kind);
   mesh.position.set(x, h + 0.5, z);
   scene.add(mesh);
@@ -505,7 +434,6 @@ function spawnRandomAnimal(kind) {
   }
 }
 
-// Spawn nhiều động vật hơn cho map lớn
 for (let i = 0; i < 20; i++) {
   const kinds = ['pig', 'cow', 'sheep'];
   spawnRandomAnimal(kinds[i % kinds.length]);
@@ -549,7 +477,20 @@ function flashAnimal(a) {
   });
 }
 
-// ----- Quản lý thịt các loại -----
+function attackAnimal(idx) {
+  const a = animals[idx]; if (!a) return;
+  a.hp--; flashAnimal(a);
+  if (a.hp <= 0) {
+    scene.remove(a.mesh);
+    const meatColor = MEAT_TYPES[a.kind].color;
+    spawnDropEffect(a.mesh.position.x, a.mesh.position.y, a.mesh.position.z, meatColor);
+    addMeat(a.kind);
+    animals.splice(idx, 1);
+    setTimeout(() => spawnRandomAnimal(a.kind), 15000);
+  }
+}
+
+// ----- Quản lý thịt -----
 let meatInventory = { pig: 0, cow: 0, sheep: 0 };
 let totalMeat = 0;
 
@@ -572,22 +513,7 @@ function useMeat() {
   return null;
 }
 
-function attackAnimal(idx) {
-  const a = animals[idx];
-  if (!a) return;
-  a.hp--;
-  flashAnimal(a);
-  if (a.hp <= 0) {
-    scene.remove(a.mesh);
-    const meatColor = MEAT_TYPES[a.kind].color;
-    spawnDropEffect(a.mesh.position.x, a.mesh.position.y, a.mesh.position.z, meatColor, a.kind);
-    addMeat(a.kind);
-    animals.splice(idx, 1);
-    setTimeout(() => spawnRandomAnimal(a.kind), 15000);
-  }
-}
-
-// ----- Hotbar UI (Minecraft style) -----
+// ----- Hotbar UI -----
 const hotbar = document.getElementById('hotbar');
 BLOCK_TYPES.forEach((b, i) => {
   const el = document.createElement('div');
@@ -597,11 +523,12 @@ BLOCK_TYPES.forEach((b, i) => {
   el.title = b.name;
   const count = document.createElement('span');
   count.className = 'hotbarCount';
-  count.textContent = '0';
+  count.textContent = inventory[i];
   el.appendChild(count);
   el.addEventListener('click', () => { selectedBlock = i; updateHotbar(); });
   hotbar.appendChild(el);
 });
+
 function updateHotbar() {
   [...hotbar.children].forEach((el, i) => {
     el.classList.toggle('active', i === selectedBlock);
@@ -609,18 +536,12 @@ function updateHotbar() {
   });
 }
 updateHotbar();
-window.addEventListener('keydown', (e) => {
-  if (e.key >= '1' && e.key <= String(BLOCK_TYPES.length)) {
-    selectedBlock = parseInt(e.key) - 1;
-    updateHotbar();
-  }
-});
 
 // ----- Điều khiển góc nhìn -----
 const blocker = document.getElementById('blocker');
 const mobileControls = document.getElementById('mobileControls');
 let yaw = 0, pitch = 0;
-let locked = false;
+let gameActive = false;
 
 const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
@@ -630,34 +551,49 @@ if (isMobile) {
     'Joystick: di chuyển | Vuốt phải: nhìn<br>Phá/Đánh | Đặt | Nhảy | 🪑 Ngồi | 🏃 Chạy';
 }
 
+function activateGame() {
+  gameActive = true;
+  blocker.style.display = 'none';
+  if (!isMobile && document.pointerLockElement !== document.body) {
+    document.body.requestPointerLock();
+  }
+}
+
+blocker.addEventListener('click', activateGame);
+blocker.addEventListener('touchstart', (e) => { e.preventDefault(); activateGame(); });
+
+document.addEventListener('pointerlockchange', () => {
+  if (!isMobile) {
+    gameActive = (document.pointerLockElement === document.body);
+    blocker.style.display = gameActive ? 'none' : 'flex';
+  }
+});
+
 // ----- Cài đặt độ nhạy -----
 let mouseSensitivity = 1, touchSensitivity = 1;
 let settingsOpen = false;
-const settingsBtn = document.getElementById('settingsBtn');
-const settingsPanel = document.getElementById('settingsPanel');
-const mouseSensSlider = document.getElementById('mouseSensSlider');
-const touchSensSlider = document.getElementById('touchSensSlider');
-const mouseSensVal = document.getElementById('mouseSensVal');
-const touchSensVal = document.getElementById('touchSensVal');
+document.getElementById('settingsBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  settingsOpen = true;
+  document.getElementById('settingsPanel').style.display = 'flex';
+  if (document.pointerLockElement) document.exitPointerLock();
+});
+document.getElementById('closeSettings').addEventListener('click', (e) => {
+  e.stopPropagation();
+  settingsOpen = false;
+  document.getElementById('settingsPanel').style.display = 'none';
+  if (!isMobile && gameActive) document.body.requestPointerLock();
+});
 
+const mouseSensSlider = document.getElementById('mouseSensSlider');
 mouseSensSlider.addEventListener('input', () => {
   mouseSensitivity = parseFloat(mouseSensSlider.value);
-  mouseSensVal.textContent = mouseSensitivity.toFixed(1) + 'x';
+  document.getElementById('mouseSensVal').textContent = mouseSensitivity.toFixed(1) + 'x';
 });
+const touchSensSlider = document.getElementById('touchSensSlider');
 touchSensSlider.addEventListener('input', () => {
   touchSensitivity = parseFloat(touchSensSlider.value);
-  touchSensVal.textContent = touchSensitivity.toFixed(1) + 'x';
-});
-
-settingsBtn.addEventListener('click', () => {
-  settingsOpen = true;
-  settingsPanel.style.display = 'flex';
-  if (!isMobile && document.pointerLockElement) document.exitPointerLock();
-});
-document.getElementById('closeSettings').addEventListener('click', () => {
-  settingsOpen = false;
-  settingsPanel.style.display = 'none';
-  if (!isMobile && locked) document.body.requestPointerLock();
+  document.getElementById('touchSensVal').textContent = touchSensitivity.toFixed(1) + 'x';
 });
 
 // ----- Túi đồ -----
@@ -684,145 +620,105 @@ function renderInventoryPanel() {
   });
 }
 
-function isMenuOpen() { return settingsOpen || invOpen; }
-
 function openInventory() {
   invOpen = true;
   renderInventoryPanel();
   inventoryPanel.style.display = 'flex';
-  if (!isMobile && document.pointerLockElement) document.exitPointerLock();
+  if (document.pointerLockElement) document.exitPointerLock();
 }
 function closeInventory() {
   invOpen = false;
   inventoryPanel.style.display = 'none';
-  if (!isMobile && locked) document.body.requestPointerLock();
+  if (!isMobile && gameActive) document.body.requestPointerLock();
 }
 inventoryBtn.addEventListener('click', openInventory);
 document.getElementById('closeInventory').addEventListener('click', closeInventory);
-window.addEventListener('keydown', (e) => {
-  if (e.key === 'i' || e.key === 'I') { invOpen ? closeInventory() : openInventory(); }
-  if (e.key === 'f' || e.key === 'F') { eatMeat(); }
-  if (e.key === 'c' || e.key === 'C') { setSitting(!isSitting); }
-});
 
-blocker.addEventListener('click', () => {
-  if (isMobile) {
-    locked = true;
-    blocker.style.display = 'none';
-  } else {
-    document.body.requestPointerLock();
-  }
-});
-document.addEventListener('pointerlockchange', () => {
-  if (isMobile) return;
-  locked = document.pointerLockElement === document.body;
-  if (!settingsOpen) blocker.style.display = locked ? 'none' : 'flex';
-});
+// ----- Xử lý chuột -----
 document.addEventListener('mousemove', (e) => {
-  if (!locked || isMobile || isMenuOpen()) return;
+  if (!gameActive || isMobile || settingsOpen || invOpen) return;
   yaw -= e.movementX * 0.0022 * mouseSensitivity;
   pitch -= e.movementY * 0.0022 * mouseSensitivity;
-  pitch = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, pitch));
+  pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, pitch));
 });
 
-// ----- Nhìn quanh bằng vuốt tay (mobile) -----
+// ----- Mobile touch camera -----
 const lookArea = document.getElementById('lookArea');
 let lookTouchId = null, lastLookX = 0, lastLookY = 0;
 lookArea.addEventListener('touchstart', (e) => {
+  if (!gameActive) return;
   const t = e.changedTouches[0];
-  lookTouchId = t.identifier;
-  lastLookX = t.clientX; lastLookY = t.clientY;
+  lookTouchId = t.identifier; lastLookX = t.clientX; lastLookY = t.clientY;
 }, { passive: true });
 lookArea.addEventListener('touchmove', (e) => {
-  if (isMenuOpen()) return;
+  if (!gameActive || settingsOpen || invOpen) return;
   for (const t of e.changedTouches) {
     if (t.identifier !== lookTouchId) continue;
-    const dx = t.clientX - lastLookX, dy = t.clientY - lastLookY;
+    yaw -= (t.clientX - lastLookX) * 0.0045 * touchSensitivity;
+    pitch -= (t.clientY - lastLookY) * 0.0045 * touchSensitivity;
     lastLookX = t.clientX; lastLookY = t.clientY;
-    yaw -= dx * 0.0045 * touchSensitivity;
-    pitch -= dy * 0.0045 * touchSensitivity;
-    pitch = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, pitch));
+    pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, pitch));
   }
 }, { passive: true });
-lookArea.addEventListener('touchend', (e) => {
-  for (const t of e.changedTouches) if (t.identifier === lookTouchId) lookTouchId = null;
-});
 
-// ----- Joystick di chuyển (mobile) -----
-const joyBase = document.getElementById('joystickBase');
+// ----- Joystick -----
+let joyVec = { x: 0, y: 0 }, joyTouchId = null;
 const joyKnob = document.getElementById('joystickKnob');
-let joyTouchId = null;
-let joyVec = { x: 0, y: 0 };
-const JOY_RADIUS = 45;
-
-function joyReset() {
-  joyVec = { x: 0, y: 0 };
-  joyKnob.style.left = '35px';
-  joyKnob.style.top = '35px';
-}
-joyBase.addEventListener('touchstart', (e) => {
-  const t = e.changedTouches[0];
-  joyTouchId = t.identifier;
+document.getElementById('joystickBase').addEventListener('touchstart', (e) => {
+  joyTouchId = e.changedTouches[0].identifier;
 }, { passive: true });
-joyBase.addEventListener('touchmove', (e) => {
-  if (isMenuOpen()) return;
+document.getElementById('joystickBase').addEventListener('touchmove', (e) => {
   for (const t of e.changedTouches) {
     if (t.identifier !== joyTouchId) continue;
-    const rect = joyBase.getBoundingClientRect();
-    const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
-    let dx = t.clientX - cx, dy = t.clientY - cy;
-    const dist = Math.min(Math.hypot(dx, dy), JOY_RADIUS);
+    const r = document.getElementById('joystickBase').getBoundingClientRect();
+    let dx = t.clientX - (r.left + 60), dy = t.clientY - (r.top + 60);
+    const dist = Math.min(Math.hypot(dx, dy), 45);
     const angle = Math.atan2(dy, dx);
     dx = Math.cos(angle) * dist; dy = Math.sin(angle) * dist;
-    joyKnob.style.left = (35 + dx) + 'px';
-    joyKnob.style.top = (35 + dy) + 'px';
-    joyVec = { x: dx / JOY_RADIUS, y: dy / JOY_RADIUS };
+    joyKnob.style.left = (35 + dx) + 'px'; joyKnob.style.top = (35 + dy) + 'px';
+    joyVec = { x: dx / 45, y: dy / 45 };
   }
 }, { passive: true });
-joyBase.addEventListener('touchend', (e) => {
-  for (const t of e.changedTouches) {
-    if (t.identifier === joyTouchId) { joyTouchId = null; joyReset(); }
-  }
+document.getElementById('joystickBase').addEventListener('touchend', () => {
+  joyTouchId = null; joyVec = {x:0,y:0}; joyKnob.style.left='35px'; joyKnob.style.top='35px';
 });
 
-// ----- Nút mobile (Minecraft style) -----
+// ----- Nút mobile -----
 const jumpBtn = document.getElementById('jumpBtn');
 jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); keys['Space'] = true; }, { passive: false });
 jumpBtn.addEventListener('touchend', (e) => { e.preventDefault(); keys['Space'] = false; }, { passive: false });
 
 document.getElementById('breakBtn').addEventListener('touchstart', (e) => {
   e.preventDefault();
-  if (locked && !isMenuOpen()) breakBlock();
+  if (gameActive) breakBlock();
 }, { passive: false });
 document.getElementById('placeBtn').addEventListener('touchstart', (e) => {
   e.preventDefault();
-  if (locked && !isMenuOpen()) placeBlock();
+  if (gameActive) placeBlock();
 }, { passive: false });
 
-// Nút ngồi và chạy trên mobile
-const sitMobileBtn = document.getElementById('sitMobileBtn');
-const runMobileBtn = document.getElementById('runMobileBtn');
-sitMobileBtn.addEventListener('touchstart', (e) => { e.preventDefault(); setSitting(!isSitting); }, { passive: false });
-runMobileBtn.addEventListener('touchstart', (e) => { e.preventDefault(); setRunning(true); }, { passive: false });
-runMobileBtn.addEventListener('touchend', (e) => { e.preventDefault(); setRunning(false); }, { passive: false });
-
-// ----- Di chuyển -----
+// ----- Phím tắt -----
 const keys = {};
 window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
 
+window.addEventListener('keydown', (e) => {
+  if (e.key >= '1' && e.key <= '7') { selectedBlock = parseInt(e.key) - 1; updateHotbar(); }
+  if (e.key === 'i' || e.key === 'I') { invOpen ? closeInventory() : openInventory(); }
+  if (e.key === 'f' || e.key === 'F') { eatMeat(); }
+  if (e.key === 'c' || e.key === 'C') { setSitting(!isSitting); }
+});
+
 // ----- Ngồi / Chạy -----
-let isSitting = false;
-let runButtonHeld = false;
+let isSitting = false, runButtonHeld = false;
 const sitBtn = document.getElementById('sitBtn');
 const runBtn = document.getElementById('runBtn');
 
 function setSitting(v) {
   isSitting = v;
   sitBtn.classList.toggle('toggledOn', v);
+  document.getElementById('sitMobileBtn').classList.toggle('toggledOn', v);
   sitBtn.textContent = v ? '🪑 Đứng' : '🪑 Ngồi';
-  sitMobileBtn.textContent = v ? '🪑' : '🪑';
-  sitMobileBtn.classList.toggle('toggledOn', v);
   if (v) player.vel.set(0, 0, 0);
 }
 sitBtn.addEventListener('click', () => setSitting(!isSitting));
@@ -831,106 +727,96 @@ function setRunning(v) {
   runButtonHeld = v;
   const rNow = isRunningNow();
   runBtn.classList.toggle('toggledOn', rNow);
-  runMobileBtn.classList.toggle('toggledOn', rNow);
+  document.getElementById('runMobileBtn').classList.toggle('toggledOn', rNow);
 }
-function isRunningNow() {
-  return !isSitting && (runButtonHeld || keys['ShiftLeft'] || keys['ShiftRight']);
-}
+function isRunningNow() { return !isSitting && (runButtonHeld || keys['ShiftLeft'] || keys['ShiftRight']); }
 runBtn.addEventListener('mousedown', () => setRunning(true));
 runBtn.addEventListener('mouseup', () => setRunning(false));
 runBtn.addEventListener('mouseleave', () => setRunning(false));
 
+document.getElementById('sitMobileBtn').addEventListener('touchstart', (e) => { e.preventDefault(); setSitting(!isSitting); }, { passive: false });
+document.getElementById('runMobileBtn').addEventListener('touchstart', (e) => { e.preventDefault(); setRunning(!runButtonHeld); }, { passive: false });
+
+// ----- Người chơi -----
 const player = {
-  pos: new THREE.Vector3(0, heightAt(0,0) + 3, 0),
+  pos: new THREE.Vector3(0, heightAt(0,0) + 5, 0),
   vel: new THREE.Vector3(0,0,0),
   onGround: false,
 };
-const SPAWN_POS = player.pos.clone();
 
 // ----- Máu -----
-const MAX_HEALTH = 100;
-let health = MAX_HEALTH;
+let health = 100, hunger = 100;
 const healthBarFill = document.getElementById('healthBarFill');
 const healthText = document.getElementById('healthText');
 
-function updateHealthUI() {
-  const pct = Math.max(0, health / MAX_HEALTH * 100);
-  healthBarFill.style.width = pct + '%';
-  healthText.textContent = Math.max(0, Math.round(health));
-}
-
 function takeDamage(amount) {
-  if (amount <= 0) return;
   health = Math.max(0, health - amount);
-  updateHealthUI();
+  healthBarFill.style.width = health + '%';
+  healthText.textContent = Math.round(health);
   if (health <= 0) respawnPlayer();
 }
 
-function healOverTime() {
-  if (hunger > 20 && health < MAX_HEALTH && health > 0) {
-    health = Math.min(MAX_HEALTH, health + 1);
-    hunger = Math.max(0, hunger - 1);
-    updateHealthUI();
-    updateHungerUI();
-  } else if (hunger <= 0 && health > 0) {
-    takeDamage(1);
-  }
+function respawnPlayer() {
+  player.pos.set(0, heightAt(0,0) + 5, 0);
+  player.vel.set(0, 0, 0);
+  health = 100;
+  takeDamage(0);
 }
-setInterval(healOverTime, 3000);
+
+function updateHealthUI() {
+  healthBarFill.style.width = health + '%';
+  healthText.textContent = Math.round(health);
+}
+updateHealthUI();
 
 // ----- Đói -----
-const MAX_HUNGER = 100;
-let hunger = MAX_HUNGER;
 const hungerBarFill = document.getElementById('hungerBarFill');
 const hungerText = document.getElementById('hungerText');
 const meatCountLabel = document.getElementById('meatCountLabel');
 const eatBtn = document.getElementById('eatBtn');
 
 function updateHungerUI() {
-  const pct = Math.max(0, hunger / MAX_HUNGER * 100);
-  hungerBarFill.style.width = pct + '%';
-  hungerText.textContent = Math.max(0, Math.round(hunger));
+  hungerBarFill.style.width = hunger + '%';
+  hungerText.textContent = Math.round(hunger);
   meatCountLabel.textContent = totalMeat;
-  eatBtn.disabled = totalMeat <= 0 || hunger >= MAX_HUNGER;
+  eatBtn.disabled = totalMeat <= 0 || hunger >= 100;
 }
+
 function eatMeat() {
-  if (totalMeat <= 0 || hunger >= MAX_HUNGER) return;
+  if (totalMeat <= 0 || hunger >= 100) return;
   const meatName = useMeat();
   if (meatName) {
-    hunger = Math.min(MAX_HUNGER, hunger + 35);
+    hunger = Math.min(100, hunger + 35);
     updateHungerUI();
     renderInventoryPanel();
   }
 }
 eatBtn.addEventListener('click', eatMeat);
-setInterval(() => { hunger = Math.max(0, hunger - 1); updateHungerUI(); }, 15000);
+
+setInterval(() => {
+  hunger = Math.max(0, hunger - 1);
+  updateHungerUI();
+}, 15000);
+
+setInterval(() => {
+  if (hunger > 20 && health < 100 && health > 0) {
+    health = Math.min(100, health + 1);
+    hunger = Math.max(0, hunger - 1);
+    updateHealthUI();
+    updateHungerUI();
+  } else if (hunger <= 0 && health > 0) {
+    takeDamage(1);
+  }
+}, 3000);
+
 updateHungerUI();
 
-function respawnPlayer() {
-  player.pos.copy(SPAWN_POS);
-  player.vel.set(0, 0, 0);
-  health = MAX_HEALTH;
-  updateHealthUI();
-}
-updateHealthUI();
-
-function isSolid(x,y,z){
-  const k = key(Math.round(x), Math.round(y), Math.round(z));
-  const v = world.get(k);
-  return v !== undefined && v !== null;
+// ----- Kiểm tra va chạm -----
+function isSolid(x, y, z) {
+  return worldData.has(key(Math.round(x), Math.round(y), Math.round(z)));
 }
 
-function isWater(x,y,z){
-  const k = key(Math.round(x), Math.round(y), Math.round(z));
-  const mesh = world.get(k);
-  return mesh && mesh.userData.isWater;
-}
-
-const GRAVITY = -0.018;
-const JUMP_SPEED = 0.28;
-const MOVE_SPEED = 0.11;
-const WATER_DRAG = 0.85;
-
+// ----- Cập nhật người chơi -----
 function updatePlayer() {
   if (isSitting) {
     camera.position.set(player.pos.x, player.pos.y - 0.4, player.pos.z);
@@ -941,9 +827,7 @@ function updatePlayer() {
   }
 
   const running = isRunningNow();
-  runBtn.classList.toggle('toggledOn', running);
-  const speed = MOVE_SPEED * (running ? 1.8 : 1);
-
+  const speed = 0.12 * (running ? 1.8 : 1);
   const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
   const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
 
@@ -952,63 +836,34 @@ function updatePlayer() {
   if (keys['KeyS']) move.sub(forward);
   if (keys['KeyD']) move.add(right);
   if (keys['KeyA']) move.sub(right);
-
+  
   if (joyVec.x !== 0 || joyVec.y !== 0) {
     move.add(forward.clone().multiplyScalar(-joyVec.y));
     move.add(right.clone().multiplyScalar(joyVec.x));
   }
 
   if (move.lengthSq() > 1) move.normalize();
-  
-  // Kiểm tra nếu đang ở dưới nước
-  const inWater = isWater(player.pos.x, player.pos.y - 0.5, player.pos.z);
-  const moveSpeed = inWater ? speed * 0.6 : speed;
-  move.multiplyScalar(moveSpeed);
+  move.multiplyScalar(speed);
 
-  // Va chạm ngang
   const nx = player.pos.x + move.x;
   const nz = player.pos.z + move.z;
   if (!isSolid(nx, player.pos.y, player.pos.z) && !isSolid(nx, player.pos.y - 1, player.pos.z)) player.pos.x = nx;
   if (!isSolid(player.pos.x, player.pos.y, nz) && !isSolid(player.pos.x, player.pos.y - 1, nz)) player.pos.z = nz;
 
-  // Trọng lực và nổi
-  const buoyancy = inWater ? 0.015 : 0;
-  player.vel.y += GRAVITY + buoyancy;
-  
-  if (inWater) {
-    player.vel.y *= WATER_DRAG;
-    // Có thể nổi lên mặt nước
-    if (player.pos.y < WATER_LEVEL + 0.3 && player.vel.y < 0) {
-      player.vel.y += 0.005;
-    }
-  }
-  
-  // Nhảy
-  if (keys['Space'] && (player.onGround || inWater)) {
-    player.vel.y = inWater ? JUMP_SPEED * 0.7 : JUMP_SPEED;
-    player.onGround = false;
-  }
-  
-  const ny = player.pos.y + player.vel.y;
-  if (isSolid(player.pos.x, ny - 1.6, player.pos.z) && player.vel.y < 0) {
-    if (player.vel.y < -0.35) {
-      const damage = Math.round((Math.abs(player.vel.y) - 0.35) * 60);
-      takeDamage(damage);
-    }
-    player.vel.y = 0;
-    player.onGround = true;
-  } else if (isSolid(player.pos.x, ny + 0.2, player.pos.z) && player.vel.y > 0) {
-    player.vel.y = 0;
-  } else {
-    player.pos.y = ny;
+  player.vel.y -= 0.015;
+  if (keys['Space'] && player.onGround) {
+    player.vel.y = 0.25;
     player.onGround = false;
   }
 
-  // Chết đuối
-  if (player.pos.y < WATER_LEVEL - 2) {
-    if (Math.floor(performance.now() / 1000) % 2 === 0) {
-      takeDamage(2);
-    }
+  const ny = player.pos.y + player.vel.y;
+  if (isSolid(player.pos.x, ny - 1.6, player.pos.z) && player.vel.y < 0) {
+    if (player.vel.y < -0.42) takeDamage(Math.round((Math.abs(player.vel.y) - 0.4) * 60));
+    player.vel.y = 0;
+    player.onGround = true;
+  } else {
+    player.pos.y = ny;
+    player.onGround = false;
   }
 
   camera.position.set(player.pos.x, player.pos.y, player.pos.z);
@@ -1019,34 +874,27 @@ function updatePlayer() {
   if (player.pos.y < -30) respawnPlayer();
 }
 
-// ----- Phá / Đặt khối -----
+// ----- Raycast phá/đặt block -----
 const raycaster = new THREE.Raycaster();
-raycaster.far = 7;
+raycaster.far = 6;
 
-function getTargetHit(includeAnimals) {
+function getTargetHit() {
   raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
-  const blockMeshes = [...world.values()].filter(m => m);
-  let targets = blockMeshes;
-  if (includeAnimals) {
-    const animalMeshes = [];
-    animals.forEach((a, idx) => a.mesh.traverse(c => {
-      if (c.isMesh) { c.userData.animalIndex = idx; animalMeshes.push(c); }
-    }));
-    targets = blockMeshes.concat(animalMeshes);
-  }
-  const hits = raycaster.intersectObjects(targets, false);
+  const activeMeshes = instancedMeshes.filter(im => im.count > 0);
+  const hits = raycaster.intersectObjects(activeMeshes);
   return hits.length ? hits[0] : null;
 }
 
-// ----- Hiệu ứng item rớt ra -----
+// ----- Hiệu ứng rơi item -----
 const dropEffects = [];
-function spawnDropEffect(x, y, z, color, kind = null) {
+function spawnDropEffect(x, y, z, color) {
   const mat = new THREE.MeshLambertMaterial({ color, transparent: true });
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), mat);
   mesh.position.set(x, y, z);
   scene.add(mesh);
-  dropEffects.push({ mesh, start: performance.now(), duration: 450, kind });
+  dropEffects.push({ mesh, start: performance.now(), duration: 450 });
 }
+
 function updateDropEffects() {
   const now = performance.now();
   for (let i = dropEffects.length - 1; i >= 0; i--) {
@@ -1065,50 +913,66 @@ function updateDropEffects() {
 }
 
 function breakBlock() {
-  const hit = getTargetHit(true);
+  const hit = getTargetHit();
   if (!hit) return;
-  if (hit.object.userData.isAnimalPart) {
-    attackAnimal(hit.object.userData.animalIndex);
-    return;
+  
+  // Kiểm tra nếu là động vật
+  const instanceId = hit.instanceId;
+  const typeIndex = instancedMeshes.indexOf(hit.object);
+  
+  // Tìm block trong worldData
+  for (let [kStr, val] of worldVisuals.entries()) {
+    if (val.type === typeIndex && val.instanceIdx === instanceId) {
+      // Kiểm tra nếu là động vật (không có trong worldData)
+      if (typeIndex === -1) return;
+      
+      // Kiểm tra nếu là khối nước
+      if (typeIndex === 6) {
+        worldData.delete(kStr);
+        inventory[6]++;
+        updateHotbar();
+        spawnDropEffect(parseInt(kStr.split(',')[0]), parseInt(kStr.split(',')[1]), parseInt(kStr.split(',')[2]), 0x1e88e5);
+        rebuildVisuals();
+        return;
+      }
+      
+      worldData.delete(kStr);
+      inventory[typeIndex]++;
+      updateHotbar();
+      const pos = kStr.split(',').map(Number);
+      spawnDropEffect(pos[0], pos[1], pos[2], BLOCK_TYPES[typeIndex].color);
+      rebuildVisuals();
+      break;
+    }
   }
-  const p = hit.object.position;
-  if (hit.object.userData.isWater) {
-    // Phá nước: nhận block nước
-    removeBlockAt(p.x, p.y, p.z);
-    inventory[6]++; // Index của nước
-    updateHotbar();
-    spawnDropEffect(p.x, p.y, p.z, WATER_COLOR);
-    return;
-  }
-  const typeIndex = hit.object.userData.type;
-  removeBlockAt(p.x, p.y, p.z);
-  inventory[typeIndex]++;
-  updateHotbar();
-  spawnDropEffect(p.x, p.y, p.z, BLOCK_TYPES[typeIndex].color);
 }
 
 function placeBlock() {
   if (inventory[selectedBlock] <= 0) return;
-  const hit = getTargetHit(false);
+  const hit = getTargetHit();
   if (!hit) return;
+  
   const n = hit.face.normal;
-  const p = hit.object.position;
-  const nx = p.x + n.x, ny = p.y + n.y, nz = p.z + n.z;
-  const dist = Math.hypot(nx - player.pos.x, ny - (player.pos.y - 1), nz - player.pos.z);
-  if (dist > 0.6 && !world.get(key(nx,ny,nz))) {
-    if (selectedBlock === 6) {
-      // Đặt nước
-      addWater(nx, ny, nz);
-    } else {
-      addBlock(nx, ny, nz, selectedBlock);
-    }
+  const matrix = new THREE.Matrix4();
+  hit.object.getMatrixAt(hit.instanceId, matrix);
+  const position = new THREE.Vector3().setFromMatrixPosition(matrix);
+  
+  const nx = Math.round(position.x + n.x);
+  const ny = Math.round(position.y + n.y);
+  const nz = Math.round(position.z + n.z);
+  const kStr = key(nx, ny, nz);
+
+  if (!worldData.has(kStr)) {
+    worldData.set(kStr, selectedBlock);
     inventory[selectedBlock]--;
     updateHotbar();
+    rebuildVisuals();
   }
 }
 
+// ----- Sự kiện chuột -----
 window.addEventListener('mousedown', (e) => {
-  if (!locked || isMobile || isMenuOpen()) return;
+  if (!gameActive || isMobile || settingsOpen || invOpen) return;
   if (e.button === 0) breakBlock();
   else if (e.button === 2) placeBlock();
 });
@@ -1119,8 +983,10 @@ const fullscreenBtn = document.getElementById('fullscreenBtn');
 fullscreenBtn.addEventListener('click', () => {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(err => {});
+    fullscreenBtn.textContent = '⤓';
   } else {
-    if (document.exitFullscreen) document.exitFullscreen();
+    document.exitFullscreen();
+    fullscreenBtn.textContent = '⛶';
   }
 });
 document.addEventListener('fullscreenchange', () => {
@@ -1130,7 +996,7 @@ document.addEventListener('fullscreenchange', () => {
 // ----- Vòng lặp chính -----
 function animate() {
   requestAnimationFrame(animate);
-  if (locked && !isMenuOpen()) updatePlayer();
+  if (gameActive && !settingsOpen && !invOpen) updatePlayer();
   updateAnimals();
   updateDropEffects();
   renderer.render(scene, camera);
