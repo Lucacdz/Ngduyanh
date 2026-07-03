@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Mini Minecraft - Optimized</title>
+<title>Mini Minecraft - Fixed & Optimized</title>
 <style>
   html, body { margin: 0; padding: 0; overflow: hidden; background:#87CEEB; font-family: sans-serif; user-select: none; }
   #crosshair {
@@ -37,8 +37,10 @@
     transition: width 0.2s ease;
   }
   #healthText { color: white; font-size: 13px; font-weight: bold; text-shadow: 1px 1px 2px #000; }
+  
+  /* Màn hình chờ bắt đầu game */
   #blocker {
-    position: absolute; inset: 0; background: rgba(0,0,0,0.6); color: white;
+    position: absolute; inset: 0; background: rgba(0,0,0,0.7); color: white;
     display: flex; align-items: center; justify-content: center; flex-direction: column;
     cursor: pointer; z-index: 10; text-align: center;
   }
@@ -110,7 +112,7 @@
 </div>
 
 <div id="hint">WASD: Di chuyển | Chuột: Nhìn | Space: Nhảy | Shift: Chạy | C: Ngồi<br>Chuột trái: Phá khối | Chuột phải: Đặt khối | 1-7: Chọn khối | F: Ăn | I: Túi đồ</div>
-<div id="blocker"><h2>Mini Minecraft</h2><p>Nhấn vào màn hình để chơi</p></div>
+<div id="blocker"><h2>Mini Minecraft</h2><p>Nhấn vào ĐÂY để bắt đầu chơi</p></div>
 
 <div id="fullscreenBtn" class="topBtn" title="Toàn màn hình">📺</div>
 <div id="settingsBtn" class="topBtn">⚙️</div>
@@ -138,6 +140,8 @@
   <div id="mbSitBtn" class="actionBtn">Ngồi</div>
 </div>
 
+<div id="hotbar"></div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // ----- Cấu hình thế giới -----
@@ -152,16 +156,16 @@ const BLOCK_TYPES = [
   { name: 'Nước', color: 0x1e88e5, transparent: true, opacity: 0.6 }
 ];
 let selectedBlock = 0;
-const inventory = new Array(BLOCK_TYPES.length).fill(0);
+const inventory = new Array(BLOCK_TYPES.length).fill(10); // Cho sẵn 10 khối mỗi loại để test
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87CEEB);
 scene.fog = new THREE.Fog(0x87CEEB, 40, 120);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: false }); // Tắt bớt khử răng cưa để mượt hơn
+const renderer = new THREE.WebGLRenderer({ antialias: false });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = false; // Tắt shadow hoàn toàn để tối ưu FPS tối đa cho map nước
 document.body.appendChild(renderer.domElement);
 
 window.addEventListener('resize', () => {
@@ -170,13 +174,12 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Ánh sáng nhẹ tối ưu
-scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-const sun = new THREE.DirectionalLight(0xffffff, 0.6);
+scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+const sun = new THREE.DirectionalLight(0xffffff, 0.4);
 sun.position.set(30, 80, 20);
 scene.add(sun);
 
-// ----- Hệ thống InstancedMesh giúp tối ưu hóa đồ họa cực mạnh -----
+// ----- Hệ thống InstancedMesh -----
 const blockGeo = new THREE.BoxGeometry(1, 1, 1);
 const materials = BLOCK_TYPES.map(b => new THREE.MeshLambertMaterial({ color: b.color, transparent: b.transparent, opacity: b.opacity ?? 1 }));
 
@@ -184,8 +187,6 @@ const maxInstances = WORLD_SIZE * WORLD_SIZE * 15;
 const instancedMeshes = BLOCK_TYPES.map((_, i) => {
   const im = new THREE.InstancedMesh(blockGeo, materials[i], maxInstances);
   im.count = 0;
-  im.castShadow = (i !== 6);
-  im.receiveShadow = true;
   scene.add(im);
   return im;
 });
@@ -195,51 +196,35 @@ const worldVisuals = new Map();
 function key(x,y,z){ return `${x},${y},${z}`; }
 function heightAt(x, z) { return Math.floor(2 + Math.sin(x/8)*3 + Math.cos(z/8)*3); }
 
-// Xây dựng cấu trúc dữ liệu nền thế giới
+// Khởi tạo Map dữ liệu địa hình
 for (let x = -WORLD_SIZE/2; x < WORLD_SIZE/2; x++) {
   for (let z = -WORLD_SIZE/2; z < WORLD_SIZE/2; z++) {
     const h = heightAt(x, z);
-    const isVoid = Math.hypot(x, z) > 6 && (Math.sin(x*1.5)+Math.cos(z*1.5) * 43758.5453 % 1 < 0.015);
-    if (isVoid) continue;
-
     for (let y = -2; y <= Math.max(h, 1); y++) {
       let type = 2; // Đá
       if (y > h) {
-        if (y <= 1) type = 6; // Nước vùng trũng
+        if (y <= 1) type = 6; // Nước
         else continue;
       } else if (y === h) {
-        type = (h <= 1) ? 3 : (z > 15 ? 3 : 0); // Cát hoặc Cỏ
+        type = (h <= 1) ? 3 : 0; // Cát nếu ở vùng thấp, ngược lại là Cỏ
       } else if (y > h - 2) {
         type = 1; // Đất
       }
       worldData.set(key(x,y,z), type);
     }
-    // Cây cối
-    if (h > 1 && z <= 15 && Math.hypot(x, z) > 5 && (Math.sin(x*12.3 + z*91.4) * 43758.5453 % 1 < 0.012)) {
-      for(let i=1; i<=3; i++) worldData.set(key(x, h+i, z), 4); // Thân cây
-      for(let lx=-1; lx<=1; lx++) {
-        for(let lz=-1; lz<=1; lz++) {
-          for(let ly=3; ly<=4; ly++) {
-            if(!(lx===0 && lz===0 && ly===3)) worldData.set(key(x+lx, h+ly, z+lz), 5); // Lá
-          }
-        }
-      }
-    }
   }
 }
 
-// Hàm render map bằng InstancedMesh cực mượt
 function rebuildVisuals() {
   instancedMeshes.forEach(im => im.count = 0);
   worldVisuals.clear();
-  
   const dummy = new THREE.Object3D();
   const counts = new Array(BLOCK_TYPES.length).fill(0);
 
   for (let [kStr, type] of worldData.entries()) {
     const [x, y, z] = kStr.split(',').map(Number);
     
-    // Culling: Ẩn các khối bị che khuất hoàn toàn bởi 6 mặt xung quanh để bớt lag
+    // Culling tối ưu hóa hiệu năng cực mạnh
     if (type !== 6) {
       const top = worldData.has(key(x, y+1, z));
       const bottom = worldData.has(key(x, y-1, z));
@@ -266,92 +251,79 @@ function rebuildVisuals() {
 }
 rebuildVisuals();
 
-// ----- Thực thể động vật -----
-const animals = [];
-function spawnAnimal(x, z) {
-  const h = heightAt(x, z); if(h <= 1) return;
-  const group = new THREE.Group();
-  const mat = new THREE.MeshLambertMaterial({ color: 0xf3a9c1 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 1.1), mat); body.position.y = 0.4; group.add(body);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), mat); head.position.set(0, 0.5, 0.6); group.add(head);
-  group.position.set(x, h + 0.1, z);
-  scene.add(group);
-  animals.push({ mesh: group, hp: 3, tx: x, tz: z, nextMove: 0 });
-}
-for(let i=0; i<8; i++) spawnAnimal((Math.random()-0.5)*40, (Math.random()-0.5)*40);
-
-function updateAnimals() {
-  const now = performance.now();
-  animals.forEach(a => {
-    if(now > a.nextMove) {
-      a.tx = THREE.MathUtils.clamp(a.mesh.position.x + (Math.random()-0.5)*10, -WORLD_SIZE/2, WORLD_SIZE/2);
-      a.tz = THREE.MathUtils.clamp(a.mesh.position.z + (Math.random()-0.5)*10, -WORLD_SIZE/2, WORLD_SIZE/2);
-      a.nextMove = now + 3000 + Math.random()*3000;
-    }
-    const dx = a.tx - a.mesh.position.x, dz = a.tz - a.mesh.position.z;
-    if (Math.hypot(dx, dz) > 0.2) {
-      a.mesh.position.x += Math.sign(dx) * 0.015; a.mesh.position.z += Math.sign(dz) * 0.015;
-      a.mesh.rotation.y = Math.atan2(dx, dz);
-    }
-    a.mesh.position.y = Math.max(heightAt(Math.round(a.mesh.position.x), Math.round(a.mesh.position.z)), 1) + 0.1;
-  });
-}
-
-// ----- UI Hotbar -----
+// ----- Khởi tạo Hotbar UI -----
 const hotbar = document.getElementById('hotbar');
 BLOCK_TYPES.forEach((b, i) => {
   const el = document.createElement('div');
   el.className = 'slot' + (i === selectedBlock ? ' active' : '');
   el.style.background = '#' + b.color.toString(16).padStart(6,'0');
-  el.innerHTML = `<span class="hotbarCount">0</span>`;
-  el.addEventListener('click', () => { selectedBlock = i; updateHotbar(); });
+  el.innerHTML = `<span class="hotbarCount">${inventory[i]}</span>`;
+  el.addEventListener('click', (e) => { e.stopPropagation(); selectedBlock = i; updateHotbar(); });
   hotbar.appendChild(el);
 });
 function updateHotbar() { [...hotbar.children].forEach((el, i) => { el.classList.toggle('active', i === selectedBlock); el.querySelector('.hotbarCount').textContent = inventory[i]; }); }
-updateHotbar();
 
-// ----- Chế độ Toàn Màn Hình (Fullscreen) -----
-const fullscreenBtn = document.getElementById('fullscreenBtn');
-fullscreenBtn.addEventListener('click', () => {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(err => alert(`Không thể bật toàn màn hình: ${err.message}`));
-    fullscreenBtn.textContent = "✖️";
-  } else {
-    document.exitFullscreen();
-    fullscreenBtn.textContent = "📺";
+// ----- Xử lý trạng thái khóa chơi (FIX LỖI CHÍNH Ở ĐÂY) -----
+let yaw = 0, pitch = 0, gameActive = false;
+const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+const blocker = document.getElementById('blocker');
+const mobileControls = document.getElementById('mobileControls');
+
+if (isMobile) {
+  mobileControls.style.display = 'block';
+}
+
+// Sửa logic kích hoạt để tương thích hoàn toàn không bị kẹt lỗi PointerLock
+function activateGame() {
+  gameActive = true;
+  blocker.style.display = 'none';
+  if (!isMobile && document.pointerLockElement !== document.body) {
+    document.body.requestPointerLock();
+  }
+}
+
+blocker.addEventListener('click', activateGame);
+blocker.addEventListener('touchstart', (e) => { e.preventDefault(); activateGame(); });
+
+document.addEventListener('pointerlockchange', () => {
+  if (!isMobile) {
+    gameActive = (document.pointerLockElement === document.body);
+    blocker.style.display = gameActive ? 'none' : 'flex';
   }
 });
 
-// ----- Điều khiển góc nhìn & Trạng thái người chơi -----
-let yaw = 0, pitch = 0, locked = false;
-const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-if (isMobile) mobileControls.style.display = 'block';
-
-let mouseSensitivity = 1, touchSensitivity = 1;
-const blocker = document.getElementById('blocker');
-blocker.addEventListener('click', () => { if (isMobile) { locked = true; blocker.style.display = 'none'; } else { document.body.requestPointerLock(); } });
-document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === document.body; blocker.style.display = locked ? 'none' : 'flex'; });
-
+// Xử lý xoay góc nhìn PC
+let mouseSensitivity = 1.0;
 document.addEventListener('mousemove', (e) => {
-  if (!locked || isMobile) return;
-  yaw -= e.movementX * 0.0022 * mouseSensitivity; pitch -= e.movementY * 0.0022 * mouseSensitivity;
-  pitch = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, pitch));
+  if (!gameActive || isMobile) return;
+  yaw -= e.movementX * 0.0022 * mouseSensitivity;
+  pitch -= e.movementY * 0.0022 * mouseSensitivity;
+  pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, pitch));
 });
 
-// Vuốt nhìn quanh trên Mobile
+// Xử lý xoay góc nhìn Mobile (Vuốt màn hình bên phải)
+let touchSensitivity = 1.0;
 const lookArea = document.getElementById('lookArea');
 let lookTouchId = null, lastLookX = 0, lastLookY = 0;
-lookArea.addEventListener('touchstart', (e) => { const t = e.changedTouches[0]; lookTouchId = t.identifier; lastLookX = t.clientX; lastLookY = t.clientY; }, { passive: true });
+
+lookArea.addEventListener('touchstart', (e) => {
+  if (!gameActive) return;
+  const t = e.changedTouches[0];
+  lookTouchId = t.identifier; lastLookX = t.clientX; lastLookY = t.clientY;
+}, { passive: true });
+
 lookArea.addEventListener('touchmove', (e) => {
+  if (!gameActive) return;
   for (const t of e.changedTouches) {
     if (t.identifier !== lookTouchId) continue;
-    yaw -= (t.clientX - lastLookX) * 0.0045 * touchSensitivity; pitch -= (t.clientY - lastLookY) * 0.0045 * touchSensitivity;
+    yaw -= (t.clientX - lastLookX) * 0.0045 * touchSensitivity;
+    pitch -= (t.clientY - lastLookY) * 0.0045 * touchSensitivity;
     lastLookX = t.clientX; lastLookY = t.clientY;
-    pitch = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, pitch));
+    pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, pitch));
   }
 }, { passive: true });
 
-// Joystick di chuyển Mobile
+// Hệ thống Joystick Mobile
 let joyVec = { x: 0, y: 0 }, joyTouchId = null;
 const joyKnob = document.getElementById('joystickKnob');
 document.getElementById('joystickBase').addEventListener('touchstart', (e) => { joyTouchId = e.changedTouches[0].identifier; }, { passive: true });
@@ -368,19 +340,22 @@ document.getElementById('joystickBase').addEventListener('touchmove', (e) => {
 }, { passive: true });
 document.getElementById('joystickBase').addEventListener('touchend', () => { joyTouchId = null; joyVec = {x:0,y:0}; joyKnob.style.left='35px'; joyKnob.style.top='35px'; });
 
-// ----- Xử lý di chuyển & các nút Tròn Mobile mới -----
+// ----- Hệ thống di chuyển & Nút hành động -----
 const keys = {};
-window.addEventListener('keydown', e => keys[e.code] = true);
-window.addEventListener('keyup', e => keys[e.code] = false);
+window.addEventListener('keydown', e => { keys[e.code] = true; });
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+// Phím số chọn nhanh Hotbar PC
+window.addEventListener('keydown', e => {
+  if (e.key >= '1' && e.key <= '7') { selectedBlock = parseInt(e.key) - 1; updateHotbar(); }
+});
 
 let isSitting = false, runButtonHeld = false;
-const player = { pos: new THREE.Vector3(0, heightAt(0,0) + 4, 0), vel: new THREE.Vector3(0,0,0), onGround: false };
+const player = { pos: new THREE.Vector3(0, heightAt(0,0) + 5, 0), vel: new THREE.Vector3(0,0,0), onGround: false };
 
-function setSitting(v) { isSitting = v; document.getElementById('mbSitBtn').classList.toggle('toggledOn', v); if(v) player.vel.set(0,0,0); }
-function setRunning(v) { runButtonHeld = v; document.getElementById('mbRunBtn').classList.toggle('toggledOn', isRunningNow()); }
-function isRunningNow() { return !isSitting && (runButtonHeld || keys['ShiftLeft'] || keys['ShiftRight']); }
+function setSitting(v) { isSitting = v; document.getElementById('mbSitBtn').classList.toggle('toggledOn', v); }
+function setRunning(v) { runButtonHeld = v; document.getElementById('mbRunBtn').classList.toggle('toggledOn', v); }
 
-// Lắng nghe sự kiện từ các nút tròn mới tinh chỉnh
 document.getElementById('mbSitBtn').addEventListener('touchstart', (e) => { e.preventDefault(); setSitting(!isSitting); });
 document.getElementById('mbRunBtn').addEventListener('touchstart', (e) => { e.preventDefault(); setRunning(!runButtonHeld); });
 document.getElementById('jumpBtn').addEventListener('touchstart', (e) => { e.preventDefault(); keys['Space'] = true; });
@@ -388,37 +363,24 @@ document.getElementById('jumpBtn').addEventListener('touchend', (e) => { e.preve
 document.getElementById('breakBtn').addEventListener('touchstart', (e) => { e.preventDefault(); breakBlock(); });
 document.getElementById('placeBtn').addEventListener('touchstart', (e) => { e.preventDefault(); placeBlock(); });
 
-// PC triggers cho Ngồi/Chạy
-window.addEventListener('keydown', (e) => {
-  if (e.key === 'c' || e.key === 'C') setSitting(!isSitting);
-  if (e.key === 'f' || e.key === 'F') eatMeat();
-  if (e.key === 'i' || e.key === 'I') {
-    const p = document.getElementById('inventoryPanel');
-    if(p.style.display==='flex') { p.style.display='none'; if(!isMobile) document.body.requestPointerLock(); }
-    else { p.style.display='flex'; renderInventoryPanel(); document.exitPointerLock(); }
+// Tính năng Toàn Màn Hình (Fullscreen) không xung đột game
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+fullscreenBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().then(() => { if(!isMobile) document.body.requestPointerLock(); }).catch(err => console.log(err));
+    fullscreenBtn.textContent = "✖️";
+  } else {
+    document.exitFullscreen();
+    fullscreenBtn.textContent = "📺";
   }
 });
 
-// Cài đặt & Túi đồ UI click
-document.getElementById('settingsBtn').addEventListener('click', () => { document.getElementById('settingsPanel').style.display='flex'; document.exitPointerLock(); });
-document.getElementById('closeSettings').addEventListener('click', () => { document.getElementById('settingsPanel').style.display='none'; if(locked && !isMobile) document.body.requestPointerLock(); });
-document.getElementById('inventoryBtn').addEventListener('click', () => { document.getElementById('inventoryPanel').style.display='flex'; renderInventoryPanel(); document.exitPointerLock(); });
-document.getElementById('closeInventory').addEventListener('click', () => { document.getElementById('inventoryPanel').style.display='none'; if(locked && !isMobile) document.body.requestPointerLock(); });
-
-let health=100, hunger=100, meatCount=0;
-function takeDamage(a){ health=Math.max(0, health-a); document.getElementById('healthBarFill').style.width=health+'%'; document.getElementById('healthText').textContent=health; if(health<=0) { player.pos.set(0, heightAt(0,0)+4, 0); health=100; takeDamage(0); } }
-function updateHungerUI() { document.getElementById('hungerBarFill').style.width=hunger+'%'; document.getElementById('hungerText').textContent=hunger; document.getElementById('meatCountLabel').textContent=meatCount; document.getElementById('eatBtn').disabled=(meatCount<=0||hunger>=100); }
-function eatMeat(){ if(meatCount>0 && hunger<100){ meatCount--; hunger=Math.min(100, hunger+35); updateHungerUI(); } }
-document.getElementById('eatBtn').addEventListener('click', eatMeat);
-setInterval(() => { hunger = Math.max(0, hunger-1); updateHungerUI(); }, 12000);
+let health=100, hunger=100;
+function takeDamage(a){ health=Math.max(0, health-a); document.getElementById('healthBarFill').style.width=health+'%'; document.getElementById('healthText').textContent=health; if(health<=0) { player.pos.set(0, heightAt(0,0)+5, 0); health=100; takeDamage(0); } }
 
 function updatePlayer() {
-  if (isSitting) {
-    camera.position.set(player.pos.x, player.pos.y - 0.4, player.pos.z);
-    camera.rotation.y = yaw; camera.rotation.x = pitch;
-    return;
-  }
-  const speed = 0.11 * (isRunningNow() ? 1.7 : 1);
+  const speed = 0.12 * ((runButtonHeld || keys['ShiftLeft']) ? 1.6 : (isSitting ? 0.5 : 1));
   const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
   const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
   let move = new THREE.Vector3();
@@ -429,29 +391,30 @@ function updatePlayer() {
   if (move.lengthSq() > 1) move.normalize();
   move.multiplyScalar(speed);
 
+  // Xử lý va chạm khối cơ bản
   const nx = player.pos.x + move.x, nz = player.pos.z + move.z;
   if (!worldData.has(key(Math.round(nx), Math.round(player.pos.y), Math.round(player.pos.z)))) player.pos.x = nx;
   if (!worldData.has(key(Math.round(player.pos.x), Math.round(player.pos.y), Math.round(nz)))) player.pos.z = nz;
 
-  player.vel.y -= 0.016; // Trọng lực
-  if (keys['Space'] && player.onGround) { player.vel.y = 0.26; player.onGround = false; }
+  player.vel.y -= 0.015; // Trọng lực
+  if (keys['Space'] && player.onGround) { player.vel.y = 0.25; player.onGround = false; }
   
   const ny = player.pos.y + player.vel.y;
   const standKey = key(Math.round(player.pos.x), Math.round(ny - 1.6), Math.round(player.pos.z));
   
   if (worldData.has(standKey) && player.vel.y < 0) {
-    if (player.vel.y < -0.4) takeDamage(Math.round((Math.abs(player.vel.y)-0.35)*50));
+    if (player.vel.y < -0.42) takeDamage(Math.round((Math.abs(player.vel.y)-0.4)*60));
     player.vel.y = 0; player.onGround = true;
   } else {
     player.pos.y = ny; player.onGround = false;
   }
 
-  camera.position.set(player.pos.x, player.pos.y, player.pos.z);
+  camera.position.set(player.pos.x, player.pos.y + (isSitting ? -0.3 : 0), player.pos.z);
   camera.rotation.order = 'YXZ'; camera.rotation.y = yaw; camera.rotation.x = pitch;
-  if (player.pos.y < -20) { player.pos.set(0, 10, 0); player.vel.set(0,0,0); }
+  if (player.pos.y < -30) { player.pos.set(0, 15, 0); player.vel.set(0,0,0); }
 }
 
-// ----- Phá / Đặt logic với thế giới Instanced -----
+// ----- Logic Phá / Đặt Khối -----
 const raycaster = new THREE.Raycaster(); raycaster.far = 5;
 function getTargetHit() {
   raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
@@ -462,14 +425,11 @@ function getTargetHit() {
 
 function breakBlock() {
   const hit = getTargetHit(); if (!hit) return;
-  // Tìm kiếm tọa độ thực tế từ ma trận khối bị nhắm trúng
   const instanceId = hit.instanceId;
-  const mesh = hit.object;
-  const typeIndex = instancedMeshes.indexOf(mesh);
+  const typeIndex = instancedMeshes.indexOf(hit.object);
   
   for (let [kStr, val] of worldVisuals.entries()) {
     if (val.type === typeIndex && val.instanceIdx === instanceId) {
-      const [x,y,z] = kStr.split(',').map(Number);
       worldData.delete(kStr);
       inventory[typeIndex]++; updateHotbar();
       rebuildVisuals();
@@ -480,13 +440,9 @@ function breakBlock() {
 
 function placeBlock() {
   if (inventory[selectedBlock] <= 0) return;
-  raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
-  const hits = raycaster.intersectObjects(instancedMeshes.filter(im => im.count > 0));
-  if (!hits.length) return;
+  const hit = getTargetHit(); if (!hit) return;
   
-  const hit = hits[0];
   const n = hit.face.normal;
-  // Tính toán vị trí tương đối dựa trên pháp tuyến bề mặt (Normal vector)
   const matrix = new THREE.Matrix4();
   hit.object.getMatrixAt(hit.instanceId, matrix);
   const position = new THREE.Vector3().setFromMatrixPosition(matrix);
@@ -503,24 +459,19 @@ function placeBlock() {
   }
 }
 
-function renderInventoryPanel() {
-  const grid = document.getElementById('invGrid'); grid.innerHTML = '';
-  BLOCK_TYPES.forEach((b, i) => {
-    const item = document.createElement('div'); item.className = 'invItem';
-    item.innerHTML = `<div class="invSwatch" style="background:#${b.color.toString(16).padStart(6,'0')}"></div><span>${b.name}</span><span>x${inventory[i]}</span>`;
-    grid.appendChild(item);
-  });
-}
-
-window.addEventListener('mousedown', (e) => { if (locked && !isMobile) { if (e.button === 0) breakBlock(); else if (e.button === 2) placeBlock(); } });
+window.addEventListener('mousedown', (e) => { if (gameActive && !isMobile) { if (e.button === 0) breakBlock(); else if (e.button === 2) placeBlock(); } });
 window.addEventListener('contextmenu', e => e.preventDefault());
 
-// ----- Vòng lặp chính -----
+// Cài đặt UI Panel phụ trợ
+document.getElementById('settingsBtn').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('settingsPanel').style.display='flex'; document.exitPointerLock(); });
+document.getElementById('closeSettings').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('settingsPanel').style.display='none'; });
+const sMouse = document.getElementById('mouseSensSlider'); sMouse.addEventListener('input', () => { mouseSensitivity = parseFloat(sMouse.value); document.getElementById('mouseSensVal').textContent = sMouse.value+'x'; });
+const sTouch = document.getElementById('touchSensSlider'); sTouch.addEventListener('input', () => { touchSensitivity = parseFloat(sTouch.value); document.getElementById('touchSensVal').textContent = sTouch.value+'x'; });
+
+// ----- Vòng lặp Render (Loop) -----
 function animate() {
   requestAnimationFrame(animate);
-  if (locked) updatePlayer();
-  updateAnimals();
-  updateDropEffects();
+  if (gameActive) updatePlayer();
   renderer.render(scene, camera);
 }
 animate();
