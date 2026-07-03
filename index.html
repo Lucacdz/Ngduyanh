@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Mini Minecraft - Nước Không Lag</title>
+<title>Mini Minecraft - Bơi & Chìm</title>
 <style>
   html, body { margin: 0; padding: 0; overflow: hidden; background:#87CEEB; font-family: 'Courier New', monospace; }
   #crosshair {
@@ -10,12 +10,20 @@
     background: white; border-radius: 50%; transform: translate(-50%, -50%);
     pointer-events: none; mix-blend-mode: difference; z-index: 5;
   }
+  #underwaterOverlay {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(30, 136, 229, 0.3) 0%, rgba(13, 71, 161, 0.6) 100%);
+    pointer-events: none; z-index: 4; opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  #underwaterOverlay.active {
+    opacity: 1;
+  }
   #hint {
     position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
     color: white; background: rgba(0,0,0,0.7); padding: 8px 14px; border-radius: 4px;
     font-size: 12px; z-index: 5; text-align: center; line-height: 1.5;
-    border: 2px solid rgba(255,255,255,0.3); image-rendering: pixelated;
-    max-width: 90%;
+    border: 2px solid rgba(255,255,255,0.3); max-width: 90%;
   }
   #hotbar {
     position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
@@ -35,29 +43,25 @@
     background: rgba(0,0,0,0.6); padding: 4px 10px 4px 6px;
     border-radius: 4px; border: 2px solid rgba(255,255,255,0.3);
   }
-  #healthIcon { font-size: 20px; }
   #healthBarBg {
     width: 160px; height: 16px; background: rgba(0,0,0,0.5);
     border: 2px solid #555; border-radius: 2px; overflow: hidden;
   }
   #healthBarFill {
     height: 100%; width: 100%; background: #c92a2a;
-    transition: width 0.2s ease; image-rendering: pixelated;
+    transition: width 0.2s ease;
   }
   #healthText {
     color: white; font-size: 13px; font-weight: bold; text-shadow: 2px 2px 0 #000;
-    font-family: 'Courier New', monospace;
   }
   #blocker {
     position: absolute; inset: 0; background: rgba(0,0,0,0.75); color: white;
     display: flex; align-items: center; justify-content: center; flex-direction: column;
     cursor: pointer; z-index: 10; text-align: center;
-    font-family: 'Courier New', monospace;
   }
   #blocker h2 { font-size: 48px; margin: 0; text-shadow: 4px 4px 0 #2d2d2d; }
   #blocker p { font-size: 18px; opacity: 0.8; }
 
-  /* ----- Điều khiển mobile ----- */
   #mobileControls { display: none; }
   #lookArea {
     position: absolute; right: 0; top: 0; width: 55%; height: 100%; z-index: 3;
@@ -78,7 +82,6 @@
     border: 3px solid rgba(255,255,255,0.4); color: white; z-index: 6;
     display: flex; align-items: center; justify-content: center;
     font-size: 13px; font-weight: bold; user-select: none; touch-action: none;
-    font-family: 'Courier New', monospace; text-shadow: 2px 2px 0 #000;
     transition: all 0.1s;
   }
   .actionBtn:active { transform: scale(0.92); background: rgba(0,0,0,0.8); }
@@ -89,13 +92,12 @@
   #runMobileBtn { right: 190px; bottom: 26px; width: 60px; height: 60px; font-size: 12px; }
   .actionBtn.toggledOn { background: #2e7d32 !important; border-color: #fff; }
 
-  /* ----- Nút trên PC ----- */
   .topBtn {
     position: absolute; top: 14px; z-index: 7; width: 44px; height: 44px;
     background: rgba(0,0,0,0.7); border: 3px solid rgba(255,255,255,0.4);
     color: white; font-size: 20px; display: flex; align-items: center;
     justify-content: center; cursor: pointer; border-radius: 4px;
-    font-family: 'Courier New', monospace; transition: all 0.15s;
+    transition: all 0.15s;
   }
   .topBtn:hover { background: rgba(0,0,0,0.9); border-color: #fff; }
   #fullscreenBtn { right: 14px; }
@@ -105,7 +107,6 @@
   #settingsPanel, #inventoryPanel {
     display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.8);
     z-index: 9; color: white; align-items: center; justify-content: center;
-    font-family: 'Courier New', monospace;
   }
   .box {
     background: rgba(30,30,30,0.95); padding: 24px 28px; border-radius: 4px;
@@ -118,9 +119,8 @@
   .box button {
     margin-top: 20px; width: 100%; padding: 10px; border-radius: 4px; border: none;
     background: #4caf50; color: white; font-weight: bold; cursor: pointer;
-    font-family: 'Courier New', monospace; font-size: 14px;
+    font-size: 14px;
   }
-  
   #invGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .invItem {
     display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -131,41 +131,32 @@
   .hotbarCount {
     position: absolute; bottom: 1px; right: 3px; font-size: 10px; color: white;
     text-shadow: 2px 2px 0 #000; pointer-events: none;
-    font-family: 'Courier New', monospace;
   }
 
-  /* ----- Thanh đói ----- */
   #hungerContainer {
     position: absolute; top: 54px; left: 14px; z-index: 5;
     display: flex; align-items: center; gap: 8px;
     background: rgba(0,0,0,0.6); padding: 4px 10px 4px 6px;
     border-radius: 4px; border: 2px solid rgba(255,255,255,0.3);
   }
-  #hungerIcon { font-size: 18px; }
   #hungerBarBg {
     width: 160px; height: 14px; background: rgba(0,0,0,0.5);
     border: 2px solid #555; border-radius: 2px; overflow: hidden;
   }
   #hungerBarFill {
     height: 100%; width: 100%; background: #e67700;
-    transition: width 0.2s ease; image-rendering: pixelated;
+    transition: width 0.2s ease;
   }
   #hungerText { color: white; font-size: 12px; font-weight: bold; text-shadow: 2px 2px 0 #000; }
-  #eatBtn {
-    margin-left: 4px; padding: 3px 8px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.4);
-    background: rgba(0,0,0,0.6); color: white; font-size: 12px; cursor: pointer;
-    font-family: 'Courier New', monospace;
-  }
-  #eatBtn:disabled { opacity: 0.4; cursor: default; }
+  #foodCountLabel { color: white; font-size: 12px; text-shadow: 2px 2px 0 #000; }
 
-  /* ----- Ngồi / Chạy (PC) ----- */
   #moveModeButtons {
     position: absolute; top: 88px; left: 14px; z-index: 5; display: flex; gap: 4px;
   }
   #moveModeButtons button {
     padding: 6px 12px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.4);
     background: rgba(0,0,0,0.6); color: white; font-size: 12px; cursor: pointer;
-    font-family: 'Courier New', monospace; transition: all 0.15s;
+    transition: all 0.15s;
   }
   #moveModeButtons button:hover { background: rgba(0,0,0,0.8); }
   #moveModeButtons button.toggledOn { background: #2e7d32; border-color: #fff; }
@@ -173,18 +164,15 @@
 </head>
 <body>
 <div id="crosshair"></div>
+<div id="underwaterOverlay"></div>
 <div id="healthContainer">
-  <span id="healthIcon">❤️</span>
-  <div id="healthBarBg"><div id="healthBarFill"></div></div>
-  <span id="healthText">100</span>
+  <span>❤️</span><div id="healthBarBg"><div id="healthBarFill"></div></div><span id="healthText">100</span>
 </div>
 <div id="hungerContainer">
-  <span id="hungerIcon">🍗</span>
-  <div id="hungerBarBg"><div id="hungerBarFill"></div></div>
-  <span id="hungerText">100</span>
-  <button id="eatBtn">Ăn <span id="meatCountLabel">0</span></button>
+  <span>🍗</span><div id="hungerBarBg"><div id="hungerBarFill"></div></div><span id="hungerText">100</span>
+  <span id="foodCountLabel">🍖 x0</span>
 </div>
-<div id="hint">WASD: di chuyển | Chuột: nhìn | Space: nhảy<br>Chuột trái: phá/đánh | Chuột phải: đặt | 1-7: chọn khối<br>F: ăn | I: túi | C: ngồi | Shift: chạy</div>
+<div id="hint">WASD: di chuyển | Chuột: nhìn | Space: bơi lên | Shift: bơi xuống/chìm<br>Chuột trái: phá | Chuột phải: đặt/giữ để ăn<br>1-7: chọn khối | I: túi | C: ngồi | Shift: chạy<br>🌊 Bơi tự do dưới nước - Càng sâu càng tối</div>
 <div id="moveModeButtons">
   <button id="sitBtn">🪑 Ngồi</button>
   <button id="runBtn">🏃 Chạy</button>
@@ -195,13 +183,7 @@
 <div id="fullscreenBtn" class="topBtn">⛶</div>
 <div id="settingsBtn" class="topBtn">⚙</div>
 <div id="inventoryBtn" class="topBtn">🎒</div>
-<div id="inventoryPanel">
-  <div class="box">
-    <h3>📦 Túi đồ</h3>
-    <div id="invGrid"></div>
-    <button id="closeInventory">Đóng</button>
-  </div>
-</div>
+<div id="inventoryPanel"><div class="box"><h3>📦 Túi đồ</h3><div id="invGrid"></div><button id="closeInventory">Đóng</button></div></div>
 <div id="settingsPanel">
   <div class="box">
     <h3>⚙ Cài đặt</h3>
@@ -225,31 +207,31 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-// ----- Cấu hình cơ bản -----
-const WORLD_SIZE = 100;
+// ===== CẤU HÌNH =====
+const WORLD_SIZE = 80;
 const WATER_LEVEL = 2;
 const BLOCK_TYPES = [
-  { name: 'Cỏ',  color: 0x4caf50, transparent: false },
-  { name: 'Đất', color: 0x8d6e42, transparent: false },
-  { name: 'Đá',  color: 0x888888, transparent: false },
-  { name: 'Cát', color: 0xe0d18f, transparent: false },
-  { name: 'Gỗ',  color: 0x6b4423, transparent: false },
-  { name: 'Lá',  color: 0x2e7d32, transparent: false },
-  { name: 'Nước', color: 0x1e88e5, transparent: true, opacity: 0.6 }
+  { name: 'Cỏ',  color: 0x4caf50 },
+  { name: 'Đất', color: 0x8d6e42 },
+  { name: 'Đá',  color: 0x888888 },
+  { name: 'Cát', color: 0xe0d18f },
+  { name: 'Gỗ',  color: 0x6b4423 },
+  { name: 'Lá',  color: 0x2e7d32 },
+  { name: 'Nước', color: 0x1e88e5 }
 ];
 
 let selectedBlock = 0;
-const inventory = new Array(BLOCK_TYPES.length).fill(10);
+const inventory = new Array(BLOCK_TYPES.length).fill(20);
 
-// ----- Scene / Camera / Renderer -----
+// ===== SCENE =====
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87CEEB);
-scene.fog = new THREE.Fog(0x87CEEB, 40, 120);
+scene.fog = new THREE.Fog(0x87CEEB, 40, 100);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: false });
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = false; // Tắt shadow để tối ưu
+renderer.shadowMap.enabled = false;
 document.body.appendChild(renderer.domElement);
 
 window.addEventListener('resize', () => {
@@ -258,21 +240,20 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// ----- Ánh sáng -----
-scene.add(new THREE.AmbientLight(0xffffff, 0.85));
-const sun = new THREE.DirectionalLight(0xffffff, 0.4);
+scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+const sun = new THREE.DirectionalLight(0xffffff, 0.5);
 sun.position.set(30, 80, 20);
 scene.add(sun);
 
-// ----- Hệ thống InstancedMesh (không lag) -----
+// ===== INSTANCED MESH =====
 const blockGeo = new THREE.BoxGeometry(1, 1, 1);
 const materials = BLOCK_TYPES.map(b => new THREE.MeshLambertMaterial({ 
   color: b.color, 
-  transparent: b.transparent, 
-  opacity: b.opacity !== undefined ? b.opacity : 1 
+  transparent: b.name === 'Nước',
+  opacity: b.name === 'Nước' ? 0.5 : 1
 }));
 
-const maxInstances = WORLD_SIZE * WORLD_SIZE * 15;
+const maxInstances = WORLD_SIZE * WORLD_SIZE * 12;
 const instancedMeshes = BLOCK_TYPES.map((_, i) => {
   const im = new THREE.InstancedMesh(blockGeo, materials[i], maxInstances);
   im.count = 0;
@@ -285,8 +266,9 @@ const worldVisuals = new Map();
 
 function key(x,y,z){ return `${Math.round(x)},${Math.round(y)},${Math.round(z)}`; }
 
+// ===== ĐỊA HÌNH =====
 function heightAt(x, z) {
-  return Math.floor(3 + Math.sin(x/8)*3 + Math.cos(z/8)*3 + Math.sin(x/15 + z/12)*2);
+  return Math.floor(3 + Math.sin(x/8)*2.5 + Math.cos(z/8)*2.5 + Math.sin(x/15 + z/12)*1.5);
 }
 
 function hashRandom(x, z, seed) {
@@ -294,51 +276,70 @@ function hashRandom(x, z, seed) {
   return h - Math.floor(h);
 }
 
-function isVoidPit(x, z) {
-  if (Math.hypot(x, z) < 8) return false;
-  return hashRandom(x, z, 1) < 0.02;
-}
-
-// ----- Khởi tạo Map dữ liệu địa hình -----
-console.log('Đang tạo map siêu to với nước không lag...');
-let waterCount = 0;
-
+// ===== TẠO THẾ GIỚI =====
+console.log('Đang tạo map...');
 for (let x = -WORLD_SIZE/2; x < WORLD_SIZE/2; x++) {
   for (let z = -WORLD_SIZE/2; z < WORLD_SIZE/2; z++) {
-    if (isVoidPit(x, z)) continue;
     const h = heightAt(x, z);
     
-    // Đất và đá
     for (let y = -2; y <= Math.max(h, 1); y++) {
-      let type = 2; // Đá
+      let type = 2;
       if (y === h) {
-        if (h <= WATER_LEVEL) type = 3; // Cát ở vùng nước
-        else type = 0; // Cỏ
+        if (h <= WATER_LEVEL) type = 3;
+        else type = 0;
       } else if (y > h - 2) {
-        type = 1; // Đất
+        type = 1;
       }
       worldData.set(key(x,y,z), type);
     }
     
-    // Nước - chỉ thêm ở vùng trũng
     if (h < WATER_LEVEL) {
       for (let y = h + 1; y <= WATER_LEVEL; y++) {
-        // Chỉ thêm nước nếu tạo thành hồ nước hoặc nằm ở vùng trũng rộng
-        const hasWaterNearby = 
-          worldData.has(key(x+1, y, z)) || worldData.has(key(x-1, y, z)) ||
-          worldData.has(key(x, y, z+1)) || worldData.has(key(x, y, z-1));
-        
-        if (waterCount < 3000 || hasWaterNearby) {
-          worldData.set(key(x,y,z), 6); // Index của nước
-          waterCount++;
+        worldData.set(key(x,y,z), 6);
+      }
+    }
+  }
+}
+
+// ===== THÊM CÂY =====
+function addTree(x, y, z) {
+  const trunkHeight = 3 + Math.floor(hashRandom(x, z, 2) * 2);
+  for (let i = 1; i <= trunkHeight; i++) {
+    const ky = y + i;
+    if (ky > WATER_LEVEL) worldData.set(key(x, ky, z), 4);
+  }
+  const leafY = y + trunkHeight;
+  for (let lx = -2; lx <= 2; lx++) {
+    for (let lz = -2; lz <= 2; lz++) {
+      for (let ly = 0; ly <= 2; ly++) {
+        const dist = Math.abs(lx) + Math.abs(lz) + Math.abs(ly - 1) * 0.7;
+        if (dist <= 2.4 && !(lx === 0 && lz === 0 && ly === 0)) {
+          const bx = x + lx, by = leafY + ly, bz = z + lz;
+          if (by > WATER_LEVEL && !worldData.has(key(bx, by, bz))) {
+            worldData.set(key(bx, by, bz), 5);
+          }
         }
       }
     }
   }
 }
-console.log('Số khối nước:', waterCount);
 
-// ----- Xây dựng visual bằng InstancedMesh -----
+for (let x = -WORLD_SIZE/2; x < WORLD_SIZE/2; x++) {
+  for (let z = -WORLD_SIZE/2; z < WORLD_SIZE/2; z++) {
+    const h = heightAt(x, z);
+    if (h > WATER_LEVEL + 1 && Math.hypot(x, z) > 6 && hashRandom(x, z, 3) < 0.01) {
+      addTree(x, h, z);
+    }
+  }
+}
+
+// ===== XÂY DỰNG VISUAL (TỐI ƯU VỚI DIRTY FLAG) =====
+let needsRebuild = false;
+
+function markDirty() {
+  needsRebuild = true;
+}
+
 function rebuildVisuals() {
   instancedMeshes.forEach(im => im.count = 0);
   worldVisuals.clear();
@@ -348,8 +349,8 @@ function rebuildVisuals() {
   for (let [kStr, type] of worldData.entries()) {
     const [x, y, z] = kStr.split(',').map(Number);
     
-    // Culling để tối ưu hiệu năng
-    if (type !== 6) { // Không cull nước
+    // Culling - ẩn các mặt bị che
+    if (type !== 6) {
       const top = worldData.has(key(x, y+1, z));
       const bottom = worldData.has(key(x, y-1, z));
       const left = worldData.has(key(x-1, y, z));
@@ -374,9 +375,148 @@ function rebuildVisuals() {
     im.instanceMatrix.needsUpdate = true;
   });
 }
-rebuildVisuals();
 
-// ----- Động vật -----
+rebuildVisuals();
+console.log('Map đã tạo xong! Số block:', worldData.size);
+
+// ===== HIGHLIGHT =====
+const highlightGeo = new THREE.BoxGeometry(1.01, 1.01, 1.01);
+const highlightMat = new THREE.MeshLambertMaterial({
+  color: 0x000000,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.4
+});
+const highlightMesh = new THREE.Mesh(highlightGeo, highlightMat);
+highlightMesh.visible = false;
+scene.add(highlightMesh);
+
+// ===== CÁ =====
+const fish = [];
+const FISH_TYPES = [
+  { color: 0xff6b00, name: 'Cá hồi' },
+  { color: 0xffd700, name: 'Cá vàng' },
+  { color: 0xff4444, name: 'Cá đỏ' },
+  { color: 0x44ff44, name: 'Cá xanh' }
+];
+
+function spawnFish(x, y, z) {
+  const type = FISH_TYPES[Math.floor(Math.random() * FISH_TYPES.length)];
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(0.4, 0.2, 0.6),
+    new THREE.MeshLambertMaterial({ color: type.color })
+  );
+  mesh.position.set(x, y, z);
+  mesh.userData.isFish = true;
+  scene.add(mesh);
+  fish.push({
+    mesh,
+    type: type,
+    hp: 2,
+    target: { x: x + (Math.random()-0.5)*4, z: z + (Math.random()-0.5)*4 },
+    speed: 0.015 + Math.random() * 0.025,
+    nextDecision: 0
+  });
+}
+
+for (let i = 0; i < 80; i++) {
+  for (let tries = 0; tries < 20; tries++) {
+    const x = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.6);
+    const z = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.6);
+    const h = heightAt(x, z);
+    if (h < WATER_LEVEL) {
+      const y = WATER_LEVEL - 0.3 - Math.random() * 0.5;
+      spawnFish(x, y, z);
+      break;
+    }
+  }
+}
+
+function updateFish() {
+  const now = performance.now();
+  fish.forEach(f => {
+    if (now > f.nextDecision) {
+      f.target.x = f.mesh.position.x + (Math.random()-0.5)*5;
+      f.target.z = f.mesh.position.z + (Math.random()-0.5)*5;
+      f.target.x = THREE.MathUtils.clamp(f.target.x, -WORLD_SIZE/2+3, WORLD_SIZE/2-3);
+      f.target.z = THREE.MathUtils.clamp(f.target.z, -WORLD_SIZE/2+3, WORLD_SIZE/2-3);
+      f.nextDecision = now + 2000 + Math.random() * 3000;
+    }
+    const dx = f.target.x - f.mesh.position.x;
+    const dz = f.target.z - f.mesh.position.z;
+    const dist = Math.hypot(dx, dz);
+    if (dist > 0.2) {
+      f.mesh.position.x += (dx/dist) * f.speed;
+      f.mesh.position.z += (dz/dist) * f.speed;
+      f.mesh.rotation.y = Math.atan2(dx, dz);
+      f.mesh.rotation.z = Math.sin(now / 300 + f.mesh.position.x) * 0.1;
+    }
+  });
+}
+
+function attackFish(index) {
+  const f = fish[index];
+  if (!f) return;
+  f.hp--;
+  const origColor = f.mesh.material.color.getHex();
+  f.mesh.material = f.mesh.material.clone();
+  f.mesh.material.color.setHex(0xff5555);
+  setTimeout(() => { 
+    if (f.mesh.material) f.mesh.material.color.setHex(origColor); 
+  }, 120);
+  
+  if (f.hp <= 0) {
+    scene.remove(f.mesh);
+    addFishMeat(f.type.name);
+    spawnDropEffect(f.mesh.position.x, f.mesh.position.y, f.mesh.position.z, f.type.color);
+    fish.splice(index, 1);
+    setTimeout(() => {
+      for (let tries = 0; tries < 20; tries++) {
+        const x = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.6);
+        const z = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.6);
+        const h = heightAt(x, z);
+        if (h < WATER_LEVEL) {
+          const y = WATER_LEVEL - 0.3 - Math.random() * 0.5;
+          spawnFish(x, y, z);
+          break;
+        }
+      }
+    }, 8000);
+  }
+}
+
+// ===== QUẢN LÝ THỨC ĂN =====
+let foodInventory = [];
+let totalFood = 0;
+
+function addMeat(kind) {
+  foodInventory.push({ type: 'meat', name: MEAT_TYPES[kind].name, color: MEAT_TYPES[kind].color });
+  totalFood++;
+  updateHungerUI();
+  renderInventoryPanel();
+}
+
+function addFishMeat(name) {
+  foodInventory.push({ type: 'fish', name: name, color: 0x00aaff });
+  totalFood++;
+  updateHungerUI();
+  renderInventoryPanel();
+}
+
+function eatFood() {
+  if (totalFood <= 0 || hunger >= 100) return false;
+  const food = foodInventory.pop();
+  if (food) {
+    totalFood--;
+    hunger = Math.min(100, hunger + 35);
+    updateHungerUI();
+    renderInventoryPanel();
+    return true;
+  }
+  return false;
+}
+
+// ===== ĐỘNG VẬT =====
 const animals = [];
 const MEAT_TYPES = {
   pig: { color: 0xe8a0b4, name: 'Thịt heo' },
@@ -402,13 +542,13 @@ function createAnimalMesh(kind) {
   const legMat = new THREE.MeshLambertMaterial({ color: legColor });
 
   const body = new THREE.Mesh(new THREE.BoxGeometry(...bodySize), bodyMat);
-  body.position.y = 0.55; body.castShadow = true; group.add(body);
+  body.position.y = 0.55; group.add(body);
   const head = new THREE.Mesh(new THREE.BoxGeometry(...headSize), headMat);
-  head.position.set(0, 0.65, bodySize[2]/2 + headSize[2]/2 - 0.05); head.castShadow = true; group.add(head);
+  head.position.set(0, 0.65, bodySize[2]/2 + headSize[2]/2 - 0.05); group.add(head);
   const legGeo = new THREE.BoxGeometry(0.15, 0.4, 0.15);
   const ox = bodySize[0]/2 - 0.1, oz = bodySize[2]/2 - 0.15;
   [[ox,oz],[-ox,oz],[ox,-oz],[-ox,-oz]].forEach(([lx, lz]) => {
-    const leg = new THREE.Mesh(legGeo, legMat); leg.position.set(lx, 0.2, lz); leg.castShadow = true; group.add(leg);
+    const leg = new THREE.Mesh(legGeo, legMat); leg.position.set(lx, 0.2, lz); group.add(leg);
   });
   group.traverse(c => { if (c.isMesh) c.userData.isAnimalPart = true; });
   return group;
@@ -424,11 +564,11 @@ function spawnAnimalAt(kind, x, z) {
 }
 
 function spawnRandomAnimal(kind) {
-  for (let tries = 0; tries < 30; tries++) {
-    const x = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.7);
-    const z = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.7);
+  for (let tries = 0; tries < 25; tries++) {
+    const x = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.6);
+    const z = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.6);
     const h = heightAt(x, z);
-    if (h <= WATER_LEVEL || isVoidPit(x, z)) continue;
+    if (h <= WATER_LEVEL) continue;
     spawnAnimalAt(kind, x, z);
     return;
   }
@@ -444,11 +584,11 @@ function updateAnimals() {
   animals.forEach(a => {
     if (now > a.nextDecision) {
       let tx, tz, ok = false;
-      for (let tries = 0; tries < 8; tries++) {
-        tx = THREE.MathUtils.clamp(a.mesh.position.x + (Math.random()-0.5)*12, -WORLD_SIZE/2+2, WORLD_SIZE/2-2);
-        tz = THREE.MathUtils.clamp(a.mesh.position.z + (Math.random()-0.5)*12, -WORLD_SIZE/2+2, WORLD_SIZE/2-2);
+      for (let tries = 0; tries < 6; tries++) {
+        tx = THREE.MathUtils.clamp(a.mesh.position.x + (Math.random()-0.5)*10, -WORLD_SIZE/2+2, WORLD_SIZE/2-2);
+        tz = THREE.MathUtils.clamp(a.mesh.position.z + (Math.random()-0.5)*10, -WORLD_SIZE/2+2, WORLD_SIZE/2-2);
         const h = heightAt(Math.round(tx), Math.round(tz));
-        if (h > WATER_LEVEL && !isVoidPit(Math.round(tx), Math.round(tz))) { ok = true; break; }
+        if (h > WATER_LEVEL) { ok = true; break; }
       }
       if (ok) a.target = { x: tx, z: tz };
       a.nextDecision = now + 2500 + Math.random()*3000;
@@ -483,44 +623,20 @@ function attackAnimal(idx) {
   if (a.hp <= 0) {
     scene.remove(a.mesh);
     const meatColor = MEAT_TYPES[a.kind].color;
-    spawnDropEffect(a.mesh.position.x, a.mesh.position.y, a.mesh.position.z, meatColor);
     addMeat(a.kind);
+    spawnDropEffect(a.mesh.position.x, a.mesh.position.y, a.mesh.position.z, meatColor);
     animals.splice(idx, 1);
     setTimeout(() => spawnRandomAnimal(a.kind), 15000);
   }
 }
 
-// ----- Quản lý thịt -----
-let meatInventory = { pig: 0, cow: 0, sheep: 0 };
-let totalMeat = 0;
-
-function addMeat(kind) {
-  meatInventory[kind]++;
-  totalMeat++;
-  updateHungerUI();
-  renderInventoryPanel();
-}
-
-function useMeat() {
-  const kinds = ['pig', 'cow', 'sheep'];
-  for (const kind of kinds) {
-    if (meatInventory[kind] > 0) {
-      meatInventory[kind]--;
-      totalMeat--;
-      return MEAT_TYPES[kind].name;
-    }
-  }
-  return null;
-}
-
-// ----- Hotbar UI -----
+// ===== HOTBAR UI =====
 const hotbar = document.getElementById('hotbar');
 BLOCK_TYPES.forEach((b, i) => {
   const el = document.createElement('div');
   el.className = 'slot' + (i === selectedBlock ? ' active' : '');
   el.style.background = '#' + b.color.toString(16).padStart(6,'0');
   el.style.position = 'relative';
-  el.title = b.name;
   const count = document.createElement('span');
   count.className = 'hotbarCount';
   count.textContent = inventory[i];
@@ -537,7 +653,7 @@ function updateHotbar() {
 }
 updateHotbar();
 
-// ----- Điều khiển góc nhìn -----
+// ===== ĐIỀU KHIỂN =====
 const blocker = document.getElementById('blocker');
 const mobileControls = document.getElementById('mobileControls');
 let yaw = 0, pitch = 0;
@@ -548,7 +664,7 @@ const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 if (isMobile) {
   mobileControls.style.display = 'block';
   document.getElementById('hint').innerHTML =
-    'Joystick: di chuyển | Vuốt phải: nhìn<br>Phá/Đánh | Đặt | Nhảy | 🪑 Ngồi | 🏃 Chạy';
+    'Joystick: di chuyển | Vuốt phải: nhìn<br>Phá | Đặt/Ăn (giữ) | Nhảy/Bơi lên | 🪑 Ngồi | 🏃 Chạy<br>🌊 Bơi tự do dưới nước';
 }
 
 function activateGame() {
@@ -569,7 +685,7 @@ document.addEventListener('pointerlockchange', () => {
   }
 });
 
-// ----- Cài đặt độ nhạy -----
+// ===== CÀI ĐẶT =====
 let mouseSensitivity = 1, touchSensitivity = 1;
 let settingsOpen = false;
 document.getElementById('settingsBtn').addEventListener('click', (e) => {
@@ -596,7 +712,7 @@ touchSensSlider.addEventListener('input', () => {
   document.getElementById('touchSensVal').textContent = touchSensitivity.toFixed(1) + 'x';
 });
 
-// ----- Túi đồ -----
+// ===== TÚI ĐỒ =====
 let invOpen = false;
 const inventoryBtn = document.getElementById('inventoryBtn');
 const inventoryPanel = document.getElementById('inventoryPanel');
@@ -611,13 +727,24 @@ function renderInventoryPanel() {
     item.innerHTML = `<div class="invSwatch" style="background:${color}"></div><span>${b.name}</span><span>x${inventory[i]}</span>`;
     invGrid.appendChild(item);
   });
-  ['pig', 'cow', 'sheep'].forEach(kind => {
-    const item = document.createElement('div');
-    item.className = 'invItem';
-    const color = '#' + MEAT_TYPES[kind].color.toString(16).padStart(6,'0');
-    item.innerHTML = `<div class="invSwatch" style="background:${color}"></div><span>${MEAT_TYPES[kind].name}</span><span>x${meatInventory[kind]}</span>`;
-    invGrid.appendChild(item);
+  
+  const foodCount = {};
+  foodInventory.forEach(f => {
+    foodCount[f.name] = (foodCount[f.name] || 0) + 1;
   });
+  
+  const foodDiv = document.createElement('div');
+  foodDiv.className = 'invItem';
+  foodDiv.style.gridColumn = '1 / -1';
+  let foodText = '🍖 ';
+  const names = Object.keys(foodCount);
+  if (names.length === 0) {
+    foodText += 'Không có thức ăn';
+  } else {
+    foodText += names.map(n => `${n} x${foodCount[n]}`).join(', ');
+  }
+  foodDiv.innerHTML = `<span style="font-size:14px;">${foodText}</span>`;
+  invGrid.appendChild(foodDiv);
 }
 
 function openInventory() {
@@ -634,15 +761,15 @@ function closeInventory() {
 inventoryBtn.addEventListener('click', openInventory);
 document.getElementById('closeInventory').addEventListener('click', closeInventory);
 
-// ----- Xử lý chuột -----
+// ===== CHUỘT =====
 document.addEventListener('mousemove', (e) => {
   if (!gameActive || isMobile || settingsOpen || invOpen) return;
-  yaw -= e.movementX * 0.0022 * mouseSensitivity;
-  pitch -= e.movementY * 0.0022 * mouseSensitivity;
+  yaw -= e.movementX * 0.002 * mouseSensitivity;
+  pitch -= e.movementY * 0.002 * mouseSensitivity;
   pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, pitch));
 });
 
-// ----- Mobile touch camera -----
+// ===== MOBILE TOUCH =====
 const lookArea = document.getElementById('lookArea');
 let lookTouchId = null, lastLookX = 0, lastLookY = 0;
 lookArea.addEventListener('touchstart', (e) => {
@@ -654,14 +781,14 @@ lookArea.addEventListener('touchmove', (e) => {
   if (!gameActive || settingsOpen || invOpen) return;
   for (const t of e.changedTouches) {
     if (t.identifier !== lookTouchId) continue;
-    yaw -= (t.clientX - lastLookX) * 0.0045 * touchSensitivity;
-    pitch -= (t.clientY - lastLookY) * 0.0045 * touchSensitivity;
+    yaw -= (t.clientX - lastLookX) * 0.004 * touchSensitivity;
+    pitch -= (t.clientY - lastLookY) * 0.004 * touchSensitivity;
     lastLookX = t.clientX; lastLookY = t.clientY;
     pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, pitch));
   }
 }, { passive: true });
 
-// ----- Joystick -----
+// ===== JOYSTICK =====
 let joyVec = { x: 0, y: 0 }, joyTouchId = null;
 const joyKnob = document.getElementById('joystickKnob');
 document.getElementById('joystickBase').addEventListener('touchstart', (e) => {
@@ -683,7 +810,7 @@ document.getElementById('joystickBase').addEventListener('touchend', () => {
   joyTouchId = null; joyVec = {x:0,y:0}; joyKnob.style.left='35px'; joyKnob.style.top='35px';
 });
 
-// ----- Nút mobile -----
+// ===== NÚT MOBILE =====
 const jumpBtn = document.getElementById('jumpBtn');
 jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); keys['Space'] = true; }, { passive: false });
 jumpBtn.addEventListener('touchend', (e) => { e.preventDefault(); keys['Space'] = false; }, { passive: false });
@@ -692,12 +819,44 @@ document.getElementById('breakBtn').addEventListener('touchstart', (e) => {
   e.preventDefault();
   if (gameActive) breakBlock();
 }, { passive: false });
-document.getElementById('placeBtn').addEventListener('touchstart', (e) => {
+
+let placeHoldTimer = null;
+let isPlaceHeld = false;
+const placeBtn = document.getElementById('placeBtn');
+
+placeBtn.addEventListener('touchstart', (e) => {
   e.preventDefault();
-  if (gameActive) placeBlock();
+  if (!gameActive) return;
+  isPlaceHeld = true;
+  placeHoldTimer = setTimeout(() => {
+    if (isPlaceHeld && gameActive) {
+      eatFood();
+      isPlaceHeld = false;
+    }
+  }, 500);
 }, { passive: false });
 
-// ----- Phím tắt -----
+placeBtn.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  if (placeHoldTimer) {
+    clearTimeout(placeHoldTimer);
+    placeHoldTimer = null;
+  }
+  if (isPlaceHeld && gameActive) {
+    placeBlock();
+  }
+  isPlaceHeld = false;
+}, { passive: false });
+
+placeBtn.addEventListener('touchcancel', (e) => {
+  if (placeHoldTimer) {
+    clearTimeout(placeHoldTimer);
+    placeHoldTimer = null;
+  }
+  isPlaceHeld = false;
+}, { passive: false });
+
+// ===== PHÍM TẮT =====
 const keys = {};
 window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
@@ -705,11 +864,10 @@ window.addEventListener('keyup', e => keys[e.code] = false);
 window.addEventListener('keydown', (e) => {
   if (e.key >= '1' && e.key <= '7') { selectedBlock = parseInt(e.key) - 1; updateHotbar(); }
   if (e.key === 'i' || e.key === 'I') { invOpen ? closeInventory() : openInventory(); }
-  if (e.key === 'f' || e.key === 'F') { eatMeat(); }
   if (e.key === 'c' || e.key === 'C') { setSitting(!isSitting); }
 });
 
-// ----- Ngồi / Chạy -----
+// ===== NGỒI / CHẠY =====
 let isSitting = false, runButtonHeld = false;
 const sitBtn = document.getElementById('sitBtn');
 const runBtn = document.getElementById('runBtn');
@@ -737,14 +895,16 @@ runBtn.addEventListener('mouseleave', () => setRunning(false));
 document.getElementById('sitMobileBtn').addEventListener('touchstart', (e) => { e.preventDefault(); setSitting(!isSitting); }, { passive: false });
 document.getElementById('runMobileBtn').addEventListener('touchstart', (e) => { e.preventDefault(); setRunning(!runButtonHeld); }, { passive: false });
 
-// ----- Người chơi -----
+// ===== NGƯỜI CHƠI =====
 const player = {
   pos: new THREE.Vector3(0, heightAt(0,0) + 5, 0),
   vel: new THREE.Vector3(0,0,0),
   onGround: false,
+  inWater: false,
+  depth: 0 // Độ sâu dưới nước
 };
 
-// ----- Máu -----
+// ===== MÁU =====
 let health = 100, hunger = 100;
 const healthBarFill = document.getElementById('healthBarFill');
 const healthText = document.getElementById('healthText');
@@ -763,35 +923,16 @@ function respawnPlayer() {
   takeDamage(0);
 }
 
-function updateHealthUI() {
-  healthBarFill.style.width = health + '%';
-  healthText.textContent = Math.round(health);
-}
-updateHealthUI();
-
-// ----- Đói -----
+// ===== ĐÓI =====
 const hungerBarFill = document.getElementById('hungerBarFill');
 const hungerText = document.getElementById('hungerText');
-const meatCountLabel = document.getElementById('meatCountLabel');
-const eatBtn = document.getElementById('eatBtn');
+const foodCountLabel = document.getElementById('foodCountLabel');
 
 function updateHungerUI() {
   hungerBarFill.style.width = hunger + '%';
   hungerText.textContent = Math.round(hunger);
-  meatCountLabel.textContent = totalMeat;
-  eatBtn.disabled = totalMeat <= 0 || hunger >= 100;
+  foodCountLabel.textContent = `🍖 x${totalFood}`;
 }
-
-function eatMeat() {
-  if (totalMeat <= 0 || hunger >= 100) return;
-  const meatName = useMeat();
-  if (meatName) {
-    hunger = Math.min(100, hunger + 35);
-    updateHungerUI();
-    renderInventoryPanel();
-  }
-}
-eatBtn.addEventListener('click', eatMeat);
 
 setInterval(() => {
   hunger = Math.max(0, hunger - 1);
@@ -809,14 +950,77 @@ setInterval(() => {
   }
 }, 3000);
 
+function updateHealthUI() {
+  healthBarFill.style.width = health + '%';
+  healthText.textContent = Math.round(health);
+}
+updateHealthUI();
 updateHungerUI();
 
-// ----- Kiểm tra va chạm -----
+// ===== KIỂM TRA VA CHẠM =====
 function isSolid(x, y, z) {
-  return worldData.has(key(Math.round(x), Math.round(y), Math.round(z)));
+  const k = key(Math.round(x), Math.round(y), Math.round(z));
+  const val = worldData.get(k);
+  return val !== undefined && val !== null && val !== 6;
 }
 
-// ----- Cập nhật người chơi -----
+function isWaterBlock(x, y, z) {
+  const k = key(Math.round(x), Math.round(y), Math.round(z));
+  return worldData.get(k) === 6;
+}
+
+// ===== HIỆU ỨNG DƯỚI NƯỚC =====
+const underwaterOverlay = document.getElementById('underwaterOverlay');
+const originalFogNear = 40;
+const originalFogFar = 100;
+const underwaterFogNear = 5;
+const underwaterFogFar = 25;
+
+function updateUnderwaterEffect() {
+  const headInWater = isWaterBlock(player.pos.x, player.pos.y + 0.3, player.pos.z);
+  
+  if (headInWater) {
+    underwaterOverlay.classList.add('active');
+    
+    // Tính độ sâu
+    const depth = Math.max(0, WATER_LEVEL - player.pos.y);
+    player.depth = depth;
+    
+    // Điều chỉnh fog theo độ sâu - càng sâu càng tối
+    const depthFactor = Math.min(depth / 10, 1); // Tối đa ở độ sâu 10
+    const fogNear = THREE.MathUtils.lerp(underwaterFogNear, 2, depthFactor);
+    const fogFar = THREE.MathUtils.lerp(underwaterFogFar, 8, depthFactor);
+    
+    scene.fog.near = fogNear;
+    scene.fog.far = fogFar;
+    
+    // Thay đổi màu fog theo độ sâu
+    const fogColor = new THREE.Color();
+    fogColor.setRGB(
+      THREE.MathUtils.lerp(0.12, 0.05, depthFactor), // R
+      THREE.MathUtils.lerp(0.53, 0.28, depthFactor), // G
+      THREE.MathUtils.lerp(0.90, 0.64, depthFactor)  // B
+    );
+    scene.fog.color = fogColor;
+    scene.background = fogColor;
+    
+    // Điều chỉnh overlay opacity theo độ sâu
+    const overlayOpacity = 0.3 + depthFactor * 0.5;
+    underwaterOverlay.style.background = `radial-gradient(ellipse at center, 
+      rgba(30, 136, 229, ${overlayOpacity}) 0%, 
+      rgba(13, 71, 161, ${overlayOpacity + 0.2}) 100%)`;
+    
+  } else {
+    underwaterOverlay.classList.remove('active');
+    scene.fog.near = originalFogNear;
+    scene.fog.far = originalFogFar;
+    scene.fog.color.setHex(0x87CEEB);
+    scene.background.setHex(0x87CEEB);
+    player.depth = 0;
+  }
+}
+
+// ===== CẬP NHẬT NGƯỜI CHƠI (CÓ BƠI TỰ DO) =====
 function updatePlayer() {
   if (isSitting) {
     camera.position.set(player.pos.x, player.pos.y - 0.4, player.pos.z);
@@ -827,72 +1031,185 @@ function updatePlayer() {
   }
 
   const running = isRunningNow();
-  const speed = 0.12 * (running ? 1.8 : 1);
-  const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+  const speed = 0.065 * (running ? 1.5 : 1);
+  
+  // Tính hướng nhìn 3D
+  const forward = new THREE.Vector3(
+    -Math.sin(yaw) * Math.cos(pitch),
+    Math.sin(pitch),
+    -Math.cos(yaw) * Math.cos(pitch)
+  );
   const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+  const flatForward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
 
   let move = new THREE.Vector3();
-  if (keys['KeyW']) move.add(forward);
-  if (keys['KeyS']) move.sub(forward);
-  if (keys['KeyD']) move.add(right);
-  if (keys['KeyA']) move.sub(right);
   
-  if (joyVec.x !== 0 || joyVec.y !== 0) {
-    move.add(forward.clone().multiplyScalar(-joyVec.y));
-    move.add(right.clone().multiplyScalar(joyVec.x));
+  // Kiểm tra có đang trong nước không
+  const headInWater = isWaterBlock(player.pos.x, player.pos.y + 0.3, player.pos.z);
+  const bodyInWater = isWaterBlock(player.pos.x, player.pos.y - 0.3, player.pos.z);
+  const feetInWater = isWaterBlock(player.pos.x, player.pos.y - 1.2, player.pos.z);
+  const inWater = headInWater || bodyInWater || feetInWater;
+  player.inWater = inWater;
+  
+  if (inWater) {
+    // BƠI TỰ DO 3D - Di chuyển theo hướng nhìn
+    if (keys['KeyW']) move.add(forward);
+    if (keys['KeyS']) move.sub(forward);
+    if (keys['KeyD']) move.add(right);
+    if (keys['KeyA']) move.sub(right);
+    
+    // Space để bơi lên
+    if (keys['Space']) {
+      move.y += 1;
+    }
+    
+    // Shift để bơi xuống/chìm
+    if (keys['ShiftLeft'] || keys['ShiftRight']) {
+      move.y -= 1;
+    }
+    
+    // Joystick cho mobile
+    if (joyVec.x !== 0 || joyVec.y !== 0) {
+      move.add(forward.clone().multiplyScalar(-joyVec.y));
+      move.add(right.clone().multiplyScalar(joyVec.x));
+    }
+    
+    // Tốc độ bơi chậm hơn trên cạn
+    const swimSpeed = speed * 0.6;
+    if (move.lengthSq() > 1) move.normalize();
+    move.multiplyScalar(swimSpeed);
+    
+    // Trọng lực yếu hơn trong nước
+    player.vel.y -= 0.008; // Trọng lực rất nhẹ
+    player.vel.y *= 0.92; // Lực cản của nước
+    
+    // Giới hạn vận tốc theo trục Y trong nước
+    player.vel.y = THREE.MathUtils.clamp(player.vel.y, -0.15, 0.15);
+    
+  } else {
+    // Di chuyển bình thường trên cạn
+    if (keys['KeyW']) move.add(flatForward);
+    if (keys['KeyS']) move.sub(flatForward);
+    if (keys['KeyD']) move.add(right);
+    if (keys['KeyA']) move.sub(right);
+    
+    if (joyVec.x !== 0 || joyVec.y !== 0) {
+      move.add(flatForward.clone().multiplyScalar(-joyVec.y));
+      move.add(right.clone().multiplyScalar(joyVec.x));
+    }
+    
+    if (move.lengthSq() > 1) move.normalize();
+    move.multiplyScalar(speed);
+    
+    // Trọng lực bình thường
+    player.vel.y -= 0.022;
+    
+    // Nhảy
+    if (keys['Space'] && player.onGround) {
+      player.vel.y = 0.22;
+      player.onGround = false;
+    }
   }
 
-  if (move.lengthSq() > 1) move.normalize();
-  move.multiplyScalar(speed);
-
+  // Áp dụng di chuyển ngang
   const nx = player.pos.x + move.x;
   const nz = player.pos.z + move.z;
-  if (!isSolid(nx, player.pos.y, player.pos.z) && !isSolid(nx, player.pos.y - 1, player.pos.z)) player.pos.x = nx;
-  if (!isSolid(player.pos.x, player.pos.y, nz) && !isSolid(player.pos.x, player.pos.y - 1, nz)) player.pos.z = nz;
-
-  player.vel.y -= 0.015;
-  if (keys['Space'] && player.onGround) {
-    player.vel.y = 0.25;
-    player.onGround = false;
+  if (!isSolid(nx, player.pos.y, player.pos.z) && !isSolid(nx, player.pos.y - 0.8, player.pos.z)) {
+    player.pos.x = nx;
+  }
+  if (!isSolid(player.pos.x, player.pos.y, nz) && !isSolid(player.pos.x, player.pos.y - 0.8, nz)) {
+    player.pos.z = nz;
   }
 
-  const ny = player.pos.y + player.vel.y;
-  if (isSolid(player.pos.x, ny - 1.6, player.pos.z) && player.vel.y < 0) {
-    if (player.vel.y < -0.42) takeDamage(Math.round((Math.abs(player.vel.y) - 0.4) * 60));
+  // Áp dụng vận tốc dọc
+  const ny = player.pos.y + player.vel.y + move.y;
+  
+  // Kiểm tra va chạm dọc
+  if (isSolid(player.pos.x, ny - 1.6, player.pos.z) && player.vel.y + move.y < 0) {
+    if (!inWater && player.vel.y < -0.4) {
+      takeDamage(Math.round((Math.abs(player.vel.y) - 0.4) * 50));
+    }
     player.vel.y = 0;
     player.onGround = true;
+  } else if (isSolid(player.pos.x, ny + 0.3, player.pos.z) && player.vel.y + move.y > 0) {
+    player.vel.y = 0;
   } else {
     player.pos.y = ny;
     player.onGround = false;
   }
 
+  // Cập nhật camera
   camera.position.set(player.pos.x, player.pos.y, player.pos.z);
   camera.rotation.order = 'YXZ';
   camera.rotation.y = yaw;
   camera.rotation.x = pitch;
+  
+  // Cập nhật hiệu ứng dưới nước
+  updateUnderwaterEffect();
 
+  // Respawn nếu rơi quá sâu
   if (player.pos.y < -30) respawnPlayer();
 }
 
-// ----- Raycast phá/đặt block -----
+// ===== RAYCAST + HIGHLIGHT =====
 const raycaster = new THREE.Raycaster();
-raycaster.far = 6;
+raycaster.far = 5.5;
 
-function getTargetHit() {
+function updateHighlight() {
+  if (!gameActive) {
+    highlightMesh.visible = false;
+    return;
+  }
+  
   raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
   const activeMeshes = instancedMeshes.filter(im => im.count > 0);
   const hits = raycaster.intersectObjects(activeMeshes);
+  
+  if (hits.length > 0) {
+    const hit = hits[0];
+    const matrix = new THREE.Matrix4();
+    hit.object.getMatrixAt(hit.instanceId, matrix);
+    const position = new THREE.Vector3().setFromMatrixPosition(matrix);
+    highlightMesh.position.copy(position);
+    highlightMesh.visible = true;
+  } else {
+    highlightMesh.visible = false;
+  }
+}
+
+function getTargetHit() {
+  raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+  
+  const allMeshes = [];
+  instancedMeshes.forEach(im => {
+    if (im.count > 0) allMeshes.push(im);
+  });
+  
+  fish.forEach(f => {
+    allMeshes.push(f.mesh);
+  });
+  
+  animals.forEach(a => {
+    a.mesh.traverse(c => {
+      if (c.isMesh) {
+        c.userData.animalIndex = animals.indexOf(a);
+        allMeshes.push(c);
+      }
+    });
+  });
+  
+  const hits = raycaster.intersectObjects(allMeshes, false);
   return hits.length ? hits[0] : null;
 }
 
-// ----- Hiệu ứng rơi item -----
+// ===== HIỆU ỨNG RƠI =====
 const dropEffects = [];
 function spawnDropEffect(x, y, z, color) {
   const mat = new THREE.MeshLambertMaterial({ color, transparent: true });
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), mat);
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.35), mat);
   mesh.position.set(x, y, z);
   scene.add(mesh);
-  dropEffects.push({ mesh, start: performance.now(), duration: 450 });
+  dropEffects.push({ mesh, start: performance.now(), duration: 400 });
 }
 
 function updateDropEffects() {
@@ -900,7 +1217,7 @@ function updateDropEffects() {
   for (let i = dropEffects.length - 1; i >= 0; i--) {
     const d = dropEffects[i];
     const t = Math.min(1, (now - d.start) / d.duration);
-    d.mesh.position.y += 0.012;
+    d.mesh.position.y += 0.015;
     d.mesh.scale.setScalar(1 - t * 0.8);
     d.mesh.material.opacity = 1 - t;
     if (t >= 1) {
@@ -912,45 +1229,70 @@ function updateDropEffects() {
   }
 }
 
+// ===== PHÁ BLOCK =====
 function breakBlock() {
   const hit = getTargetHit();
   if (!hit) return;
   
-  // Kiểm tra nếu là động vật
+  // Cá
+  if (hit.object.userData.isFish) {
+    const idx = fish.findIndex(f => f.mesh === hit.object);
+    if (idx !== -1) {
+      attackFish(idx);
+      return;
+    }
+    return;
+  }
+  
+  // Động vật
+  if (hit.object.userData.isAnimalPart) {
+    const idx = hit.object.userData.animalIndex;
+    if (idx !== undefined && idx < animals.length) {
+      attackAnimal(idx);
+      return;
+    }
+    return;
+  }
+  
+  // Block
   const instanceId = hit.instanceId;
   const typeIndex = instancedMeshes.indexOf(hit.object);
+  if (typeIndex === -1) return;
   
-  // Tìm block trong worldData
+  // TÌM BLOCK THEO INSTANCE ID
+  let targetKey = null;
+  let targetType = null;
   for (let [kStr, val] of worldVisuals.entries()) {
     if (val.type === typeIndex && val.instanceIdx === instanceId) {
-      // Kiểm tra nếu là động vật (không có trong worldData)
-      if (typeIndex === -1) return;
-      
-      // Kiểm tra nếu là khối nước
-      if (typeIndex === 6) {
-        worldData.delete(kStr);
-        inventory[6]++;
-        updateHotbar();
-        spawnDropEffect(parseInt(kStr.split(',')[0]), parseInt(kStr.split(',')[1]), parseInt(kStr.split(',')[2]), 0x1e88e5);
-        rebuildVisuals();
-        return;
-      }
-      
-      worldData.delete(kStr);
-      inventory[typeIndex]++;
-      updateHotbar();
-      const pos = kStr.split(',').map(Number);
-      spawnDropEffect(pos[0], pos[1], pos[2], BLOCK_TYPES[typeIndex].color);
-      rebuildVisuals();
+      targetKey = kStr;
+      targetType = val.type;
       break;
     }
   }
+  
+  if (!targetKey) return;
+  
+  // CHẶN ĐÀO NƯỚC
+  if (targetType === 6) {
+    return; // Không cho đào khối nước
+  }
+  
+  const [bx, by, bz] = targetKey.split(',').map(Number);
+  
+  worldData.delete(targetKey);
+  inventory[targetType]++;
+  updateHotbar();
+  spawnDropEffect(bx, by, bz, BLOCK_TYPES[targetType].color);
+  markDirty(); // Đánh dấu cần rebuild
 }
 
+// ===== ĐẶT BLOCK =====
 function placeBlock() {
   if (inventory[selectedBlock] <= 0) return;
   const hit = getTargetHit();
   if (!hit) return;
+  
+  if (hit.object.userData.isFish || hit.object.userData.isAnimalPart) return;
   
   const n = hit.face.normal;
   const matrix = new THREE.Matrix4();
@@ -966,19 +1308,45 @@ function placeBlock() {
     worldData.set(kStr, selectedBlock);
     inventory[selectedBlock]--;
     updateHotbar();
-    rebuildVisuals();
+    markDirty(); // Đánh dấu cần rebuild
   }
 }
 
-// ----- Sự kiện chuột -----
+// ===== SỰ KIỆN CHUỘT =====
+let rightHoldTimer = null;
+let isRightHeld = false;
+
 window.addEventListener('mousedown', (e) => {
   if (!gameActive || isMobile || settingsOpen || invOpen) return;
-  if (e.button === 0) breakBlock();
-  else if (e.button === 2) placeBlock();
+  if (e.button === 0) {
+    breakBlock();
+  } else if (e.button === 2) {
+    isRightHeld = true;
+    rightHoldTimer = setTimeout(() => {
+      if (isRightHeld && gameActive) {
+        eatFood();
+        isRightHeld = false;
+      }
+    }, 500);
+  }
 });
+
+window.addEventListener('mouseup', (e) => {
+  if (e.button === 2) {
+    if (rightHoldTimer) {
+      clearTimeout(rightHoldTimer);
+      rightHoldTimer = null;
+    }
+    if (isRightHeld && gameActive) {
+      placeBlock();
+    }
+    isRightHeld = false;
+  }
+});
+
 window.addEventListener('contextmenu', e => e.preventDefault());
 
-// ----- Toàn màn hình -----
+// ===== TOÀN MÀN HÌNH =====
 const fullscreenBtn = document.getElementById('fullscreenBtn');
 fullscreenBtn.addEventListener('click', () => {
   if (!document.fullscreenElement) {
@@ -993,11 +1361,22 @@ document.addEventListener('fullscreenchange', () => {
   fullscreenBtn.textContent = document.fullscreenElement ? '⤓' : '⛶';
 });
 
-// ----- Vòng lặp chính -----
+// ===== VÒNG LẶP CHÍNH =====
 function animate() {
   requestAnimationFrame(animate);
-  if (gameActive && !settingsOpen && !invOpen) updatePlayer();
+  
+  // Rebuild nếu cần (chỉ 1 lần mỗi frame)
+  if (needsRebuild) {
+    rebuildVisuals();
+    needsRebuild = false;
+  }
+  
+  if (gameActive && !settingsOpen && !invOpen) {
+    updatePlayer();
+    updateHighlight();
+  }
   updateAnimals();
+  updateFish();
   updateDropEffects();
   renderer.render(scene, camera);
 }
