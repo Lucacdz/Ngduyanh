@@ -2,9 +2,53 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Mini Minecraft - Bơi & Chìm</title>
+<title>Mini Minecraft - Giant Player & Menu</title>
 <style>
   html, body { margin: 0; padding: 0; overflow: hidden; background:#87CEEB; font-family: 'Courier New', monospace; }
+  
+  /* MAIN MENU */
+  #mainMenu {
+    position: absolute; inset: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    z-index: 100; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; color: white;
+  }
+  #mainMenu h1 {
+    font-size: 64px; margin: 0 0 10px; text-shadow: 4px 4px 0 #000;
+    animation: titleBounce 2s ease-in-out infinite;
+  }
+  @keyframes titleBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  #mainMenu .subtitle { font-size: 18px; opacity: 0.8; margin-bottom: 40px; }
+  .menuBox {
+    background: rgba(0,0,0,0.7); padding: 30px; border-radius: 8px;
+    width: 400px; border: 3px solid rgba(255,255,255,0.3);
+  }
+  .menuBox label { display: block; margin: 15px 0 8px; font-size: 14px; }
+  .menuBox input[type=text] {
+    width: 100%; padding: 10px; background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.3); border-radius: 4px;
+    color: white; font-size: 16px; font-family: monospace;
+  }
+  .menuBox input[type=text]:focus { border-color: #4caf50; outline: none; }
+  .colorRow { display: flex; gap: 10px; align-items: center; margin: 8px 0; }
+  .colorRow label { margin: 0; flex: 1; }
+  .colorRow input[type=color] {
+    width: 60px; height: 40px; border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 4px; cursor: pointer; background: none;
+  }
+  .menuBtn {
+    width: 100%; padding: 15px; margin-top: 15px; border: none; border-radius: 4px;
+    font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.2s;
+    font-family: monospace;
+  }
+  .menuBtn.primary { background: #4caf50; color: white; }
+  .menuBtn.secondary { background: #2196F3; color: white; }
+  .menuBtn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+  .menuBtn:active { transform: translateY(0); }
+
+  /* GAME UI */
   #crosshair {
     position: absolute; top: 50%; left: 50%; width: 6px; height: 6px;
     background: white; border-radius: 50%; transform: translate(-50%, -50%);
@@ -13,12 +57,9 @@
   #underwaterOverlay {
     position: absolute; inset: 0;
     background: radial-gradient(ellipse at center, rgba(30, 136, 229, 0.3) 0%, rgba(13, 71, 161, 0.6) 100%);
-    pointer-events: none; z-index: 4; opacity: 0;
-    transition: opacity 0.5s ease;
+    pointer-events: none; z-index: 4; opacity: 0; transition: opacity 0.5s ease;
   }
-  #underwaterOverlay.active {
-    opacity: 1;
-  }
+  #underwaterOverlay.active { opacity: 1; }
   #hint {
     position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
     color: white; background: rgba(0,0,0,0.7); padding: 8px 14px; border-radius: 4px;
@@ -43,51 +84,37 @@
     background: rgba(0,0,0,0.6); padding: 4px 10px 4px 6px;
     border-radius: 4px; border: 2px solid rgba(255,255,255,0.3);
   }
-  #healthBarBg {
-    width: 160px; height: 16px; background: rgba(0,0,0,0.5);
-    border: 2px solid #555; border-radius: 2px; overflow: hidden;
-  }
-  #healthBarFill {
-    height: 100%; width: 100%; background: #c92a2a;
-    transition: width 0.2s ease;
-  }
-  #healthText {
-    color: white; font-size: 13px; font-weight: bold; text-shadow: 2px 2px 0 #000;
-  }
+  #healthBarBg { width: 160px; height: 16px; background: rgba(0,0,0,0.5); border: 2px solid #555; border-radius: 2px; overflow: hidden; }
+  #healthBarFill { height: 100%; width: 100%; background: #c92a2a; transition: width 0.2s ease; }
+  #healthText { color: white; font-size: 13px; font-weight: bold; text-shadow: 2px 2px 0 #000; }
   #blocker {
     position: absolute; inset: 0; background: rgba(0,0,0,0.75); color: white;
-    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    display: none; align-items: center; justify-content: center; flex-direction: column;
     cursor: pointer; z-index: 10; text-align: center;
   }
   #blocker h2 { font-size: 48px; margin: 0; text-shadow: 4px 4px 0 #2d2d2d; }
   #blocker p { font-size: 18px; opacity: 0.8; }
 
   #mobileControls { display: none; }
-  #lookArea {
-    position: absolute; right: 0; top: 0; width: 55%; height: 100%; z-index: 3;
-    touch-action: none;
-  }
+  #lookArea { position: absolute; right: 0; top: 0; width: 55%; height: 100%; z-index: 3; touch-action: none; }
   #joystickBase {
     position: absolute; left: 26px; bottom: 26px; width: 120px; height: 120px;
-    border-radius: 50%; background: rgba(0,0,0,0.4);
-    border: 3px solid rgba(255,255,255,0.5); z-index: 6; touch-action: none;
+    border-radius: 50%; background: rgba(0,0,0,0.4); border: 3px solid rgba(255,255,255,0.5); z-index: 6; touch-action: none;
   }
   #joystickKnob {
     position: absolute; left: 35px; top: 35px; width: 50px; height: 50px;
-    border-radius: 50%; background: rgba(255,255,255,0.5); pointer-events: none;
-    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%; background: rgba(255,255,255,0.5); pointer-events: none; border: 2px solid rgba(255,255,255,0.3);
   }
   .actionBtn {
     position: absolute; border-radius: 4px; background: rgba(0,0,0,0.6);
     border: 3px solid rgba(255,255,255,0.4); color: white; z-index: 6;
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: bold; user-select: none; touch-action: none;
-    transition: all 0.1s;
+    font-size: 13px; font-weight: bold; user-select: none; touch-action: none; transition: all 0.1s;
   }
   .actionBtn:active { transform: scale(0.92); background: rgba(0,0,0,0.8); }
-  #jumpBtn   { right: 26px; bottom: 26px;  width: 72px; height: 72px; font-size: 15px; }
-  #breakBtn  { right: 118px; bottom: 100px; width: 60px; height: 60px; font-size: 12px; }
-  #placeBtn  { right: 26px; bottom: 118px; width: 60px; height: 60px; font-size: 12px; }
+  #jumpBtn { right: 26px; bottom: 26px; width: 72px; height: 72px; font-size: 15px; }
+  #breakBtn { right: 118px; bottom: 100px; width: 60px; height: 60px; font-size: 12px; }
+  #placeBtn { right: 26px; bottom: 118px; width: 60px; height: 60px; font-size: 12px; }
   #sitMobileBtn { right: 118px; bottom: 26px; width: 60px; height: 60px; font-size: 12px; }
   #runMobileBtn { right: 190px; bottom: 26px; width: 60px; height: 60px; font-size: 12px; }
   .actionBtn.toggledOn { background: #2e7d32 !important; border-color: #fff; }
@@ -96,36 +123,38 @@
     position: absolute; top: 14px; z-index: 7; width: 44px; height: 44px;
     background: rgba(0,0,0,0.7); border: 3px solid rgba(255,255,255,0.4);
     color: white; font-size: 20px; display: flex; align-items: center;
-    justify-content: center; cursor: pointer; border-radius: 4px;
-    transition: all 0.15s;
+    justify-content: center; cursor: pointer; border-radius: 4px; transition: all 0.15s;
   }
   .topBtn:hover { background: rgba(0,0,0,0.9); border-color: #fff; }
   #fullscreenBtn { right: 14px; }
-  #settingsBtn   { right: 66px; }
-  #inventoryBtn  { right: 118px; }
+  #settingsBtn { right: 66px; }
+  #inventoryBtn { right: 118px; }
+  #mpBtn { right: 170px; }
+  #cameraBtn { right: 222px; }
+  #menuBtn { right: 274px; }
 
-  #settingsPanel, #inventoryPanel {
+  #settingsPanel, #inventoryPanel, #mpPanel {
     display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.8);
     z-index: 9; color: white; align-items: center; justify-content: center;
   }
   .box {
     background: rgba(30,30,30,0.95); padding: 24px 28px; border-radius: 4px;
-    width: 280px; text-align: left; border: 3px solid #555;
+    width: 320px; text-align: left; border: 3px solid #555;
   }
   .box h3 { margin: 0 0 16px; text-align: center; font-size: 20px; }
   .box label { display: block; margin: 14px 0 6px; font-size: 13px; }
   .box input[type=range] { width: 100%; accent-color: #4caf50; }
   .box .val { float: right; opacity: 0.8; }
   .box button {
-    margin-top: 20px; width: 100%; padding: 10px; border-radius: 4px; border: none;
-    background: #4caf50; color: white; font-weight: bold; cursor: pointer;
-    font-size: 14px;
+    margin-top: 10px; width: 100%; padding: 10px; border-radius: 4px; border: none;
+    background: #4caf50; color: white; font-weight: bold; cursor: pointer; font-size: 14px;
   }
+  .box button.secondary { background: #2196F3; }
+  .box button.danger { background: #f44336; }
   #invGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .invItem {
     display: flex; flex-direction: column; align-items: center; gap: 4px;
-    background: rgba(255,255,255,0.06); border-radius: 4px; padding: 8px 4px; font-size: 12px;
-    border: 2px solid #444;
+    background: rgba(255,255,255,0.06); border-radius: 4px; padding: 8px 4px; font-size: 12px; border: 2px solid #444;
   }
   .invSwatch { width: 28px; height: 28px; border-radius: 2px; border: 2px solid #555; }
   .hotbarCount {
@@ -139,30 +168,101 @@
     background: rgba(0,0,0,0.6); padding: 4px 10px 4px 6px;
     border-radius: 4px; border: 2px solid rgba(255,255,255,0.3);
   }
-  #hungerBarBg {
-    width: 160px; height: 14px; background: rgba(0,0,0,0.5);
-    border: 2px solid #555; border-radius: 2px; overflow: hidden;
-  }
-  #hungerBarFill {
-    height: 100%; width: 100%; background: #e67700;
-    transition: width 0.2s ease;
-  }
+  #hungerBarBg { width: 160px; height: 14px; background: rgba(0,0,0,0.5); border: 2px solid #555; border-radius: 2px; overflow: hidden; }
+  #hungerBarFill { height: 100%; width: 100%; background: #e67700; transition: width 0.2s ease; }
   #hungerText { color: white; font-size: 12px; font-weight: bold; text-shadow: 2px 2px 0 #000; }
   #foodCountLabel { color: white; font-size: 12px; text-shadow: 2px 2px 0 #000; }
 
+  #oxygenContainer {
+    position: absolute; top: 94px; left: 14px; z-index: 5;
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(0,0,0,0.6); padding: 4px 10px 4px 6px;
+    border-radius: 4px; border: 2px solid rgba(255,255,255,0.3);
+    transition: opacity 0.3s ease; opacity: 0;
+  }
+  #oxygenContainer.visible { opacity: 1; }
+  #oxygenBarBg { width: 160px; height: 14px; background: rgba(0,0,0,0.5); border: 2px solid #555; border-radius: 2px; overflow: hidden; }
+  #oxygenBarFill { height: 100%; width: 100%; background: #29b6f6; transition: width 0.15s ease; }
+  #oxygenText { color: white; font-size: 12px; font-weight: bold; text-shadow: 2px 2px 0 #000; }
+
   #moveModeButtons {
-    position: absolute; top: 88px; left: 14px; z-index: 5; display: flex; gap: 4px;
+    position: absolute; top: 134px; left: 14px; z-index: 5; display: flex; gap: 4px;
   }
   #moveModeButtons button {
     padding: 6px 12px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.4);
-    background: rgba(0,0,0,0.6); color: white; font-size: 12px; cursor: pointer;
-    transition: all 0.15s;
+    background: rgba(0,0,0,0.6); color: white; font-size: 12px; cursor: pointer; transition: all 0.15s;
   }
   #moveModeButtons button:hover { background: rgba(0,0,0,0.8); }
   #moveModeButtons button.toggledOn { background: #2e7d32; border-color: #fff; }
+
+  #chatContainer {
+    position: absolute; bottom: 120px; left: 14px; width: 320px; z-index: 8;
+    display: none; flex-direction: column; gap: 4px;
+  }
+  #chatMessages {
+    background: rgba(0,0,0,0.6); color: white; height: 160px; overflow-y: auto;
+    padding: 8px; font-size: 13px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.3);
+    scrollbar-width: thin; scrollbar-color: #888 transparent;
+  }
+  #chatMessages::-webkit-scrollbar { width: 6px; }
+  #chatMessages::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
+  .chat-msg { margin-bottom: 4px; word-wrap: break-word; }
+  .chat-msg .name { font-weight: bold; color: #4caf50; }
+  .chat-msg.system { color: #ffd700; font-style: italic; }
+  #chatInput {
+    width: 100%; padding: 8px; background: rgba(0,0,0,0.8); color: white;
+    border: 2px solid rgba(255,255,255,0.4); border-radius: 4px; font-size: 14px;
+    font-family: 'Courier New', monospace; outline: none;
+  }
+  #chatInput:focus { border-color: #4caf50; }
+
+  #mpStatusIndicator {
+    position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.7); color: #4caf50; padding: 4px 12px;
+    border-radius: 4px; font-size: 12px; z-index: 5; display: none;
+    border: 2px solid rgba(255,255,255,0.3);
+  }
+  .mp-input {
+    width: 100%; padding: 8px; margin-bottom: 10px; background: rgba(0,0,0,0.5);
+    color: white; border: 2px solid #555; border-radius: 4px; font-family: monospace;
+  }
+  .mp-id-display {
+    background: rgba(0,0,0,0.5); padding: 8px; border-radius: 4px;
+    font-family: monospace; font-size: 16px; color: #4caf50; text-align: center;
+    margin: 10px 0; word-break: break-all; border: 1px dashed #4caf50;
+  }
 </style>
 </head>
 <body>
+
+<!-- MAIN MENU -->
+<div id="mainMenu">
+  <h1>⛏️ MINECRAFT</h1>
+  <div class="subtitle">NGDUYANHDZ</div>
+  <div class="menuBox">
+    <label>👤 Tên người chơi:</label>
+    <input type="text" id="menuPlayerName" value="Người chơi" maxlength="15">
+    
+    <label>🎨 Tùy chỉnh Skin:</label>
+    <div class="colorRow">
+      <label>Màu da:</label>
+      <input type="color" id="skinColor" value="#d2a679">
+    </div>
+    <div class="colorRow">
+      <label>Màu áo:</label>
+      <input type="color" id="shirtColor" value="#2196F3">
+    </div>
+    <div class="colorRow">
+      <label>Màu quần:</label>
+      <input type="color" id="pantsColor" value="#37474F">
+    </div>
+    
+    <button class="menuBtn primary" onclick="startSinglePlayer()">🎮 Chơi đơn</button>
+    <button class="menuBtn secondary" onclick="showMultiplayerMenu()">🌐 Chơi online</button>
+  </div>
+</div>
+
+<!-- GAME UI -->
 <div id="crosshair"></div>
 <div id="underwaterOverlay"></div>
 <div id="healthContainer">
@@ -172,17 +272,26 @@
   <span>🍗</span><div id="hungerBarBg"><div id="hungerBarFill"></div></div><span id="hungerText">100</span>
   <span id="foodCountLabel">🍖 x0</span>
 </div>
-<div id="hint">WASD: di chuyển | Chuột: nhìn | Space: bơi lên | Shift: bơi xuống/chìm<br>Chuột trái: phá | Chuột phải: đặt/giữ để ăn<br>1-7: chọn khối | I: túi | C: ngồi | Shift: chạy<br>🌊 Bơi tự do dưới nước - Càng sâu càng tối</div>
+<div id="oxygenContainer">
+  <span>💨</span><div id="oxygenBarBg"><div id="oxygenBarFill"></div></div><span id="oxygenText">100</span>
+</div>
+<div id="mpStatusIndicator">🟢 Đang chơi nhiều người</div>
+
+<div id="hint">WASD: di chuyển | Chuột: nhìn | Space: bơi lên | Shift: bơi xuống/chìm<br>Chuột trái: phá | Chuột phải: đặt/giữ để ăn<br>1-7: chọn khối | I: túi | C: ngồi | Shift: chạy | V: Đổi góc nhìn | T: Chat</div>
 <div id="moveModeButtons">
   <button id="sitBtn">🪑 Ngồi</button>
   <button id="runBtn">🏃 Chạy</button>
 </div>
 <div id="hotbar"></div>
-<div id="blocker"><h2>MINECRAFT</h2><p>Click để bắt đầu</p></div>
+<div id="blocker"><h2>TẠM DỪNG</h2><p>Click để tiếp tục</p></div>
 
 <div id="fullscreenBtn" class="topBtn">⛶</div>
 <div id="settingsBtn" class="topBtn">⚙</div>
 <div id="inventoryBtn" class="topBtn">🎒</div>
+<div id="mpBtn" class="topBtn">🌐</div>
+<div id="cameraBtn" class="topBtn">🎥</div>
+<div id="menuBtn" class="topBtn">🏠</div>
+
 <div id="inventoryPanel"><div class="box"><h3>📦 Túi đồ</h3><div id="invGrid"></div><button id="closeInventory">Đóng</button></div></div>
 <div id="settingsPanel">
   <div class="box">
@@ -195,10 +304,29 @@
   </div>
 </div>
 
+<div id="mpPanel">
+  <div class="box">
+    <h3>🌐 Đa người chơi</h3>
+    <label>ID của bạn:</label>
+    <div class="mp-id-display" id="myPeerId">Đang khởi tạo...</div>
+    <button class="secondary" onclick="copyPeerId()" style="margin-bottom:15px;">📋 Copy ID</button>
+    <label>Hoặc tham gia phòng khác:</label>
+    <input type="text" id="joinPeerIdInput" class="mp-input" placeholder="Dán ID của Host vào đây...">
+    <button id="joinGameBtn" class="secondary">Tham gia</button>
+    <button id="closeMpBtn" class="danger" style="margin-top:10px;">Đóng</button>
+    <p id="mpStatusText" style="font-size:12px; color:#aaa; margin-top:10px; text-align:center;">Trạng thái: Sẵn sàng</p>
+  </div>
+</div>
+
+<div id="chatContainer">
+  <div id="chatMessages"></div>
+  <input id="chatInput" type="text" placeholder="Nhấn Enter để gửi..." autocomplete="off">
+</div>
+
 <div id="mobileControls">
   <div id="lookArea"></div>
   <div id="joystickBase"><div id="joystickKnob"></div></div>
-  <div id="breakBtn" class="actionBtn">⛏ Phá</div>
+  <div id="breakBtn" class="actionBtn"> Phá</div>
   <div id="placeBtn" class="actionBtn">📦 Đặt</div>
   <div id="jumpBtn" class="actionBtn">⬆ Nhảy</div>
   <div id="sitMobileBtn" class="actionBtn">🪑</div>
@@ -206,6 +334,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
 <script>
 // ===== CẤU HÌNH =====
 const WORLD_SIZE = 80;
@@ -217,11 +347,218 @@ const BLOCK_TYPES = [
   { name: 'Cát', color: 0xe0d18f },
   { name: 'Gỗ',  color: 0x6b4423 },
   { name: 'Lá',  color: 0x2e7d32 },
-  { name: 'Nước', color: 0x1e88e5 }
+  { name: 'Nước', color: 0x3f76e4 }
 ];
 
 let selectedBlock = 0;
 const inventory = new Array(BLOCK_TYPES.length).fill(20);
+let playerName = 'Người chơi';
+let cameraMode = 'third';
+let gameStarted = false;
+
+// Skin colors
+let skinColor = '#d2a679';
+let shirtColor = '#2196F3';
+let pantsColor = '#37474F';
+
+// ===== MENU FUNCTIONS =====
+function startSinglePlayer() {
+  playerName = document.getElementById('menuPlayerName').value || 'Người chơi';
+  skinColor = document.getElementById('skinColor').value;
+  shirtColor = document.getElementById('shirtColor').value;
+  pantsColor = document.getElementById('pantsColor').value;
+  
+  document.getElementById('mainMenu').style.display = 'none';
+  initGame();
+}
+
+function showMultiplayerMenu() {
+  playerName = document.getElementById('menuPlayerName').value || 'Người chơi';
+  skinColor = document.getElementById('skinColor').value;
+  shirtColor = document.getElementById('shirtColor').value;
+  pantsColor = document.getElementById('pantsColor').value;
+  
+  document.getElementById('mainMenu').style.display = 'none';
+  initGame();
+  document.getElementById('mpPanel').style.display = 'flex';
+  initPeer();
+}
+
+function returnToMenu() {
+  gameStarted = false;
+  document.getElementById('mainMenu').style.display = 'flex';
+  document.getElementById('blocker').style.display = 'none';
+  if (document.pointerLockElement) document.exitPointerLock();
+}
+
+document.getElementById('menuBtn').addEventListener('click', returnToMenu);
+
+// ===== MULTIPLAYER & PEERJS =====
+let peer = null;
+let myPeerId = null;
+let connections = []; 
+let hostConnection = null; 
+let isHost = false;
+let isMultiplayer = false;
+let otherPlayers = {}; 
+
+function initPeer() {
+  if (peer) return;
+  peer = new Peer();
+  peer.on('open', (id) => {
+    myPeerId = id;
+    document.getElementById('myPeerId').textContent = id;
+    document.getElementById('mpStatusText').textContent = "Trạng thái: Sẵn sàng";
+  });
+  peer.on('connection', (conn) => {
+    if (!isHost) { conn.close(); return; }
+    setupConnection(conn);
+  });
+  peer.on('error', (err) => {
+    console.error("PeerJS Error:", err);
+    document.getElementById('mpStatusText').textContent = "Lỗi: " + err.type;
+  });
+}
+
+function setupConnection(conn) {
+  if (isHost) {
+    connections.push(conn);
+    broadcastMessage({ type: 'system', msg: `${playerName} (Host) chào mừng!` });
+    sendFullWorldTo(conn);
+  } else {
+    hostConnection = conn;
+    isMultiplayer = true;
+    document.getElementById('mpStatusIndicator').style.display = 'block';
+    document.getElementById('mpStatusText').textContent = "Đã kết nối!";
+    setTimeout(() => { document.getElementById('mpPanel').style.display = 'none'; }, 1000);
+    addChatMessage("Hệ thống", "Đã kết nối!", true);
+  }
+
+  conn.on('data', (data) => handleNetworkData(data, conn.peer));
+  conn.on('close', () => {
+    if (isHost) {
+      connections = connections.filter(c => c !== conn);
+      broadcastMessage({ type: 'system', msg: "Một người chơi đã rời." });
+    } else {
+      isMultiplayer = false;
+      document.getElementById('mpStatusIndicator').style.display = 'none';
+      addChatMessage("Hệ thống", "Mất kết nối!", true);
+    }
+    if (otherPlayers[conn.peer]) {
+      scene.remove(otherPlayers[conn.peer].mesh);
+      delete otherPlayers[conn.peer];
+    }
+  });
+}
+
+function handleNetworkData(data, senderId) {
+  if (data.type === 'chat') {
+    addChatMessage(data.name, data.msg, false, data.nameColor);
+  } else if (data.type === 'move') {
+    updateOtherPlayerPosition(senderId, data.name, data.pos, data.yaw, data.isSitting);
+  } else if (data.type === 'break_block') {
+    if (isHost) {
+      worldData.delete(data.key);
+      markDirty();
+      broadcastMessage(data);
+    }
+  } else if (data.type === 'place_block') {
+    if (isHost) {
+      worldData.set(data.key, data.blockType);
+      markDirty();
+      broadcastMessage(data);
+    }
+  } else if (data.type === 'world_init') {
+    if (!isHost && data.world) {
+      worldData.clear();
+      data.world.forEach(item => worldData.set(item[0], item[1]));
+      markDirty();
+      addChatMessage("Hệ thống", "Đã đồng bộ thế giới!", true);
+    }
+  }
+}
+
+function broadcastMessage(data) {
+  if (!isHost) return;
+  const payload = { ...data, name: playerName, nameColor: shirtColor };
+  connections.forEach(conn => { if (conn.open) conn.send(payload); });
+}
+
+function sendToHost(data) {
+  if (hostConnection && hostConnection.open) hostConnection.send(data);
+}
+
+function sendFullWorldTo(conn) {
+  conn.send({ type: 'world_init', world: Array.from(worldData.entries()) });
+}
+
+function updateOtherPlayerPosition(peerId, name, pos, yaw, isSitting) {
+  if (!otherPlayers[peerId]) {
+    otherPlayers[peerId] = { mesh: createPlayerModel().group, name: name };
+    otherPlayers[peerId].mesh.traverse(c => { if(c.isMesh) c.userData.isOtherPlayer = true; });
+    scene.add(otherPlayers[peerId].mesh);
+  }
+  const p = otherPlayers[peerId];
+  p.mesh.position.set(pos.x, pos.y - 1.6, pos.z);
+  p.mesh.rotation.y = yaw;
+}
+
+// ===== TẠO NHÂN VẬT CAO 2 BLOCK =====
+function createPlayerModel() {
+  const group = new THREE.Group();
+  
+  const skinMat = new THREE.MeshLambertMaterial({ color: skinColor });
+  const shirtMat = new THREE.MeshLambertMaterial({ color: shirtColor });
+  const pantsMat = new THREE.MeshLambertMaterial({ color: pantsColor });
+
+  // Đầu (cao 0.5, rộng 0.5) - vị trí y=1.75
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), skinMat);
+  head.position.y = 1.75; 
+  group.add(head);
+
+  // Thân (cao 0.75, rộng 0.5) - vị trí y=1.125
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.75, 0.3), shirtMat);
+  body.position.y = 1.125;
+  group.add(body);
+
+  // Tay trái (cao 0.75) - pivot ở y=1.5
+  const leftArmPivot = new THREE.Group();
+  leftArmPivot.position.set(-0.35, 1.5, 0);
+  const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.75, 0.2), skinMat);
+  leftArm.position.y = -0.375; 
+  leftArmPivot.add(leftArm);
+  group.add(leftArmPivot);
+
+  // Tay phải
+  const rightArmPivot = new THREE.Group();
+  rightArmPivot.position.set(0.35, 1.5, 0);
+  const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.75, 0.2), skinMat);
+  rightArm.position.y = -0.375;
+  rightArmPivot.add(rightArm);
+  group.add(rightArmPivot);
+
+  // Chân trái (cao 0.75) - pivot ở y=0.375
+  const leftLegPivot = new THREE.Group();
+  leftLegPivot.position.set(-0.15, 0.375, 0);
+  const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.75, 0.24), pantsMat);
+  leftLeg.position.y = -0.375;
+  leftLegPivot.add(leftLeg);
+  group.add(leftLegPivot);
+
+  // Chân phải
+  const rightLegPivot = new THREE.Group();
+  rightLegPivot.position.set(0.15, 0.375, 0);
+  const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.75, 0.24), pantsMat);
+  rightLeg.position.y = -0.375;
+  rightLegPivot.add(rightLeg);
+  group.add(rightLegPivot);
+
+  group.traverse(c => { if (c.isMesh) c.userData.isPlayer = true; });
+
+  return { group, head, leftArmPivot, rightArmPivot, leftLegPivot, rightLegPivot };
+}
+
+let playerModel = null;
 
 // ===== SCENE =====
 const scene = new THREE.Scene();
@@ -231,7 +568,6 @@ scene.fog = new THREE.Fog(0x87CEEB, 40, 100);
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = false;
 document.body.appendChild(renderer.domElement);
 
 window.addEventListener('resize', () => {
@@ -248,10 +584,9 @@ scene.add(sun);
 // ===== INSTANCED MESH =====
 const blockGeo = new THREE.BoxGeometry(1, 1, 1);
 const materials = BLOCK_TYPES.map(b => new THREE.MeshLambertMaterial({ 
-  color: b.color, 
-  transparent: b.name === 'Nước',
-  opacity: b.name === 'Nước' ? 0.5 : 1
+  color: b.color, transparent: b.name === 'Nước', opacity: b.name === 'Nước' ? 0.55 : 1
 }));
+const waterMaterial = materials[6];
 
 const maxInstances = WORLD_SIZE * WORLD_SIZE * 12;
 const instancedMeshes = BLOCK_TYPES.map((_, i) => {
@@ -263,45 +598,36 @@ const instancedMeshes = BLOCK_TYPES.map((_, i) => {
 
 const worldData = new Map();
 const worldVisuals = new Map();
+const waterFlowDist = new Map();
+const MAX_WATER_SPREAD = 5;
+const MIN_WATER_Y = -25;
 
 function key(x,y,z){ return `${Math.round(x)},${Math.round(y)},${Math.round(z)}`; }
 
-// ===== ĐỊA HÌNH =====
 function heightAt(x, z) {
   return Math.floor(3 + Math.sin(x/8)*2.5 + Math.cos(z/8)*2.5 + Math.sin(x/15 + z/12)*1.5);
 }
-
 function hashRandom(x, z, seed) {
   let h = Math.sin(x * 127.1 + z * 311.7 + seed * 74.7) * 43758.5453;
   return h - Math.floor(h);
 }
 
-// ===== TẠO THẾ GIỚI =====
 console.log('Đang tạo map...');
 for (let x = -WORLD_SIZE/2; x < WORLD_SIZE/2; x++) {
   for (let z = -WORLD_SIZE/2; z < WORLD_SIZE/2; z++) {
     const h = heightAt(x, z);
-    
     for (let y = -2; y <= Math.max(h, 1); y++) {
       let type = 2;
-      if (y === h) {
-        if (h <= WATER_LEVEL) type = 3;
-        else type = 0;
-      } else if (y > h - 2) {
-        type = 1;
-      }
+      if (y === h) type = (h <= WATER_LEVEL) ? 3 : 0;
+      else if (y > h - 2) type = 1;
       worldData.set(key(x,y,z), type);
     }
-    
     if (h < WATER_LEVEL) {
-      for (let y = h + 1; y <= WATER_LEVEL; y++) {
-        worldData.set(key(x,y,z), 6);
-      }
+      for (let y = h + 1; y <= WATER_LEVEL; y++) worldData.set(key(x,y,z), 6);
     }
   }
 }
 
-// ===== THÊM CÂY =====
 function addTree(x, y, z) {
   const trunkHeight = 3 + Math.floor(hashRandom(x, z, 2) * 2);
   for (let i = 1; i <= trunkHeight; i++) {
@@ -315,30 +641,21 @@ function addTree(x, y, z) {
         const dist = Math.abs(lx) + Math.abs(lz) + Math.abs(ly - 1) * 0.7;
         if (dist <= 2.4 && !(lx === 0 && lz === 0 && ly === 0)) {
           const bx = x + lx, by = leafY + ly, bz = z + lz;
-          if (by > WATER_LEVEL && !worldData.has(key(bx, by, bz))) {
-            worldData.set(key(bx, by, bz), 5);
-          }
+          if (by > WATER_LEVEL && !worldData.has(key(bx, by, bz))) worldData.set(key(bx, by, bz), 5);
         }
       }
     }
   }
 }
-
 for (let x = -WORLD_SIZE/2; x < WORLD_SIZE/2; x++) {
   for (let z = -WORLD_SIZE/2; z < WORLD_SIZE/2; z++) {
     const h = heightAt(x, z);
-    if (h > WATER_LEVEL + 1 && Math.hypot(x, z) > 6 && hashRandom(x, z, 3) < 0.01) {
-      addTree(x, h, z);
-    }
+    if (h > WATER_LEVEL + 1 && Math.hypot(x, z) > 6 && hashRandom(x, z, 3) < 0.01) addTree(x, h, z);
   }
 }
 
-// ===== XÂY DỰNG VISUAL (TỐI ƯU VỚI DIRTY FLAG) =====
 let needsRebuild = false;
-
-function markDirty() {
-  needsRebuild = true;
-}
+function markDirty() { needsRebuild = true; }
 
 function rebuildVisuals() {
   instancedMeshes.forEach(im => im.count = 0);
@@ -348,236 +665,196 @@ function rebuildVisuals() {
 
   for (let [kStr, type] of worldData.entries()) {
     const [x, y, z] = kStr.split(',').map(Number);
-    
-    // Culling - ẩn các mặt bị che
-    if (type !== 6) {
-      const top = worldData.has(key(x, y+1, z));
-      const bottom = worldData.has(key(x, y-1, z));
-      const left = worldData.has(key(x-1, y, z));
-      const right = worldData.has(key(x+1, y, z));
-      const front = worldData.has(key(x, y, z+1));
-      const back = worldData.has(key(x, y, z-1));
-      if (top && bottom && left && right && front && back) continue;
-    }
+    const top = worldData.has(key(x, y+1, z));
+    const bottom = worldData.has(key(x, y-1, z));
+    const left = worldData.has(key(x-1, y, z));
+    const right = worldData.has(key(x+1, y, z));
+    const front = worldData.has(key(x, y, z+1));
+    const back = worldData.has(key(x, y, z-1));
+    if (top && bottom && left && right && front && back) continue;
 
     const im = instancedMeshes[type];
     const idx = counts[type];
     dummy.position.set(x, y, z);
     dummy.updateMatrix();
     im.setMatrixAt(idx, dummy.matrix);
-    
     worldVisuals.set(kStr, { type, instanceIdx: idx });
     counts[type]++;
   }
-  
   instancedMeshes.forEach((im, i) => {
     im.count = counts[i];
     im.instanceMatrix.needsUpdate = true;
   });
 }
 
-rebuildVisuals();
-console.log('Map đã tạo xong! Số block:', worldData.size);
+const WATER_FLOW_NEIGHBORS = [{ dx: 1, dy: 0, dz: 0 }, { dx: -1, dy: 0, dz: 0 }, { dx: 0, dy: 0, dz: 1 }, { dx: 0, dy: 0, dz: -1 }];
+const WATER_TYPE_INDEX = 6;
 
-// ===== HIGHLIGHT =====
+function tryFillWaterBFS(startX, startY, startZ) {
+  const queue = [[startX, startY, startZ]];
+  const visited = new Set();
+  let anyFilled = false;
+  while (queue.length) {
+    const [x, y, z] = queue.shift();
+    const k = key(x, y, z);
+    if (visited.has(k) || worldData.has(k) || y < MIN_WATER_Y) continue;
+    visited.add(k);
+    let newDist = null;
+    const aboveKey = key(x, y + 1, z);
+    if (worldData.get(aboveKey) === WATER_TYPE_INDEX) {
+      newDist = 0;
+    } else {
+      for (const n of WATER_FLOW_NEIGHBORS) {
+        const nk = key(x + n.dx, y + n.dy, z + n.dz);
+        if (worldData.get(nk) === WATER_TYPE_INDEX) {
+          const nDist = waterFlowDist.get(nk) ?? 0;
+          if (nDist < MAX_WATER_SPREAD) {
+            const candidate = nDist + 1;
+            if (newDist === null || candidate < newDist) newDist = candidate;
+          }
+        }
+      }
+    }
+    if (newDist !== null) {
+      worldData.set(k, WATER_TYPE_INDEX);
+      waterFlowDist.set(k, newDist);
+      anyFilled = true;
+      queue.push([x, y - 1, z]);
+      if (newDist < MAX_WATER_SPREAD) {
+        for (const n of WATER_FLOW_NEIGHBORS) queue.push([x + n.dx, y + n.dy, z + n.dz]);
+      }
+    }
+  }
+  if (anyFilled) markDirty();
+}
+
+rebuildVisuals();
+
+const waterSurfaceGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 48, 48);
+waterSurfaceGeo.rotateX(-Math.PI / 2);
+const waterSurfaceMat = new THREE.MeshLambertMaterial({ color: 0x5b9bf5, transparent: true, opacity: 0.45, side: THREE.DoubleSide });
+const waterSurface = new THREE.Mesh(waterSurfaceGeo, waterSurfaceMat);
+waterSurface.position.set(0, WATER_LEVEL + 0.52, 0);
+scene.add(waterSurface);
+const waterSurfacePosAttr = waterSurfaceGeo.attributes.position;
+const waterSurfaceBaseY = new Float32Array(waterSurfacePosAttr.count);
+for (let i = 0; i < waterSurfacePosAttr.count; i++) waterSurfaceBaseY[i] = waterSurfacePosAttr.getY(i);
+
+function updateWaterSurface(time) {
+  for (let i = 0; i < waterSurfacePosAttr.count; i++) {
+    const x = waterSurfacePosAttr.getX(i);
+    const z = waterSurfacePosAttr.getZ(i);
+    const wave = Math.sin(x * 0.5 + time * 1.6) * 0.06 + Math.cos(z * 0.4 + time * 1.1) * 0.06;
+    waterSurfacePosAttr.setY(i, waterSurfaceBaseY[i] + wave);
+  }
+  waterSurfacePosAttr.needsUpdate = true;
+  waterSurfaceGeo.computeVertexNormals();
+  waterSurfaceMat.opacity = 0.4 + Math.sin(time * 0.9) * 0.05;
+  waterMaterial.opacity = 0.52 + Math.sin(time * 0.9 + 1) * 0.04;
+}
+
 const highlightGeo = new THREE.BoxGeometry(1.01, 1.01, 1.01);
-const highlightMat = new THREE.MeshLambertMaterial({
-  color: 0x000000,
-  wireframe: true,
-  transparent: true,
-  opacity: 0.4
-});
+const highlightMat = new THREE.MeshLambertMaterial({ color: 0x000000, wireframe: true, transparent: true, opacity: 0.4 });
 const highlightMesh = new THREE.Mesh(highlightGeo, highlightMat);
 highlightMesh.visible = false;
 scene.add(highlightMesh);
 
-// ===== CÁ =====
-const fish = [];
-const FISH_TYPES = [
-  { color: 0xff6b00, name: 'Cá hồi' },
-  { color: 0xffd700, name: 'Cá vàng' },
-  { color: 0xff4444, name: 'Cá đỏ' },
-  { color: 0x44ff44, name: 'Cá xanh' }
-];
-
-function spawnFish(x, y, z) {
-  const type = FISH_TYPES[Math.floor(Math.random() * FISH_TYPES.length)];
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(0.4, 0.2, 0.6),
-    new THREE.MeshLambertMaterial({ color: type.color })
-  );
-  mesh.position.set(x, y, z);
-  mesh.userData.isFish = true;
+const bubbleParticles = [];
+function spawnBubble(x, y, z) {
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.04 + Math.random() * 0.05, 6, 6), new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 }));
+  mesh.position.set(x + (Math.random()-0.5)*0.3, y, z + (Math.random()-0.5)*0.3);
   scene.add(mesh);
-  fish.push({
-    mesh,
-    type: type,
-    hp: 2,
-    target: { x: x + (Math.random()-0.5)*4, z: z + (Math.random()-0.5)*4 },
-    speed: 0.015 + Math.random() * 0.025,
-    nextDecision: 0
-  });
+  bubbleParticles.push({ mesh, start: performance.now(), duration: 900 + Math.random()*400 });
+}
+function updateBubbles() {
+  const now = performance.now();
+  for (let i = bubbleParticles.length - 1; i >= 0; i--) {
+    const b = bubbleParticles[i];
+    const t = (now - b.start) / b.duration;
+    if (t >= 1) { scene.remove(b.mesh); b.mesh.geometry.dispose(); b.mesh.material.dispose(); bubbleParticles.splice(i, 1); continue; }
+    b.mesh.position.y += 0.012;
+    b.mesh.material.opacity = 0.7 * (1 - t);
+  }
 }
 
+const fish = [];
+const FISH_TYPES = [{ color: 0xff6b00, name: 'Cá hồi' }, { color: 0xffd700, name: 'Cá vàng' }, { color: 0xff4444, name: 'Cá đỏ' }, { color: 0x44ff44, name: 'Cá xanh' }];
+function spawnFish(x, y, z) {
+  const type = FISH_TYPES[Math.floor(Math.random() * FISH_TYPES.length)];
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.2, 0.6), new THREE.MeshLambertMaterial({ color: type.color }));
+  mesh.position.set(x, y, z); mesh.userData.isFish = true; scene.add(mesh);
+  fish.push({ mesh, type, hp: 2, target: { x: x + (Math.random()-0.5)*4, z: z + (Math.random()-0.5)*4 }, speed: 0.015 + Math.random() * 0.025, nextDecision: 0 });
+}
 for (let i = 0; i < 80; i++) {
   for (let tries = 0; tries < 20; tries++) {
     const x = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.6);
     const z = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.6);
-    const h = heightAt(x, z);
-    if (h < WATER_LEVEL) {
-      const y = WATER_LEVEL - 0.3 - Math.random() * 0.5;
-      spawnFish(x, y, z);
-      break;
-    }
+    if (heightAt(x, z) < WATER_LEVEL) { spawnFish(x, WATER_LEVEL - 0.3 - Math.random() * 0.5, z); break; }
   }
 }
-
 function updateFish() {
   const now = performance.now();
   fish.forEach(f => {
     if (now > f.nextDecision) {
-      f.target.x = f.mesh.position.x + (Math.random()-0.5)*5;
-      f.target.z = f.mesh.position.z + (Math.random()-0.5)*5;
-      f.target.x = THREE.MathUtils.clamp(f.target.x, -WORLD_SIZE/2+3, WORLD_SIZE/2-3);
-      f.target.z = THREE.MathUtils.clamp(f.target.z, -WORLD_SIZE/2+3, WORLD_SIZE/2-3);
+      f.target.x = THREE.MathUtils.clamp(f.mesh.position.x + (Math.random()-0.5)*5, -WORLD_SIZE/2+3, WORLD_SIZE/2-3);
+      f.target.z = THREE.MathUtils.clamp(f.mesh.position.z + (Math.random()-0.5)*5, -WORLD_SIZE/2+3, WORLD_SIZE/2-3);
       f.nextDecision = now + 2000 + Math.random() * 3000;
     }
-    const dx = f.target.x - f.mesh.position.x;
-    const dz = f.target.z - f.mesh.position.z;
+    const dx = f.target.x - f.mesh.position.x, dz = f.target.z - f.mesh.position.z;
     const dist = Math.hypot(dx, dz);
     if (dist > 0.2) {
-      f.mesh.position.x += (dx/dist) * f.speed;
-      f.mesh.position.z += (dz/dist) * f.speed;
-      f.mesh.rotation.y = Math.atan2(dx, dz);
-      f.mesh.rotation.z = Math.sin(now / 300 + f.mesh.position.x) * 0.1;
+      f.mesh.position.x += (dx/dist) * f.speed; f.mesh.position.z += (dz/dist) * f.speed;
+      f.mesh.rotation.y = Math.atan2(dx, dz); f.mesh.rotation.z = Math.sin(now / 300 + f.mesh.position.x) * 0.1;
     }
   });
 }
-
 function attackFish(index) {
-  const f = fish[index];
-  if (!f) return;
-  f.hp--;
-  const origColor = f.mesh.material.color.getHex();
-  f.mesh.material = f.mesh.material.clone();
-  f.mesh.material.color.setHex(0xff5555);
-  setTimeout(() => { 
-    if (f.mesh.material) f.mesh.material.color.setHex(origColor); 
-  }, 120);
-  
+  const f = fish[index]; if (!f) return; f.hp--;
+  f.mesh.material = f.mesh.material.clone(); f.mesh.material.color.setHex(0xff5555);
+  setTimeout(() => { if (f.mesh.material) f.mesh.material.color.setHex(f.type.color); }, 120);
   if (f.hp <= 0) {
-    scene.remove(f.mesh);
-    addFishMeat(f.type.name);
-    spawnDropEffect(f.mesh.position.x, f.mesh.position.y, f.mesh.position.z, f.type.color);
+    scene.remove(f.mesh); addFishMeat(f.type.name); spawnDropEffect(f.mesh.position.x, f.mesh.position.y, f.mesh.position.z, f.type.color);
     fish.splice(index, 1);
-    setTimeout(() => {
-      for (let tries = 0; tries < 20; tries++) {
-        const x = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.6);
-        const z = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.6);
-        const h = heightAt(x, z);
-        if (h < WATER_LEVEL) {
-          const y = WATER_LEVEL - 0.3 - Math.random() * 0.5;
-          spawnFish(x, y, z);
-          break;
-        }
-      }
-    }, 8000);
   }
 }
 
-// ===== QUẢN LÝ THỨC ĂN =====
-let foodInventory = [];
-let totalFood = 0;
-
-function addMeat(kind) {
-  foodInventory.push({ type: 'meat', name: MEAT_TYPES[kind].name, color: MEAT_TYPES[kind].color });
-  totalFood++;
-  updateHungerUI();
-  renderInventoryPanel();
-}
-
-function addFishMeat(name) {
-  foodInventory.push({ type: 'fish', name: name, color: 0x00aaff });
-  totalFood++;
-  updateHungerUI();
-  renderInventoryPanel();
-}
-
+let foodInventory = [], totalFood = 0;
+function addFishMeat(name) { foodInventory.push({ type: 'fish', name: name, color: 0x00aaff }); totalFood++; updateHungerUI(); renderInventoryPanel(); }
 function eatFood() {
   if (totalFood <= 0 || hunger >= 100) return false;
-  const food = foodInventory.pop();
-  if (food) {
-    totalFood--;
-    hunger = Math.min(100, hunger + 35);
-    updateHungerUI();
-    renderInventoryPanel();
-    return true;
-  }
-  return false;
+  foodInventory.pop(); totalFood--; hunger = Math.min(100, hunger + 35);
+  updateHungerUI(); renderInventoryPanel(); return true;
 }
 
-// ===== ĐỘNG VẬT =====
 const animals = [];
-const MEAT_TYPES = {
-  pig: { color: 0xe8a0b4, name: 'Thịt heo' },
-  cow: { color: 0xc0392b, name: 'Thịt bò' },
-  sheep: { color: 0xecf0f1, name: 'Thịt cừu' }
-};
-
+const MEAT_TYPES = { pig: { color: 0xe8a0b4, name: 'Thịt heo' }, cow: { color: 0xc0392b, name: 'Thịt bò' }, sheep: { color: 0xecf0f1, name: 'Thịt cừu' } };
 function createAnimalMesh(kind) {
   const group = new THREE.Group();
   let bodyColor, headColor, legColor, bodySize, headSize;
-  if (kind === 'pig') {
-    bodyColor = 0xf3a9c1; headColor = 0xf3a9c1; legColor = 0xdb88a4;
-    bodySize = [0.9, 0.55, 1.2]; headSize = [0.5, 0.45, 0.45];
-  } else if (kind === 'cow') {
-    bodyColor = 0xf5f0e6; headColor = 0x3b2a20; legColor = 0x3b2a20;
-    bodySize = [1.0, 0.65, 1.4]; headSize = [0.5, 0.5, 0.5];
-  } else {
-    bodyColor = 0xffffff; headColor = 0x2b2b2b; legColor = 0x2b2b2b;
-    bodySize = [0.9, 0.6, 1.1]; headSize = [0.4, 0.4, 0.4];
-  }
-  const bodyMat = new THREE.MeshLambertMaterial({ color: bodyColor });
-  const headMat = new THREE.MeshLambertMaterial({ color: headColor });
-  const legMat = new THREE.MeshLambertMaterial({ color: legColor });
-
-  const body = new THREE.Mesh(new THREE.BoxGeometry(...bodySize), bodyMat);
-  body.position.y = 0.55; group.add(body);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(...headSize), headMat);
-  head.position.set(0, 0.65, bodySize[2]/2 + headSize[2]/2 - 0.05); group.add(head);
+  if (kind === 'pig') { bodyColor = 0xf3a9c1; headColor = 0xf3a9c1; legColor = 0xdb88a4; bodySize = [0.9, 0.55, 1.2]; headSize = [0.5, 0.45, 0.45]; } 
+  else if (kind === 'cow') { bodyColor = 0xf5f0e6; headColor = 0x3b2a20; legColor = 0x3b2a20; bodySize = [1.0, 0.65, 1.4]; headSize = [0.5, 0.5, 0.5]; } 
+  else { bodyColor = 0xffffff; headColor = 0x2b2b2b; legColor = 0x2b2b2b; bodySize = [0.9, 0.6, 1.1]; headSize = [0.4, 0.4, 0.4]; }
+  const bodyMat = new THREE.MeshLambertMaterial({ color: bodyColor }), headMat = new THREE.MeshLambertMaterial({ color: headColor }), legMat = new THREE.MeshLambertMaterial({ color: legColor });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(...bodySize), bodyMat); body.position.y = 0.55; group.add(body);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(...headSize), headMat); head.position.set(0, 0.65, bodySize[2]/2 + headSize[2]/2 - 0.05); group.add(head);
   const legGeo = new THREE.BoxGeometry(0.15, 0.4, 0.15);
   const ox = bodySize[0]/2 - 0.1, oz = bodySize[2]/2 - 0.15;
-  [[ox,oz],[-ox,oz],[ox,-oz],[-ox,-oz]].forEach(([lx, lz]) => {
-    const leg = new THREE.Mesh(legGeo, legMat); leg.position.set(lx, 0.2, lz); group.add(leg);
-  });
+  [[ox,oz],[-ox,oz],[ox,-oz],[-ox,-oz]].forEach(([lx, lz]) => { const leg = new THREE.Mesh(legGeo, legMat); leg.position.set(lx, 0.2, lz); group.add(leg); });
   group.traverse(c => { if (c.isMesh) c.userData.isAnimalPart = true; });
   return group;
 }
-
 function spawnAnimalAt(kind, x, z) {
-  const h = heightAt(x, z);
-  if (h <= WATER_LEVEL) return;
-  const mesh = createAnimalMesh(kind);
-  mesh.position.set(x, h + 0.5, z);
-  scene.add(mesh);
+  const h = heightAt(x, z); if (h <= WATER_LEVEL) return;
+  const mesh = createAnimalMesh(kind); mesh.position.set(x, h + 0.5, z); scene.add(mesh);
   animals.push({ mesh, kind, hp: 3, target: { x, z }, speed: 0.018 + Math.random()*0.014, nextDecision: 0 });
 }
-
 function spawnRandomAnimal(kind) {
   for (let tries = 0; tries < 25; tries++) {
-    const x = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.6);
-    const z = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.6);
-    const h = heightAt(x, z);
-    if (h <= WATER_LEVEL) continue;
-    spawnAnimalAt(kind, x, z);
-    return;
+    const x = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.6), z = Math.floor((Math.random()-0.5) * WORLD_SIZE * 0.6);
+    if (heightAt(x, z) > WATER_LEVEL) { spawnAnimalAt(kind, x, z); return; }
   }
 }
-
-for (let i = 0; i < 20; i++) {
-  const kinds = ['pig', 'cow', 'sheep'];
-  spawnRandomAnimal(kinds[i % kinds.length]);
-}
+for (let i = 0; i < 20; i++) spawnRandomAnimal(['pig', 'cow', 'sheep'][i % 3]);
 
 function updateAnimals() {
   const now = performance.now();
@@ -587,64 +864,46 @@ function updateAnimals() {
       for (let tries = 0; tries < 6; tries++) {
         tx = THREE.MathUtils.clamp(a.mesh.position.x + (Math.random()-0.5)*10, -WORLD_SIZE/2+2, WORLD_SIZE/2-2);
         tz = THREE.MathUtils.clamp(a.mesh.position.z + (Math.random()-0.5)*10, -WORLD_SIZE/2+2, WORLD_SIZE/2-2);
-        const h = heightAt(Math.round(tx), Math.round(tz));
-        if (h > WATER_LEVEL) { ok = true; break; }
+        if (heightAt(Math.round(tx), Math.round(tz)) > WATER_LEVEL) { ok = true; break; }
       }
       if (ok) a.target = { x: tx, z: tz };
       a.nextDecision = now + 2500 + Math.random()*3000;
     }
-    const dx = a.target.x - a.mesh.position.x;
-    const dz = a.target.z - a.mesh.position.z;
+    const dx = a.target.x - a.mesh.position.x, dz = a.target.z - a.mesh.position.z;
     const dist = Math.hypot(dx, dz);
     if (dist > 0.1) {
-      a.mesh.position.x += (dx/dist) * a.speed;
-      a.mesh.position.z += (dz/dist) * a.speed;
-      a.mesh.rotation.y = Math.atan2(dx, dz);
+      a.mesh.position.x += (dx/dist) * a.speed; a.mesh.position.z += (dz/dist) * a.speed; a.mesh.rotation.y = Math.atan2(dx, dz);
     }
-    const groundH = heightAt(Math.round(a.mesh.position.x), Math.round(a.mesh.position.z));
-    a.mesh.position.y = Math.max(groundH + 0.5, WATER_LEVEL + 0.5);
+    a.mesh.position.y = Math.max(heightAt(Math.round(a.mesh.position.x), Math.round(a.mesh.position.z)) + 0.5, WATER_LEVEL + 0.5);
   });
 }
-
 function flashAnimal(a) {
   a.mesh.traverse(c => {
     if (c.isMesh) {
-      const original = c.material.color.getHex();
-      c.material = c.material.clone();
-      c.material.color.setHex(0xff5555);
+      const original = c.material.color.getHex(); c.material = c.material.clone(); c.material.color.setHex(0xff5555);
       setTimeout(() => { if (c.material) c.material.color.setHex(original); }, 120);
     }
   });
 }
-
 function attackAnimal(idx) {
-  const a = animals[idx]; if (!a) return;
-  a.hp--; flashAnimal(a);
+  const a = animals[idx]; if (!a) return; a.hp--; flashAnimal(a);
   if (a.hp <= 0) {
-    scene.remove(a.mesh);
-    const meatColor = MEAT_TYPES[a.kind].color;
-    addMeat(a.kind);
-    spawnDropEffect(a.mesh.position.x, a.mesh.position.y, a.mesh.position.z, meatColor);
-    animals.splice(idx, 1);
-    setTimeout(() => spawnRandomAnimal(a.kind), 15000);
+    scene.remove(a.mesh); addMeat(a.kind); spawnDropEffect(a.mesh.position.x, a.mesh.position.y, a.mesh.position.z, MEAT_TYPES[a.kind].color);
+    animals.splice(idx, 1); setTimeout(() => spawnRandomAnimal(a.kind), 15000);
   }
 }
+function addMeat(kind) { foodInventory.push({ type: 'meat', name: MEAT_TYPES[kind].name, color: MEAT_TYPES[kind].color }); totalFood++; updateHungerUI(); renderInventoryPanel(); }
 
-// ===== HOTBAR UI =====
 const hotbar = document.getElementById('hotbar');
 BLOCK_TYPES.forEach((b, i) => {
   const el = document.createElement('div');
   el.className = 'slot' + (i === selectedBlock ? ' active' : '');
   el.style.background = '#' + b.color.toString(16).padStart(6,'0');
-  el.style.position = 'relative';
-  const count = document.createElement('span');
-  count.className = 'hotbarCount';
-  count.textContent = inventory[i];
+  const count = document.createElement('span'); count.className = 'hotbarCount'; count.textContent = inventory[i];
   el.appendChild(count);
   el.addEventListener('click', () => { selectedBlock = i; updateHotbar(); });
   hotbar.appendChild(el);
 });
-
 function updateHotbar() {
   [...hotbar.children].forEach((el, i) => {
     el.classList.toggle('active', i === selectedBlock);
@@ -653,31 +912,24 @@ function updateHotbar() {
 }
 updateHotbar();
 
-// ===== ĐIỀU KHIỂN =====
 const blocker = document.getElementById('blocker');
 const mobileControls = document.getElementById('mobileControls');
 let yaw = 0, pitch = 0;
 let gameActive = false;
-
 const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
 if (isMobile) {
   mobileControls.style.display = 'block';
-  document.getElementById('hint').innerHTML =
-    'Joystick: di chuyển | Vuốt phải: nhìn<br>Phá | Đặt/Ăn (giữ) | Nhảy/Bơi lên | 🪑 Ngồi | 🏃 Chạy<br>🌊 Bơi tự do dưới nước';
 }
 
 function activateGame() {
+  if (document.getElementById('chatInput') === document.activeElement) return;
   gameActive = true;
   blocker.style.display = 'none';
-  if (!isMobile && document.pointerLockElement !== document.body) {
-    document.body.requestPointerLock();
-  }
+  if (!isMobile && document.pointerLockElement !== document.body) document.body.requestPointerLock();
 }
-
 blocker.addEventListener('click', activateGame);
 blocker.addEventListener('touchstart', (e) => { e.preventDefault(); activateGame(); });
-
 document.addEventListener('pointerlockchange', () => {
   if (!isMobile) {
     gameActive = (document.pointerLockElement === document.body);
@@ -685,122 +937,83 @@ document.addEventListener('pointerlockchange', () => {
   }
 });
 
-// ===== CÀI ĐẶT =====
 let mouseSensitivity = 1, touchSensitivity = 1;
-let settingsOpen = false;
+let settingsOpen = false, invOpen = false, chatOpen = false;
 document.getElementById('settingsBtn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  settingsOpen = true;
-  document.getElementById('settingsPanel').style.display = 'flex';
+  e.stopPropagation(); settingsOpen = true; document.getElementById('settingsPanel').style.display = 'flex';
   if (document.pointerLockElement) document.exitPointerLock();
 });
 document.getElementById('closeSettings').addEventListener('click', (e) => {
-  e.stopPropagation();
-  settingsOpen = false;
-  document.getElementById('settingsPanel').style.display = 'none';
+  e.stopPropagation(); settingsOpen = false; document.getElementById('settingsPanel').style.display = 'none';
   if (!isMobile && gameActive) document.body.requestPointerLock();
 });
-
-const mouseSensSlider = document.getElementById('mouseSensSlider');
-mouseSensSlider.addEventListener('input', () => {
-  mouseSensitivity = parseFloat(mouseSensSlider.value);
-  document.getElementById('mouseSensVal').textContent = mouseSensitivity.toFixed(1) + 'x';
+document.getElementById('mouseSensSlider').addEventListener('input', (e) => {
+  mouseSensitivity = parseFloat(e.target.value); document.getElementById('mouseSensVal').textContent = mouseSensitivity.toFixed(1) + 'x';
 });
-const touchSensSlider = document.getElementById('touchSensSlider');
-touchSensSlider.addEventListener('input', () => {
-  touchSensitivity = parseFloat(touchSensSlider.value);
-  document.getElementById('touchSensVal').textContent = touchSensitivity.toFixed(1) + 'x';
+document.getElementById('touchSensSlider').addEventListener('input', (e) => {
+  touchSensitivity = parseFloat(e.target.value); document.getElementById('touchSensVal').textContent = touchSensitivity.toFixed(1) + 'x';
 });
 
-// ===== TÚI ĐỒ =====
-let invOpen = false;
-const inventoryBtn = document.getElementById('inventoryBtn');
 const inventoryPanel = document.getElementById('inventoryPanel');
 const invGrid = document.getElementById('invGrid');
-
 function renderInventoryPanel() {
   invGrid.innerHTML = '';
   BLOCK_TYPES.forEach((b, i) => {
-    const item = document.createElement('div');
-    item.className = 'invItem';
+    const item = document.createElement('div'); item.className = 'invItem';
     const color = i === 6 ? '#1e88e5' : '#' + b.color.toString(16).padStart(6,'0');
     item.innerHTML = `<div class="invSwatch" style="background:${color}"></div><span>${b.name}</span><span>x${inventory[i]}</span>`;
     invGrid.appendChild(item);
   });
-  
-  const foodCount = {};
-  foodInventory.forEach(f => {
-    foodCount[f.name] = (foodCount[f.name] || 0) + 1;
-  });
-  
-  const foodDiv = document.createElement('div');
-  foodDiv.className = 'invItem';
-  foodDiv.style.gridColumn = '1 / -1';
+  const foodDiv = document.createElement('div'); foodDiv.className = 'invItem'; foodDiv.style.gridColumn = '1 / -1';
   let foodText = '🍖 ';
+  const foodCount = {}; foodInventory.forEach(f => { foodCount[f.name] = (foodCount[f.name] || 0) + 1; });
   const names = Object.keys(foodCount);
-  if (names.length === 0) {
-    foodText += 'Không có thức ăn';
-  } else {
-    foodText += names.map(n => `${n} x${foodCount[n]}`).join(', ');
-  }
+  foodText += names.length === 0 ? 'Không có thức ăn' : names.map(n => `${n} x${foodCount[n]}`).join(', ');
   foodDiv.innerHTML = `<span style="font-size:14px;">${foodText}</span>`;
   invGrid.appendChild(foodDiv);
 }
-
-function openInventory() {
-  invOpen = true;
-  renderInventoryPanel();
-  inventoryPanel.style.display = 'flex';
+document.getElementById('inventoryBtn').addEventListener('click', () => {
+  invOpen = true; renderInventoryPanel(); inventoryPanel.style.display = 'flex';
   if (document.pointerLockElement) document.exitPointerLock();
-}
-function closeInventory() {
-  invOpen = false;
-  inventoryPanel.style.display = 'none';
+});
+document.getElementById('closeInventory').addEventListener('click', () => {
+  invOpen = false; inventoryPanel.style.display = 'none';
   if (!isMobile && gameActive) document.body.requestPointerLock();
-}
-inventoryBtn.addEventListener('click', openInventory);
-document.getElementById('closeInventory').addEventListener('click', closeInventory);
-
-// ===== CHUỘT =====
-document.addEventListener('mousemove', (e) => {
-  if (!gameActive || isMobile || settingsOpen || invOpen) return;
-  yaw -= e.movementX * 0.002 * mouseSensitivity;
-  pitch -= e.movementY * 0.002 * mouseSensitivity;
-  pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, pitch));
 });
 
-// ===== MOBILE TOUCH =====
+document.addEventListener('mousemove', (e) => {
+  if (!gameActive || isMobile || settingsOpen || invOpen || chatOpen) return;
+  yaw -= e.movementX * 0.002 * mouseSensitivity;
+  pitch -= e.movementY * 0.002 * mouseSensitivity;
+  pitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, pitch));
+});
+
 const lookArea = document.getElementById('lookArea');
 let lookTouchId = null, lastLookX = 0, lastLookY = 0;
 lookArea.addEventListener('touchstart', (e) => {
-  if (!gameActive) return;
-  const t = e.changedTouches[0];
-  lookTouchId = t.identifier; lastLookX = t.clientX; lastLookY = t.clientY;
+  if (!gameActive || chatOpen) return;
+  const t = e.changedTouches[0]; lookTouchId = t.identifier; lastLookX = t.clientX; lastLookY = t.clientY;
 }, { passive: true });
 lookArea.addEventListener('touchmove', (e) => {
-  if (!gameActive || settingsOpen || invOpen) return;
+  if (!gameActive || settingsOpen || invOpen || chatOpen) return;
   for (const t of e.changedTouches) {
     if (t.identifier !== lookTouchId) continue;
     yaw -= (t.clientX - lastLookX) * 0.004 * touchSensitivity;
     pitch -= (t.clientY - lastLookY) * 0.004 * touchSensitivity;
     lastLookX = t.clientX; lastLookY = t.clientY;
-    pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, pitch));
+    pitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, pitch));
   }
 }, { passive: true });
 
-// ===== JOYSTICK =====
 let joyVec = { x: 0, y: 0 }, joyTouchId = null;
 const joyKnob = document.getElementById('joystickKnob');
-document.getElementById('joystickBase').addEventListener('touchstart', (e) => {
-  joyTouchId = e.changedTouches[0].identifier;
-}, { passive: true });
+document.getElementById('joystickBase').addEventListener('touchstart', (e) => { joyTouchId = e.changedTouches[0].identifier; }, { passive: true });
 document.getElementById('joystickBase').addEventListener('touchmove', (e) => {
   for (const t of e.changedTouches) {
     if (t.identifier !== joyTouchId) continue;
     const r = document.getElementById('joystickBase').getBoundingClientRect();
     let dx = t.clientX - (r.left + 60), dy = t.clientY - (r.top + 60);
-    const dist = Math.min(Math.hypot(dx, dy), 45);
-    const angle = Math.atan2(dy, dx);
+    const dist = Math.min(Math.hypot(dx, dy), 45), angle = Math.atan2(dy, dx);
     dx = Math.cos(angle) * dist; dy = Math.sin(angle) * dist;
     joyKnob.style.left = (35 + dx) + 'px'; joyKnob.style.top = (35 + dy) + 'px';
     joyVec = { x: dx / 45, y: dy / 45 };
@@ -810,574 +1023,454 @@ document.getElementById('joystickBase').addEventListener('touchend', () => {
   joyTouchId = null; joyVec = {x:0,y:0}; joyKnob.style.left='35px'; joyKnob.style.top='35px';
 });
 
-// ===== NÚT MOBILE =====
 const jumpBtn = document.getElementById('jumpBtn');
 jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); keys['Space'] = true; }, { passive: false });
 jumpBtn.addEventListener('touchend', (e) => { e.preventDefault(); keys['Space'] = false; }, { passive: false });
+document.getElementById('breakBtn').addEventListener('touchstart', (e) => { e.preventDefault(); if (gameActive) breakBlock(); }, { passive: false });
 
-document.getElementById('breakBtn').addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  if (gameActive) breakBlock();
-}, { passive: false });
-
-let placeHoldTimer = null;
-let isPlaceHeld = false;
+let placeHoldTimer = null, isPlaceHeld = false;
 const placeBtn = document.getElementById('placeBtn');
-
 placeBtn.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  if (!gameActive) return;
-  isPlaceHeld = true;
-  placeHoldTimer = setTimeout(() => {
-    if (isPlaceHeld && gameActive) {
-      eatFood();
-      isPlaceHeld = false;
-    }
-  }, 500);
+  e.preventDefault(); if (!gameActive) return; isPlaceHeld = true;
+  placeHoldTimer = setTimeout(() => { if (isPlaceHeld && gameActive) { eatFood(); isPlaceHeld = false; } }, 500);
 }, { passive: false });
-
 placeBtn.addEventListener('touchend', (e) => {
-  e.preventDefault();
-  if (placeHoldTimer) {
-    clearTimeout(placeHoldTimer);
-    placeHoldTimer = null;
-  }
-  if (isPlaceHeld && gameActive) {
-    placeBlock();
-  }
-  isPlaceHeld = false;
+  e.preventDefault(); if (placeHoldTimer) { clearTimeout(placeHoldTimer); placeHoldTimer = null; }
+  if (isPlaceHeld && gameActive) placeBlock(); isPlaceHeld = false;
 }, { passive: false });
 
-placeBtn.addEventListener('touchcancel', (e) => {
-  if (placeHoldTimer) {
-    clearTimeout(placeHoldTimer);
-    placeHoldTimer = null;
-  }
-  isPlaceHeld = false;
-}, { passive: false });
-
-// ===== PHÍM TẮT =====
 const keys = {};
-window.addEventListener('keydown', e => keys[e.code] = true);
+window.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (e.key === 't' || e.key === 'T') {
+    e.preventDefault();
+    toggleChat();
+  }
+});
 window.addEventListener('keyup', e => keys[e.code] = false);
 
 window.addEventListener('keydown', (e) => {
+  if (chatOpen) return;
   if (e.key >= '1' && e.key <= '7') { selectedBlock = parseInt(e.key) - 1; updateHotbar(); }
-  if (e.key === 'i' || e.key === 'I') { invOpen ? closeInventory() : openInventory(); }
-  if (e.key === 'c' || e.key === 'C') { setSitting(!isSitting); }
+  if (e.key === 'i' || e.key === 'I') { invOpen ? document.getElementById('closeInventory').click() : document.getElementById('inventoryBtn').click(); }
+  if (e.key === 'c' || e.key === 'C') setSitting(!isSitting);
+  if (e.key === 'v' || e.key === 'V' || e.key === 'F5') {
+    e.preventDefault();
+    toggleCameraMode();
+  }
 });
 
-// ===== NGỒI / CHẠY =====
-let isSitting = false, runButtonHeld = false;
-const sitBtn = document.getElementById('sitBtn');
-const runBtn = document.getElementById('runBtn');
+function toggleCameraMode() {
+  cameraMode = cameraMode === 'first' ? 'third' : 'first';
+  document.getElementById('cameraBtn').textContent = cameraMode === 'first' ? '👤' : '🎥';
+}
+document.getElementById('cameraBtn').addEventListener('click', () => {
+  toggleCameraMode();
+  if (!isMobile && gameActive) document.body.requestPointerLock();
+});
 
+const chatContainer = document.getElementById('chatContainer');
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  if (chatOpen) {
+    chatContainer.style.display = 'flex';
+    chatInput.focus();
+    if (document.pointerLockElement) document.exitPointerLock();
+  } else {
+    chatContainer.style.display = 'none';
+    chatInput.value = '';
+    if (!isMobile && gameActive) document.body.requestPointerLock();
+  }
+}
+
+chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const msg = chatInput.value.trim();
+    if (msg) {
+      sendChatMessage(msg);
+      chatInput.value = '';
+    }
+  } else if (e.key === 'Escape') {
+    toggleChat();
+  }
+});
+
+function sendChatMessage(msg) {
+  const data = { type: 'chat', msg: msg, name: playerName, nameColor: shirtColor };
+  if (isHost) {
+    broadcastMessage(data);
+    addChatMessage(data.name, data.msg, false, data.nameColor);
+  } else {
+    sendToHost(data);
+    addChatMessage(data.name, data.msg, false, data.nameColor);
+  }
+}
+
+function addChatMessage(name, msg, isSystem = false, color = '#4caf50') {
+  const div = document.createElement('div');
+  div.className = 'chat-msg' + (isSystem ? ' system' : '');
+  if (isSystem) {
+    div.innerHTML = `<span>${msg}</span>`;
+  } else {
+    div.innerHTML = `<span class="name" style="color:${color}">${name}:</span> <span>${msg}</span>`;
+  }
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+let isSitting = false, runButtonHeld = false;
+const sitBtn = document.getElementById('sitBtn'), runBtn = document.getElementById('runBtn');
 function setSitting(v) {
-  isSitting = v;
-  sitBtn.classList.toggle('toggledOn', v);
-  document.getElementById('sitMobileBtn').classList.toggle('toggledOn', v);
-  sitBtn.textContent = v ? '🪑 Đứng' : '🪑 Ngồi';
-  if (v) player.vel.set(0, 0, 0);
+  isSitting = v; sitBtn.classList.toggle('toggledOn', v); document.getElementById('sitMobileBtn').classList.toggle('toggledOn', v);
+  sitBtn.textContent = v ? '🪑 Đứng' : '🪑 Ngồi'; if (v) player.vel.set(0, 0, 0);
 }
 sitBtn.addEventListener('click', () => setSitting(!isSitting));
-
 function setRunning(v) {
-  runButtonHeld = v;
-  const rNow = isRunningNow();
-  runBtn.classList.toggle('toggledOn', rNow);
-  document.getElementById('runMobileBtn').classList.toggle('toggledOn', rNow);
+  runButtonHeld = v; const rNow = isRunningNow();
+  runBtn.classList.toggle('toggledOn', rNow); document.getElementById('runMobileBtn').classList.toggle('toggledOn', rNow);
 }
 function isRunningNow() { return !isSitting && (runButtonHeld || keys['ShiftLeft'] || keys['ShiftRight']); }
 runBtn.addEventListener('mousedown', () => setRunning(true));
 runBtn.addEventListener('mouseup', () => setRunning(false));
 runBtn.addEventListener('mouseleave', () => setRunning(false));
-
 document.getElementById('sitMobileBtn').addEventListener('touchstart', (e) => { e.preventDefault(); setSitting(!isSitting); }, { passive: false });
 document.getElementById('runMobileBtn').addEventListener('touchstart', (e) => { e.preventDefault(); setRunning(!runButtonHeld); }, { passive: false });
 
-// ===== NGƯỜI CHƠI =====
-const player = {
-  pos: new THREE.Vector3(0, heightAt(0,0) + 5, 0),
-  vel: new THREE.Vector3(0,0,0),
-  onGround: false,
-  inWater: false,
-  depth: 0 // Độ sâu dưới nước
-};
-
-// ===== MÁU =====
+const player = { pos: new THREE.Vector3(0, heightAt(0,0) + 5, 0), vel: new THREE.Vector3(0,0,0), onGround: false, inWater: false, depth: 0, drowning: false, lastDrownDamage: 0, bubbleTimer: 0 };
 let health = 100, hunger = 100;
-const healthBarFill = document.getElementById('healthBarFill');
-const healthText = document.getElementById('healthText');
-
+const healthBarFill = document.getElementById('healthBarFill'), healthText = document.getElementById('healthText');
 function takeDamage(amount) {
-  health = Math.max(0, health - amount);
-  healthBarFill.style.width = health + '%';
-  healthText.textContent = Math.round(health);
+  health = Math.max(0, health - amount); healthBarFill.style.width = health + '%'; healthText.textContent = Math.round(health);
   if (health <= 0) respawnPlayer();
 }
-
 function respawnPlayer() {
-  player.pos.set(0, heightAt(0,0) + 5, 0);
-  player.vel.set(0, 0, 0);
-  health = 100;
-  takeDamage(0);
+  player.pos.set(0, heightAt(0,0) + 5, 0); player.vel.set(0, 0, 0); health = 100; oxygen = 100; player.drowning = false;
+  healthBarFill.style.width = '100%'; healthText.textContent = '100'; updateOxygenUI();
 }
 
-// ===== ĐÓI =====
-const hungerBarFill = document.getElementById('hungerBarFill');
-const hungerText = document.getElementById('hungerText');
-const foodCountLabel = document.getElementById('foodCountLabel');
-
-function updateHungerUI() {
-  hungerBarFill.style.width = hunger + '%';
-  hungerText.textContent = Math.round(hunger);
-  foodCountLabel.textContent = `🍖 x${totalFood}`;
-}
-
+const hungerBarFill = document.getElementById('hungerBarFill'), hungerText = document.getElementById('hungerText'), foodCountLabel = document.getElementById('foodCountLabel');
+function updateHungerUI() { hungerBarFill.style.width = hunger + '%'; hungerText.textContent = Math.round(hunger); foodCountLabel.textContent = `🍖 x${totalFood}`; }
+setInterval(() => { hunger = Math.max(0, hunger - 1); updateHungerUI(); }, 15000);
 setInterval(() => {
-  hunger = Math.max(0, hunger - 1);
-  updateHungerUI();
-}, 15000);
-
-setInterval(() => {
-  if (hunger > 20 && health < 100 && health > 0) {
-    health = Math.min(100, health + 1);
-    hunger = Math.max(0, hunger - 1);
-    updateHealthUI();
-    updateHungerUI();
-  } else if (hunger <= 0 && health > 0) {
-    takeDamage(1);
-  }
+  if (hunger > 20 && health < 100 && health > 0) { health = Math.min(100, health + 1); hunger = Math.max(0, hunger - 1); healthBarFill.style.width = health + '%'; healthText.textContent = Math.round(health); updateHungerUI(); } 
+  else if (hunger <= 0 && health > 0) takeDamage(1);
 }, 3000);
 
-function updateHealthUI() {
-  healthBarFill.style.width = health + '%';
-  healthText.textContent = Math.round(health);
+let oxygen = 100;
+const oxygenBarFill = document.getElementById('oxygenBarFill'), oxygenText = document.getElementById('oxygenText'), oxygenContainer = document.getElementById('oxygenContainer');
+function updateOxygenUI() {
+  oxygenBarFill.style.width = oxygen + '%'; oxygenText.textContent = Math.round(oxygen);
+  oxygenBarFill.style.background = oxygen <= 25 ? '#e53935' : '#29b6f6';
 }
-updateHealthUI();
-updateHungerUI();
+updateOxygenUI();
 
-// ===== KIỂM TRA VA CHẠM =====
-function isSolid(x, y, z) {
-  const k = key(Math.round(x), Math.round(y), Math.round(z));
-  const val = worldData.get(k);
-  return val !== undefined && val !== null && val !== 6;
-}
+function isSolid(x, y, z) { const val = worldData.get(key(Math.round(x), Math.round(y), Math.round(z))); return val !== undefined && val !== null && val !== 6; }
+function isWaterBlock(x, y, z) { return worldData.get(key(Math.round(x), Math.round(y), Math.round(z))) === 6; }
 
-function isWaterBlock(x, y, z) {
-  const k = key(Math.round(x), Math.round(y), Math.round(z));
-  return worldData.get(k) === 6;
-}
-
-// ===== HIỆU ỨNG DƯỚI NƯỚC =====
 const underwaterOverlay = document.getElementById('underwaterOverlay');
-const originalFogNear = 40;
-const originalFogFar = 100;
-const underwaterFogNear = 5;
-const underwaterFogFar = 25;
-
+const originalFogNear = 40, originalFogFar = 100, underwaterFogNear = 5, underwaterFogFar = 25;
 function updateUnderwaterEffect() {
-  const headInWater = isWaterBlock(player.pos.x, player.pos.y + 0.3, player.pos.z);
-  
+  const headInWater = isWaterBlock(player.pos.x, player.pos.y + 1.5, player.pos.z); 
   if (headInWater) {
     underwaterOverlay.classList.add('active');
-    
-    // Tính độ sâu
-    const depth = Math.max(0, WATER_LEVEL - player.pos.y);
-    player.depth = depth;
-    
-    // Điều chỉnh fog theo độ sâu - càng sâu càng tối
-    const depthFactor = Math.min(depth / 10, 1); // Tối đa ở độ sâu 10
-    const fogNear = THREE.MathUtils.lerp(underwaterFogNear, 2, depthFactor);
-    const fogFar = THREE.MathUtils.lerp(underwaterFogFar, 8, depthFactor);
-    
-    scene.fog.near = fogNear;
-    scene.fog.far = fogFar;
-    
-    // Thay đổi màu fog theo độ sâu
+    const depth = Math.max(0, WATER_LEVEL - player.pos.y); player.depth = depth;
+    const depthFactor = Math.min(depth / 10, 1);
+    scene.fog.near = THREE.MathUtils.lerp(underwaterFogNear, 2, depthFactor);
+    scene.fog.far = THREE.MathUtils.lerp(underwaterFogFar, 8, depthFactor);
     const fogColor = new THREE.Color();
-    fogColor.setRGB(
-      THREE.MathUtils.lerp(0.12, 0.05, depthFactor), // R
-      THREE.MathUtils.lerp(0.53, 0.28, depthFactor), // G
-      THREE.MathUtils.lerp(0.90, 0.64, depthFactor)  // B
-    );
-    scene.fog.color = fogColor;
-    scene.background = fogColor;
-    
-    // Điều chỉnh overlay opacity theo độ sâu
-    const overlayOpacity = 0.3 + depthFactor * 0.5;
-    underwaterOverlay.style.background = `radial-gradient(ellipse at center, 
-      rgba(30, 136, 229, ${overlayOpacity}) 0%, 
-      rgba(13, 71, 161, ${overlayOpacity + 0.2}) 100%)`;
-    
+    fogColor.setRGB(THREE.MathUtils.lerp(0.12, 0.05, depthFactor), THREE.MathUtils.lerp(0.53, 0.28, depthFactor), THREE.MathUtils.lerp(0.90, 0.64, depthFactor));
+    scene.fog.color = fogColor; scene.background = fogColor;
+    underwaterOverlay.style.background = `radial-gradient(ellipse at center, rgba(30, 136, 229, ${0.3 + depthFactor * 0.5}) 0%, rgba(13, 71, 161, ${0.5 + depthFactor * 0.2}) 100%)`;
   } else {
     underwaterOverlay.classList.remove('active');
-    scene.fog.near = originalFogNear;
-    scene.fog.far = originalFogFar;
-    scene.fog.color.setHex(0x87CEEB);
-    scene.background.setHex(0x87CEEB);
-    player.depth = 0;
+    scene.fog.near = originalFogNear; scene.fog.far = originalFogFar; scene.fog.color.setHex(0x87CEEB); scene.background.setHex(0x87CEEB); player.depth = 0;
   }
+  return headInWater;
 }
 
-// ===== CẬP NHẬT NGƯỜI CHƠI (CÓ BƠI TỰ DO) =====
+function updateOxygen(headInWater) {
+  const now = performance.now();
+  if (headInWater) {
+    oxygenContainer.classList.add('visible'); oxygen = Math.max(0, oxygen - 0.11);
+    player.bubbleTimer -= 1;
+    if (player.bubbleTimer <= 0) { spawnBubble(player.pos.x, player.pos.y + 1.5, player.pos.z); player.bubbleTimer = 12 + Math.random() * 10; }
+    if (oxygen <= 0) {
+      player.drowning = true;
+      if (now - player.lastDrownDamage > 1000) { takeDamage(6); player.lastDrownDamage = now; }
+    } else player.drowning = false;
+  } else {
+    oxygen = Math.min(100, oxygen + 0.9); player.drowning = false;
+    if (oxygen >= 100) oxygenContainer.classList.remove('visible');
+  }
+  updateOxygenUI();
+}
+
+let lastMoveSync = 0;
 function updatePlayer() {
+  if (!playerModel) return;
+
   if (isSitting) {
-    camera.position.set(player.pos.x, player.pos.y - 0.4, player.pos.z);
-    camera.rotation.order = 'YXZ';
-    camera.rotation.y = yaw;
-    camera.rotation.x = pitch;
-    return;
+    playerModel.leftLegPivot.rotation.x = -Math.PI / 2;
+    playerModel.rightLegPivot.rotation.x = -Math.PI / 2;
+    playerModel.group.position.y = player.pos.y - 1.6 - 0.5;
+  } else {
+    playerModel.leftLegPivot.rotation.x = 0;
+    playerModel.rightLegPivot.rotation.x = 0;
+    playerModel.group.position.y = player.pos.y - 1.6;
   }
 
   const running = isRunningNow();
   const speed = 0.065 * (running ? 1.5 : 1);
-  
-  // Tính hướng nhìn 3D
-  const forward = new THREE.Vector3(
-    -Math.sin(yaw) * Math.cos(pitch),
-    Math.sin(pitch),
-    -Math.cos(yaw) * Math.cos(pitch)
-  );
+  const forward = new THREE.Vector3(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
   const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
   const flatForward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
 
   let move = new THREE.Vector3();
-  
-  // Kiểm tra có đang trong nước không
-  const headInWater = isWaterBlock(player.pos.x, player.pos.y + 0.3, player.pos.z);
-  const bodyInWater = isWaterBlock(player.pos.x, player.pos.y - 0.3, player.pos.z);
-  const feetInWater = isWaterBlock(player.pos.x, player.pos.y - 1.2, player.pos.z);
+  const headInWater = isWaterBlock(player.pos.x, player.pos.y + 1.5, player.pos.z);
+  const bodyInWater = isWaterBlock(player.pos.x, player.pos.y, player.pos.z);
+  const feetInWater = isWaterBlock(player.pos.x, player.pos.y - 1.5, player.pos.z);
   const inWater = headInWater || bodyInWater || feetInWater;
   player.inWater = inWater;
   
   if (inWater) {
-    // BƠI TỰ DO 3D - Di chuyển theo hướng nhìn
-    if (keys['KeyW']) move.add(forward);
-    if (keys['KeyS']) move.sub(forward);
-    if (keys['KeyD']) move.add(right);
-    if (keys['KeyA']) move.sub(right);
+    if (keys['KeyW']) move.add(forward); if (keys['KeyS']) move.sub(forward);
+    if (keys['KeyD']) move.add(right); if (keys['KeyA']) move.sub(right);
+    if (joyVec.x !== 0 || joyVec.y !== 0) { move.add(forward.clone().multiplyScalar(-joyVec.y)); move.add(right.clone().multiplyScalar(joyVec.x)); }
+    const swimSpeed = speed * 0.6; if (move.lengthSq() > 1) move.normalize(); move.multiplyScalar(swimSpeed);
+    const swimVerticalForce = 0.05;
+    if (keys['Space']) player.vel.y += swimVerticalForce;
+    else if (keys['ShiftLeft'] || keys['ShiftRight']) player.vel.y -= swimVerticalForce;
+    player.vel.y -= 0.012; player.vel.y *= 0.88;
+    player.vel.y = THREE.MathUtils.clamp(player.vel.y, -0.12, 0.12);
     
-    // Space để bơi lên
-    if (keys['Space']) {
-      move.y += 1;
-    }
-    
-    // Shift để bơi xuống/chìm
-    if (keys['ShiftLeft'] || keys['ShiftRight']) {
-      move.y -= 1;
-    }
-    
-    // Joystick cho mobile
-    if (joyVec.x !== 0 || joyVec.y !== 0) {
-      move.add(forward.clone().multiplyScalar(-joyVec.y));
-      move.add(right.clone().multiplyScalar(joyVec.x));
-    }
-    
-    // Tốc độ bơi chậm hơn trên cạn
-    const swimSpeed = speed * 0.6;
-    if (move.lengthSq() > 1) move.normalize();
-    move.multiplyScalar(swimSpeed);
-    
-    // Trọng lực yếu hơn trong nước
-    player.vel.y -= 0.008; // Trọng lực rất nhẹ
-    player.vel.y *= 0.92; // Lực cản của nước
-    
-    // Giới hạn vận tốc theo trục Y trong nước
-    player.vel.y = THREE.MathUtils.clamp(player.vel.y, -0.15, 0.15);
-    
+    playerModel.leftArmPivot.rotation.x = -1.2;
+    playerModel.rightArmPivot.rotation.x = -1.2;
+    const time = performance.now() * 0.005;
+    playerModel.leftLegPivot.rotation.x = Math.sin(time * 2) * 0.3;
+    playerModel.rightLegPivot.rotation.x = Math.sin(time * 2 + Math.PI) * 0.3;
   } else {
-    // Di chuyển bình thường trên cạn
-    if (keys['KeyW']) move.add(flatForward);
-    if (keys['KeyS']) move.sub(flatForward);
-    if (keys['KeyD']) move.add(right);
-    if (keys['KeyA']) move.sub(right);
-    
-    if (joyVec.x !== 0 || joyVec.y !== 0) {
-      move.add(flatForward.clone().multiplyScalar(-joyVec.y));
-      move.add(right.clone().multiplyScalar(joyVec.x));
-    }
-    
-    if (move.lengthSq() > 1) move.normalize();
-    move.multiplyScalar(speed);
-    
-    // Trọng lực bình thường
+    if (keys['KeyW']) move.add(flatForward); if (keys['KeyS']) move.sub(flatForward);
+    if (keys['KeyD']) move.add(right); if (keys['KeyA']) move.sub(right);
+    if (joyVec.x !== 0 || joyVec.y !== 0) { move.add(flatForward.clone().multiplyScalar(-joyVec.y)); move.add(right.clone().multiplyScalar(joyVec.x)); }
+    if (move.lengthSq() > 1) move.normalize(); move.multiplyScalar(speed);
     player.vel.y -= 0.022;
+    if (keys['Space'] && player.onGround) { player.vel.y = 0.22; player.onGround = false; }
     
-    // Nhảy
-    if (keys['Space'] && player.onGround) {
-      player.vel.y = 0.22;
-      player.onGround = false;
+    if (!isSitting && move.lengthSq() > 0.01) {
+      const time = performance.now() * 0.008 * (running ? 1.5 : 1);
+      playerModel.leftLegPivot.rotation.x = Math.sin(time) * 0.6;
+      playerModel.rightLegPivot.rotation.x = Math.sin(time + Math.PI) * 0.6;
+      playerModel.leftArmPivot.rotation.x = Math.sin(time + Math.PI) * 0.6;
+      playerModel.rightArmPivot.rotation.x = Math.sin(time) * 0.6;
+    } else if (!isSitting) {
+      playerModel.leftLegPivot.rotation.x = 0;
+      playerModel.rightLegPivot.rotation.x = 0;
+      playerModel.leftArmPivot.rotation.x = 0;
+      playerModel.rightArmPivot.rotation.x = 0;
     }
   }
 
-  // Áp dụng di chuyển ngang
-  const nx = player.pos.x + move.x;
-  const nz = player.pos.z + move.z;
-  if (!isSolid(nx, player.pos.y, player.pos.z) && !isSolid(nx, player.pos.y - 0.8, player.pos.z)) {
-    player.pos.x = nx;
-  }
-  if (!isSolid(player.pos.x, player.pos.y, nz) && !isSolid(player.pos.x, player.pos.y - 0.8, nz)) {
-    player.pos.z = nz;
-  }
+  const nx = player.pos.x + move.x, nz = player.pos.z + move.z;
+  if (!isSolid(nx, player.pos.y, player.pos.z) && !isSolid(nx, player.pos.y - 0.8, player.pos.z)) player.pos.x = nx;
+  if (!isSolid(player.pos.x, player.pos.y, nz) && !isSolid(player.pos.x, player.pos.y - 0.8, nz)) player.pos.z = nz;
 
-  // Áp dụng vận tốc dọc
   const ny = player.pos.y + player.vel.y + move.y;
-  
-  // Kiểm tra va chạm dọc
   if (isSolid(player.pos.x, ny - 1.6, player.pos.z) && player.vel.y + move.y < 0) {
-    if (!inWater && player.vel.y < -0.4) {
-      takeDamage(Math.round((Math.abs(player.vel.y) - 0.4) * 50));
-    }
-    player.vel.y = 0;
-    player.onGround = true;
-  } else if (isSolid(player.pos.x, ny + 0.3, player.pos.z) && player.vel.y + move.y > 0) {
+    if (!inWater && player.vel.y < -0.4) takeDamage(Math.round((Math.abs(player.vel.y) - 0.4) * 50));
+    player.vel.y = 0; player.onGround = true;
+  } else if (isSolid(player.pos.x, ny + 1.5, player.pos.z) && player.vel.y + move.y > 0) {
     player.vel.y = 0;
   } else {
-    player.pos.y = ny;
-    player.onGround = false;
+    player.pos.y = ny; player.onGround = false;
   }
 
-  // Cập nhật camera
-  camera.position.set(player.pos.x, player.pos.y, player.pos.z);
-  camera.rotation.order = 'YXZ';
-  camera.rotation.y = yaw;
-  camera.rotation.x = pitch;
-  
-  // Cập nhật hiệu ứng dưới nước
-  updateUnderwaterEffect();
+  playerModel.group.position.x = player.pos.x;
+  playerModel.group.position.z = player.pos.z;
+  playerModel.group.rotation.y = yaw;
 
-  // Respawn nếu rơi quá sâu
+  if (cameraMode === 'first') {
+    playerModel.group.visible = false;
+    const eyeHeight = 1.7;
+    camera.position.set(player.pos.x, player.pos.y + eyeHeight, player.pos.z);
+    const lookX = player.pos.x - Math.sin(yaw) * Math.cos(pitch);
+    const lookY = player.pos.y + eyeHeight + Math.sin(pitch);
+    const lookZ = player.pos.z - Math.cos(yaw) * Math.cos(pitch);
+    camera.lookAt(lookX, lookY, lookZ);
+  } else {
+    playerModel.group.visible = true;
+    const camDist = 4.5;
+    const camHeight = 1.0;
+    camera.position.x = player.pos.x + Math.sin(yaw) * camDist * Math.cos(pitch);
+    camera.position.y = player.pos.y + camHeight + Math.sin(pitch) * camDist;
+    camera.position.z = player.pos.z + Math.cos(yaw) * camDist * Math.cos(pitch);
+    camera.lookAt(player.pos.x, player.pos.y + 1.0, player.pos.z);
+  }
+  
+  const headSubmerged = updateUnderwaterEffect();
+  updateOxygen(headSubmerged);
   if (player.pos.y < -30) respawnPlayer();
+
+  if (isMultiplayer && performance.now() - lastMoveSync > 100) {
+    lastMoveSync = performance.now();
+    const syncData = { type: 'move', name: playerName, pos: { x: player.pos.x, y: player.pos.y, z: player.pos.z }, yaw: yaw, isSitting: isSitting };
+    if (isHost) broadcastMessage(syncData);
+    else sendToHost(syncData);
+  }
 }
 
-// ===== RAYCAST + HIGHLIGHT =====
-const raycaster = new THREE.Raycaster();
-raycaster.far = 5.5;
-
+const raycaster = new THREE.Raycaster(); raycaster.far = 8.0;
 function updateHighlight() {
-  if (!gameActive) {
-    highlightMesh.visible = false;
-    return;
-  }
-  
+  if (!gameActive || chatOpen) { highlightMesh.visible = false; return; }
   raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
-  const activeMeshes = instancedMeshes.filter(im => im.count > 0);
+  const activeMeshes = instancedMeshes.filter((im, i) => im.count > 0 && i !== WATER_TYPE_INDEX);
   const hits = raycaster.intersectObjects(activeMeshes);
-  
   if (hits.length > 0) {
-    const hit = hits[0];
-    const matrix = new THREE.Matrix4();
+    const hit = hits[0]; const matrix = new THREE.Matrix4();
     hit.object.getMatrixAt(hit.instanceId, matrix);
-    const position = new THREE.Vector3().setFromMatrixPosition(matrix);
-    highlightMesh.position.copy(position);
+    highlightMesh.position.copy(new THREE.Vector3().setFromMatrixPosition(matrix));
     highlightMesh.visible = true;
-  } else {
-    highlightMesh.visible = false;
-  }
+  } else highlightMesh.visible = false;
 }
 
 function getTargetHit() {
   raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
-  
   const allMeshes = [];
-  instancedMeshes.forEach(im => {
-    if (im.count > 0) allMeshes.push(im);
-  });
-  
-  fish.forEach(f => {
-    allMeshes.push(f.mesh);
-  });
-  
-  animals.forEach(a => {
-    a.mesh.traverse(c => {
-      if (c.isMesh) {
-        c.userData.animalIndex = animals.indexOf(a);
-        allMeshes.push(c);
-      }
-    });
-  });
+  instancedMeshes.forEach((im, i) => { if (im.count > 0 && i !== WATER_TYPE_INDEX) allMeshes.push(im); });
+  fish.forEach(f => allMeshes.push(f.mesh));
+  animals.forEach(a => { a.mesh.traverse(c => { if (c.isMesh) { c.userData.animalIndex = animals.indexOf(a); allMeshes.push(c); } }); });
   
   const hits = raycaster.intersectObjects(allMeshes, false);
-  return hits.length ? hits[0] : null;
+  for (let hit of hits) {
+    if (!hit.object.userData.isPlayer && !hit.object.userData.isOtherPlayer) {
+      return hit;
+    }
+  }
+  return null;
 }
 
-// ===== HIỆU ỨNG RƠI =====
 const dropEffects = [];
 function spawnDropEffect(x, y, z, color) {
   const mat = new THREE.MeshLambertMaterial({ color, transparent: true });
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.35), mat);
-  mesh.position.set(x, y, z);
-  scene.add(mesh);
+  mesh.position.set(x, y, z); scene.add(mesh);
   dropEffects.push({ mesh, start: performance.now(), duration: 400 });
 }
-
 function updateDropEffects() {
   const now = performance.now();
   for (let i = dropEffects.length - 1; i >= 0; i--) {
-    const d = dropEffects[i];
-    const t = Math.min(1, (now - d.start) / d.duration);
-    d.mesh.position.y += 0.015;
-    d.mesh.scale.setScalar(1 - t * 0.8);
-    d.mesh.material.opacity = 1 - t;
-    if (t >= 1) {
-      scene.remove(d.mesh);
-      d.mesh.geometry.dispose();
-      d.mesh.material.dispose();
-      dropEffects.splice(i, 1);
-    }
+    const d = dropEffects[i]; const t = Math.min(1, (now - d.start) / d.duration);
+    d.mesh.position.y += 0.015; d.mesh.scale.setScalar(1 - t * 0.8); d.mesh.material.opacity = 1 - t;
+    if (t >= 1) { scene.remove(d.mesh); d.mesh.geometry.dispose(); d.mesh.material.dispose(); dropEffects.splice(i, 1); }
   }
 }
 
-// ===== PHÁ BLOCK =====
 function breakBlock() {
-  const hit = getTargetHit();
-  if (!hit) return;
+  const hit = getTargetHit(); if (!hit) return;
+  if (hit.object.userData.isFish) { const idx = fish.findIndex(f => f.mesh === hit.object); if (idx !== -1) attackFish(idx); return; }
+  if (hit.object.userData.isAnimalPart) { const idx = hit.object.userData.animalIndex; if (idx !== undefined && idx < animals.length) attackAnimal(idx); return; }
   
-  // Cá
-  if (hit.object.userData.isFish) {
-    const idx = fish.findIndex(f => f.mesh === hit.object);
-    if (idx !== -1) {
-      attackFish(idx);
-      return;
-    }
-    return;
-  }
-  
-  // Động vật
-  if (hit.object.userData.isAnimalPart) {
-    const idx = hit.object.userData.animalIndex;
-    if (idx !== undefined && idx < animals.length) {
-      attackAnimal(idx);
-      return;
-    }
-    return;
-  }
-  
-  // Block
-  const instanceId = hit.instanceId;
-  const typeIndex = instancedMeshes.indexOf(hit.object);
+  const instanceId = hit.instanceId, typeIndex = instancedMeshes.indexOf(hit.object);
   if (typeIndex === -1) return;
-  
-  // TÌM BLOCK THEO INSTANCE ID
-  let targetKey = null;
-  let targetType = null;
+  let targetKey = null, targetType = null;
   for (let [kStr, val] of worldVisuals.entries()) {
-    if (val.type === typeIndex && val.instanceIdx === instanceId) {
-      targetKey = kStr;
-      targetType = val.type;
-      break;
-    }
+    if (val.type === typeIndex && val.instanceIdx === instanceId) { targetKey = kStr; targetType = val.type; break; }
   }
-  
-  if (!targetKey) return;
-  
-  // CHẶN ĐÀO NƯỚC
-  if (targetType === 6) {
-    return; // Không cho đào khối nước
-  }
-  
+  if (!targetKey || targetType === 6) return;
+
   const [bx, by, bz] = targetKey.split(',').map(Number);
-  
-  worldData.delete(targetKey);
-  inventory[targetType]++;
-  updateHotbar();
+  worldData.delete(targetKey); inventory[targetType]++; updateHotbar();
   spawnDropEffect(bx, by, bz, BLOCK_TYPES[targetType].color);
-  markDirty(); // Đánh dấu cần rebuild
+  markDirty();
+  tryFillWaterBFS(bx, by, bz);
+
+  if (isMultiplayer) {
+    if (isHost) broadcastMessage({ type: 'break_block', key: targetKey });
+    else sendToHost({ type: 'break_block', key: targetKey });
+  }
 }
 
-// ===== ĐẶT BLOCK =====
 function placeBlock() {
   if (inventory[selectedBlock] <= 0) return;
-  const hit = getTargetHit();
-  if (!hit) return;
-  
+  const hit = getTargetHit(); if (!hit) return;
   if (hit.object.userData.isFish || hit.object.userData.isAnimalPart) return;
   
-  const n = hit.face.normal;
-  const matrix = new THREE.Matrix4();
+  const n = hit.face.normal; const matrix = new THREE.Matrix4();
   hit.object.getMatrixAt(hit.instanceId, matrix);
   const position = new THREE.Vector3().setFromMatrixPosition(matrix);
-  
-  const nx = Math.round(position.x + n.x);
-  const ny = Math.round(position.y + n.y);
-  const nz = Math.round(position.z + n.z);
+  const nx = Math.round(position.x + n.x), ny = Math.round(position.y + n.y), nz = Math.round(position.z + n.z);
   const kStr = key(nx, ny, nz);
 
-  if (!worldData.has(kStr)) {
-    worldData.set(kStr, selectedBlock);
-    inventory[selectedBlock]--;
-    updateHotbar();
-    markDirty(); // Đánh dấu cần rebuild
+  const existingType = worldData.get(kStr);
+  if (!worldData.has(kStr) || existingType === WATER_TYPE_INDEX) {
+    worldData.set(kStr, selectedBlock); waterFlowDist.delete(kStr);
+    inventory[selectedBlock]--; updateHotbar(); markDirty();
+    
+    if (isMultiplayer) {
+      if (isHost) broadcastMessage({ type: 'place_block', key: kStr, blockType: selectedBlock });
+      else sendToHost({ type: 'place_block', key: kStr, blockType: selectedBlock });
+    }
   }
 }
 
-// ===== SỰ KIỆN CHUỘT =====
-let rightHoldTimer = null;
-let isRightHeld = false;
-
+let rightHoldTimer = null, isRightHeld = false;
 window.addEventListener('mousedown', (e) => {
-  if (!gameActive || isMobile || settingsOpen || invOpen) return;
-  if (e.button === 0) {
-    breakBlock();
-  } else if (e.button === 2) {
+  if (!gameActive || isMobile || settingsOpen || invOpen || chatOpen) return;
+  if (e.button === 0) breakBlock();
+  else if (e.button === 2) {
     isRightHeld = true;
-    rightHoldTimer = setTimeout(() => {
-      if (isRightHeld && gameActive) {
-        eatFood();
-        isRightHeld = false;
-      }
-    }, 500);
+    rightHoldTimer = setTimeout(() => { if (isRightHeld && gameActive) { eatFood(); isRightHeld = false; } }, 500);
   }
 });
-
 window.addEventListener('mouseup', (e) => {
   if (e.button === 2) {
-    if (rightHoldTimer) {
-      clearTimeout(rightHoldTimer);
-      rightHoldTimer = null;
-    }
-    if (isRightHeld && gameActive) {
-      placeBlock();
-    }
+    if (rightHoldTimer) { clearTimeout(rightHoldTimer); rightHoldTimer = null; }
+    if (isRightHeld && gameActive) placeBlock();
     isRightHeld = false;
   }
 });
-
 window.addEventListener('contextmenu', e => e.preventDefault());
 
-// ===== TOÀN MÀN HÌNH =====
 const fullscreenBtn = document.getElementById('fullscreenBtn');
 fullscreenBtn.addEventListener('click', () => {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(err => {});
-    fullscreenBtn.textContent = '⤓';
-  } else {
-    document.exitFullscreen();
-    fullscreenBtn.textContent = '⛶';
-  }
+  if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => {}); fullscreenBtn.textContent = '⤓'; } 
+  else { document.exitFullscreen(); fullscreenBtn.textContent = '⛶'; }
 });
-document.addEventListener('fullscreenchange', () => {
-  fullscreenBtn.textContent = document.fullscreenElement ? '⤓' : '⛶';
+document.addEventListener('fullscreenchange', () => { fullscreenBtn.textContent = document.fullscreenElement ? '⤓' : ''; });
+
+function copyPeerId() {
+  navigator.clipboard.writeText(myPeerId).then(() => alert("Đã copy ID!"));
+}
+document.getElementById('joinGameBtn').addEventListener('click', () => {
+  const targetId = document.getElementById('joinPeerIdInput').value.trim();
+  if (!targetId || targetId === myPeerId) return;
+  document.getElementById('mpStatusText').textContent = "Đang kết nối...";
+  const conn = peer.connect(targetId);
+  setupConnection(conn);
+});
+document.getElementById('closeMpBtn').addEventListener('click', () => {
+  document.getElementById('mpPanel').style.display = 'none';
+  if (!isMobile && gameActive) document.body.requestPointerLock();
 });
 
-// ===== VÒNG LẶP CHÍNH =====
+function initGame() {
+  gameStarted = true;
+  playerModel = createPlayerModel();
+  scene.add(playerModel.group);
+  
+  if (!peer) initPeer();
+  
+  document.getElementById('blocker').style.display = 'flex';
+}
+
 function animate() {
   requestAnimationFrame(animate);
-  
-  // Rebuild nếu cần (chỉ 1 lần mỗi frame)
-  if (needsRebuild) {
-    rebuildVisuals();
-    needsRebuild = false;
-  }
-  
-  if (gameActive && !settingsOpen && !invOpen) {
-    updatePlayer();
-    updateHighlight();
-  }
-  updateAnimals();
-  updateFish();
-  updateDropEffects();
+  if (needsRebuild) { rebuildVisuals(); needsRebuild = false; }
+  if (gameStarted && gameActive && !settingsOpen && !invOpen && !chatOpen) { updatePlayer(); updateHighlight(); }
+  updateAnimals(); updateFish(); updateDropEffects(); updateBubbles();
+  updateWaterSurface(performance.now() * 0.001);
   renderer.render(scene, camera);
 }
 animate();
