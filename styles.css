@@ -1,0 +1,140 @@
+/* src/plugins/lucacAudio/styles.css */
+#lucac-root {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    width: 280px;
+    background: #110005;
+    border: 2px solid #ff0055;
+    border-radius: 0;
+    z-index: 2147483647;
+    box-shadow: 0 0 25px rgba(255,0,85,.15), inset 0 0 15px rgba(255,0,50,.1);
+    font-family: 'Tomorrow', sans-serif;
+    color: #fff;
+    user-select: none;
+    touch-action: none;
+    overflow: hidden;
+}
+#lucac-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px; cursor: grab;
+    background: #1f000b; border-bottom: 2px solid #ff0055;
+}
+#lucac-head:active { cursor: grabbing; }
+#lucac-title { display: flex; align-items: center; gap: 6px; }
+#lucac-name {
+    font-size: 13px; font-weight: 800; letter-spacing: 1px;
+    color: #fff; text-shadow: 0 0 10px #ff0055;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 140px;
+}
+#lucac-tag {
+    font-size: 8px; background: #ff0055; color: #000;
+    padding: 1px 4px; font-weight: 800;
+}
+#lucac-right { display: flex; align-items: center; gap: 8px; }
+#lucac-badge {
+    display: flex; align-items: center; gap: 5px;
+    background: #000; padding: 2px 8px; border: 1px solid #333;
+}
+#lucac-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #444; transition: all .3s;
+}
+#lucac-st {
+    font-size: 9px; color: #666;
+    font-family: 'Share Tech Mono', monospace;
+}
+#lucac-col {
+    background: none; border: 1px solid #ff0055; color: #ff0055;
+    width: 20px; height: 20px; font-size: 9px; cursor: pointer; padding: 0;
+}
+#lucac-vu-container { height: 3px; background: #000; overflow: hidden; }
+#lucac-vu-bar {
+    height: 100%; width: 0%;
+    background: #ff0055; transition: width .08s ease-out;
+    box-shadow: 0 0 8px #ff0055;
+}
+#lucac-tabs {
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+    background: #000; border-bottom: 1px solid #222;
+    gap: 1px; padding: 1px;
+}
+.lucac-tab-btn {
+    padding: 8px 3px;
+    font-family: 'Tomorrow', sans-serif;
+    font-size: 9px; font-weight: 600;
+    background: #050505; border: none; color: #666;
+    cursor: pointer; letter-spacing: .3px;
+    transition: all .15s;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lucac-tab-btn:hover { color: #ff0055; background: #0a0005; }
+.lucac-tab-btn.lucac-tab-on {
+    color: #fff; background: #1f000b;
+    box-shadow: inset 0 -2px 0 #ff0055;
+}
+#lucac-body { padding: 14px; max-height: 60vh; overflow-y: auto; }
+#lucac-body::-webkit-scrollbar { width: 3px; }
+#lucac-body::-webkit-scrollbar-thumb { background: #ff0055; }
+.lucac-presets { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+.lucac-kp-btn {
+    flex: 1 1 auto; padding: 6px;
+    font-family: 'Tomorrow', sans-serif;
+    font-size: 9px; font-weight: 600;
+    background: #000; border: 1px solid #333; color: #aaa;
+    cursor: pointer; transition: all .1s; text-transform: uppercase;
+}
+.lucac-kp-btn:hover { border-color: #ff0055; color: #fff; }
+.lucac-kp-btn.lucac-kp-on {
+    background: #ff0055; color: #000; border-color: #ff0055;
+    box-shadow: 0 0 10px rgba(255,0,85,.4); font-weight: 800;
+}
+.lucac-sep { height: 1px; background: #222; margin: 10px 0; }
+.lucac-section-title {
+    font-size: 10px; font-weight: 600;
+    margin: 0 0 12px; letter-spacing: 1px;
+    color: #666; text-transform: uppercase;
+}
+.lucac-row { margin-bottom: 12px; }
+.lucac-rowlabel {
+    display: flex; justify-content: space-between;
+    font-size: 10px; font-weight: 600;
+    color: #666; margin-bottom: 6px; text-transform: uppercase;
+}
+.lucac-rowlabel span:last-child { color: #fff; font-family: 'Share Tech Mono', monospace; }
+.lucac-row input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 3px;
+    background: linear-gradient(90deg, #ff0055 var(--v,0%), #222 var(--v,0%));
+    outline: none;
+}
+.lucac-row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 11px; height: 11px;
+    background: #ff0055; cursor: pointer;
+    border: 1px solid #fff; box-shadow: 0 0 6px rgba(255,0,85,.5);
+}
+.lucac-toggle-btn {
+    width: 100%; padding: 10px;
+    font-family: 'Tomorrow', sans-serif;
+    font-size: 12px; font-weight: 800;
+    background: #000; border: 1px solid #333; color: #555;
+    cursor: pointer; transition: all .2s;
+}
+.lucac-toggle-btn:hover { border-color: #ff0055; color: #fff; }
+.lucac-toggle-btn.lucac-on {
+    background: #ff0055; color: #000;
+    border-color: #ff0055; box-shadow: 0 0 14px rgba(255,0,85,.5);
+}
+.lucac-set-btn {
+    flex: 1; padding: 9px;
+    font-family: 'Tomorrow', sans-serif;
+    font-size: 11px; font-weight: 800;
+    cursor: pointer; border: 1px solid #333;
+    background: #000; color: #aaa;
+}
+.lucac-set-btn.lucac-save { border-color: #ff0055; color: #ff0055; }
+.lucac-set-btn.lucac-save:hover { background: #ff0055; color: #000; }
+.lucac-hint {
+    font-size: 9px; color: #555; margin-top: 6px;
+    line-height: 1.4; font-family: 'Share Tech Mono', monospace;
+}
