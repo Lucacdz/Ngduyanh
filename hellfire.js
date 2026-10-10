@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         LUCAC
 // @namespace    lucac
-// @version      83
-// @description  NgDuyAnhHw - Dynamic Island collapse + Cover + Maximizer (v83)
+// @version      112
+// @description  NgDuyAnhHw - v83 + full key (v112)
 // @match        *://*/*
 // @run-at       document-end
 // @grant        GM_xmlhttpRequest
@@ -21,6 +21,686 @@
     const IS_ORION = /Orion/i.test(navigator.userAgent);
     const IOS_MIC_COMPENSATION = IS_IOS ? 4.5 : 1.0;
     const SINGLE_MIC_MODE = true;
+
+    const LUCAC_DISCORD_INVITE = 'https://discord.gg/mVq4ytdyD3';
+    // API ban/IP: de trong neu bot FastAPI public, vd 'http://IP_VPS:8000' (khong co / cuoi)
+    // Co the ghi de bang localStorage.setItem('lucac_ban_api', 'http://...')
+    const LUCAC_BAN_API_DEFAULT = '';
+    const IP_STORAGE = 'lucac_client_ip';
+    const BAN_STORAGE = 'lucac_ban_info';
+
+
+    // ========== KEY / LICENSE SYSTEM (24h Discord *getkey) ==========
+    // PHAI TRUNG SECRET VOI BOT (lucac_getkey / *getkey)
+    const KEY_SECRET = 'LUCAC_KEY_SECRET_2026_NDA';
+    const KEY_STORAGE = 'lucac_key_v1';
+    const DEVICE_STORAGE = 'lucac_device_id';
+    const KEY_RAW_STORAGE = 'lucac_key_raw';
+
+    const KEY_TTL_SEC = 24 * 3600;
+
+    function _fnv1a(str) {
+        let h = 2166136261 >>> 0;
+        for (let i = 0; i < str.length; i++) {
+            h ^= str.charCodeAt(i) & 255;
+            h = Math.imul(h, 16777619) >>> 0;
+        }
+        return ('00000000' + h.toString(16)).slice(-8);
+    }
+    function _normKey(k) {
+        return String(k || '').trim().toUpperCase().replace(/\s+/g, '').replace(/[_]/g, '-');
+    }
+    function _mac(parts) {
+        // MAC nhe: FNV(SECRET | part1 | part2 | ...)
+        return _fnv1a(KEY_SECRET + '|' + parts.join('|'));
+    }
+
+    // Owner / lifetime keys (hash) — van dung
+    const VALID_KEY_HASHES = {};
+    (function _seedKeys() {
+        const raw = [
+            'LUCAC-ADMIN-NDA-2026'
+        ];
+        raw.forEach(k => { VALID_KEY_HASHES[_fnv1a(_normKey(k))] = 1; });
+    })();
+
+    // ========== ADMIN KEY (mo console GUI) ==========
+    // Chi luu HASH. Key mac dinh: LUCAC-ADMIN-NDA-2026  -> DOI key rieng cua ban:
+    // mo console, chay _fnv1a(_normKey('KEY_MOI')) roi thay hash ben duoi.
+    const ADMIN_KEY_HASHES = { 'd1e111fe': 1 };
+    Object.keys(ADMIN_KEY_HASHES).forEach(h => { VALID_KEY_HASHES[h] = 1; });
+
+    function isAdmin() {
+        try {
+            const tok = localStorage.getItem(KEY_STORAGE) || '';
+            return !!ADMIN_KEY_HASHES[tok.split('|')[0]];
+        } catch (e) { return false; }
+    }
+    // Bat console tu som (ring buffer) de admin xem duoc log truoc khi mo
+    const _conBuf = [];
+    const _conSubs = [];
+    (function _hookConsole() {
+        ['log', 'info', 'warn', 'error', 'debug'].forEach(function (lv) {
+            const orig = console[lv];
+            if (typeof orig !== 'function') return;
+            console[lv] = function () {
+                try {
+                    const text = Array.prototype.map.call(arguments, function (a) {
+                        if (typeof a === 'string') return a;
+                        if (a instanceof Error) return a.stack || a.message;
+                        try { return JSON.stringify(a); } catch (e) { return String(a); }
+                    }).join(' ');
+                    const e = { lv: lv, t: Date.now(), text: text };
+                    _conBuf.push(e);
+                    if (_conBuf.length > 500) _conBuf.shift();
+                    _conSubs.forEach(function (fn) { try { fn(e); } catch (x) {} });
+                } catch (x) {}
+                return orig.apply(console, arguments);
+            };
+        });
+        window.addEventListener('error', function (ev) {
+            console.error('[window.onerror]', ev.message, (ev.filename || '') + ':' + (ev.lineno || ''));
+        });
+    })();
+
+    function openAdminConsole() {
+        if (!isAdmin()) return;
+        if (document.getElementById('kh-admin-con')) return;
+        const wrap = document.createElement('div');
+        wrap.id = 'kh-admin-con';
+        wrap.innerHTML = `
+<style>
+#kh-admin-con{position:fixed;left:0;right:0;bottom:0;z-index:2147483647;height:42vh;min-height:220px;display:flex;flex-direction:column;
+background:rgba(8,6,20,.96);border-top:1px solid rgba(168,85,247,.5);box-shadow:0 -8px 30px rgba(0,0,0,.55);
+font-family:monospace;color:#e9d5ff;font-size:11px;}
+#kh-admin-con.min{height:auto;min-height:0;}
+#kh-admin-con.min #kh-ac-log,#kh-admin-con.min #kh-ac-row{display:none;}
+#kh-ac-bar{display:flex;gap:6px;align-items:center;padding:6px 8px;background:rgba(168,85,247,.16);}
+#kh-ac-bar b{flex:1;letter-spacing:1px;font-size:11px;}
+#kh-ac-bar button,#kh-ac-run{border:1px solid rgba(168,85,247,.45);background:rgba(168,85,247,.2);color:#f0e6ff;
+border-radius:8px;padding:4px 9px;font-family:monospace;font-size:11px;font-weight:700;cursor:pointer;}
+#kh-ac-log{flex:1;overflow:auto;padding:6px 8px;white-space:pre-wrap;word-break:break-word;-webkit-overflow-scrolling:touch;}
+#kh-ac-log div{padding:1px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+#kh-ac-log .warn{color:#fcd34d;} #kh-ac-log .error{color:#fca5a5;} #kh-ac-log .cmd{color:#93c5fd;} #kh-ac-log .res{color:#86efac;}
+#kh-ac-row{display:flex;gap:6px;padding:6px 8px;border-top:1px solid rgba(168,85,247,.25);}
+#kh-ac-in{flex:1;min-width:0;background:rgba(0,0,0,.5);border:1px solid rgba(168,85,247,.4);border-radius:8px;color:#fff;
+padding:7px 9px;font-family:monospace;font-size:12px;outline:none;}
+</style>
+<div id="kh-ac-bar"><b>🛠 ADMIN CONSOLE</b>
+<button id="kh-ac-clear" type="button">Xóa</button><button id="kh-ac-copy" type="button">Copy</button>
+<button id="kh-ac-min" type="button">_</button><button id="kh-ac-x" type="button">✕</button></div>
+<div id="kh-ac-log"></div>
+<div id="kh-ac-row"><input id="kh-ac-in" type="text" placeholder="Gõ lệnh JS, vd: localStorage.length" autocomplete="off" spellcheck="false" autocapitalize="off"><button id="kh-ac-run" type="button">Chạy</button></div>`;
+        document.documentElement.appendChild(wrap);
+        const logEl = wrap.querySelector('#kh-ac-log');
+        const inp = wrap.querySelector('#kh-ac-in');
+        const add = function (e) {
+            const d = document.createElement('div');
+            d.className = e.lv;
+            const tm = new Date(e.t).toLocaleTimeString();
+            d.textContent = '[' + tm + '] ' + e.text;
+            logEl.appendChild(d);
+            while (logEl.childNodes.length > 500) logEl.removeChild(logEl.firstChild);
+            logEl.scrollTop = logEl.scrollHeight;
+        };
+        _conBuf.forEach(add);
+        _conSubs.push(add);
+        const run = function () {
+            const code = inp.value.trim();
+            if (!code) return;
+            inp.value = '';
+            add({ lv: 'cmd', t: Date.now(), text: '> ' + code });
+            try {
+                const r = (0, eval)(code);
+                Promise.resolve(r).then(function (v) {
+                    let out;
+                    try { out = (typeof v === 'string') ? v : JSON.stringify(v, null, 1); } catch (e) { out = String(v); }
+                    add({ lv: 'res', t: Date.now(), text: '← ' + (out === undefined ? 'undefined' : out) });
+                }, function (er) { add({ lv: 'error', t: Date.now(), text: '✗ ' + (er && er.message || er) }); });
+            } catch (er) {
+                add({ lv: 'error', t: Date.now(), text: '✗ ' + (er && er.message || er) + ' (trang có thể chặn eval bởi CSP)' });
+            }
+        };
+        wrap.querySelector('#kh-ac-run').onclick = run;
+        inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') run(); });
+        wrap.querySelector('#kh-ac-clear').onclick = function () { logEl.textContent = ''; _conBuf.length = 0; };
+        wrap.querySelector('#kh-ac-copy').onclick = function () {
+            const t = Array.prototype.map.call(logEl.childNodes, function (n) { return n.textContent; }).join('\n');
+            try { navigator.clipboard.writeText(t); add({ lv: 'res', t: Date.now(), text: '✓ Đã copy log' }); } catch (e) {}
+        };
+        wrap.querySelector('#kh-ac-min').onclick = function () { wrap.classList.toggle('min'); };
+        wrap.querySelector('#kh-ac-x').onclick = function () {
+            const i = _conSubs.indexOf(add); if (i >= 0) _conSubs.splice(i, 1);
+            wrap.remove();
+        };
+        console.info('[LUCAC] Admin console ready');
+    }
+
+    /**
+     * Timed key format (tu bot *getkey):
+     *   LC-<expHex>-<uidHex>-<sig8>
+     * sig = FNV(SECRET|exp|uid)
+     */
+    function verifyTimedKey(input) {
+        const n = _normKey(input);
+        const m = /^LC-([0-9A-F]+)-([0-9A-F]+)-([0-9A-F]{8})$/.exec(n);
+        if (!m) return { ok: false, msg: 'Sai định dạng key' };
+        const exp = parseInt(m[1], 16);
+        const uid = m[2];
+        const sig = m[3].toLowerCase();
+        if (!isFinite(exp) || exp < 0) return { ok: false, msg: 'Key hỏng' };
+        const now = Math.floor(Date.now() / 1000);
+        // exp === 0 => vĩnh viễn (admin *taokey)
+        if (exp !== 0 && exp < now) return { ok: false, msg: 'Key hết hạn — gõ *getkey trên Discord' };
+        // cho phép admin cấp key dài (tối đa ~10 năm)
+        if (exp !== 0 && exp > now + 10 * 365 * 86400) return { ok: false, msg: 'Key không hợp lệ (time)' };
+        const expect = _mac([String(exp), uid.toLowerCase()]);
+        if (sig !== expect) return { ok: false, msg: 'Key không hợp lệ (sig)' };
+        return { ok: true, msg: exp === 0 ? 'OK · vĩnh viễn' : 'OK', exp: exp, uid: uid, kind: exp === 0 ? 'perm' : 'timed' };
+    }
+
+    function verifyStaticKey(input) {
+        const h = _fnv1a(_normKey(input));
+        if (VALID_KEY_HASHES[h]) return { ok: true, msg: 'OK', kind: 'static', hash: h };
+        return { ok: false, msg: 'Key không hợp lệ' };
+    }
+
+    function isKeyUnlocked() {
+        try {
+            const tok = localStorage.getItem(KEY_STORAGE);
+            if (!tok) return false;
+            const parts = tok.split('|');
+            // timed: timed|exp|uid|sig
+            if (parts[0] === 'timed' || parts[0] === 'perm') {
+                const exp = parseInt(parts[1], 10);
+                const uid = parts[2] || '';
+                const sig = parts[3] || '';
+                const now = Math.floor(Date.now() / 1000);
+                if (exp !== 0 && (isNaN(exp) || exp < now)) return false;
+                if (_mac([String(exp), uid.toLowerCase()]) !== sig) return false;
+                return true;
+            }
+            // static: hash|ts
+            return !!VALID_KEY_HASHES[parts[0]];
+        } catch (e) { return false; }
+    }
+
+    function tryUnlockKey(input) {
+        const n = _normKey(input);
+        if (!n) return { ok: false, msg: 'Nhập key' };
+        // Prefer timed LC-... keys
+        if (n.startsWith('LC-')) {
+            const r = verifyTimedKey(n);
+            if (!r.ok) return r;
+            try {
+                const kind = (r.exp === 0) ? 'perm' : 'timed';
+                localStorage.setItem(KEY_STORAGE, [kind, r.exp, r.uid, _mac([String(r.exp), r.uid.toLowerCase()])].join('|'));
+            } catch (e) {}
+            if (r.exp === 0) return { ok: true, msg: 'OK · vĩnh viễn' };
+            return { ok: true, msg: 'OK · hết hạn ' + new Date(r.exp * 1000).toLocaleString() };
+        }
+        const r = verifyStaticKey(n);
+        if (!r.ok) return r;
+        try { localStorage.setItem(KEY_STORAGE, r.hash + '|' + Date.now()); } catch (e) {}
+        return { ok: true, msg: 'OK (owner key)' };
+    }
+
+    function lockKey() {
+        try { localStorage.removeItem(KEY_STORAGE); } catch (e) {}
+    }
+    function clearKey() { lockKey(); try { localStorage.removeItem(typeof KEY_RAW_STORAGE!=="undefined"?KEY_RAW_STORAGE:"lucac_key_raw"); } catch(e2){} }
+
+    function keyStatusText() {
+        try {
+            const tok = localStorage.getItem(KEY_STORAGE);
+            if (!tok) return { text: 'LOCKED', color: '#fca5a5' };
+            const parts = tok.split('|');
+            if (parts[0] === 'timed' || parts[0] === 'perm') {
+                const exp = parseInt(parts[1], 10);
+                if (exp === 0) return { text: 'VĨNH VIỄN', color: '#86efac' };
+                const left = exp - Math.floor(Date.now() / 1000);
+                if (left <= 0) return { text: 'HẾT HẠN', color: '#fca5a5' };
+                const h = Math.floor(left / 3600);
+                const m = Math.floor((left % 3600) / 60);
+                return { text: 'OK · còn ' + h + 'h' + m + 'm', color: '#86efac' };
+            }
+            if (ADMIN_KEY_HASHES[parts[0]]) return { text: 'ADMIN', color: '#c4b5fd' };
+            if (VALID_KEY_HASHES[parts[0]]) return { text: 'OWNER', color: '#86efac' };
+        } catch (e) {}
+        return { text: 'LOCKED', color: '#fca5a5' };
+    }
+
+
+    function getBanApiBase() {
+        try {
+            const v = localStorage.getItem('lucac_ban_api');
+            if (v && v.trim()) return v.trim().replace(/\/$/, '');
+        } catch (e) {}
+        return (typeof LUCAC_BAN_API_DEFAULT === 'string' ? LUCAC_BAN_API_DEFAULT : '').replace(/\/$/, '');
+    }
+
+    function formatBanUntil(until) {
+        until = parseInt(until, 10) || 0;
+        if (!until) return 'Vĩnh viễn';
+        const now = Math.floor(Date.now() / 1000);
+        const left = until - now;
+        if (left <= 0) return 'Hết hạn';
+        const d = Math.floor(left / 86400);
+        const h = Math.floor((left % 86400) / 3600);
+        const m = Math.floor((left % 3600) / 60);
+        const end = new Date(until * 1000).toLocaleString();
+        if (d > 0) return d + 'd ' + h + 'h ' + m + 'm (đến ' + end + ')';
+        return h + 'h ' + m + 'm (đến ' + end + ')';
+    }
+
+    function saveBanInfo(info) {
+        try { localStorage.setItem(BAN_STORAGE, JSON.stringify(info || {})); } catch (e) {}
+    }
+    function loadBanInfo() {
+        try {
+            const t = localStorage.getItem(BAN_STORAGE);
+            if (!t) return null;
+            const o = JSON.parse(t);
+            if (!o || !o.banned) return null;
+            const until = parseInt(o.until, 10) || 0;
+            if (until && until < Math.floor(Date.now() / 1000)) {
+                try { localStorage.removeItem(BAN_STORAGE); } catch (e) {}
+                return null;
+            }
+            return o;
+        } catch (e) { return null; }
+    }
+    function clearBanInfo() {
+        try { localStorage.removeItem(BAN_STORAGE); } catch (e) {}
+    }
+
+    function fetchClientIP() {
+        return new Promise(function (resolve) {
+            try {
+                const cached = localStorage.getItem(IP_STORAGE);
+                if (cached && /^\d{1,3}(\.\d{1,3}){3}$/.test(cached)) {
+                    resolve(cached);
+                }
+            } catch (e) {}
+            const done = function (ip) {
+                if (ip) {
+                    try { localStorage.setItem(IP_STORAGE, ip); } catch (e) {}
+                }
+                resolve(ip || '');
+            };
+            // ipify
+            fetch('https://api.ipify.org?format=json')
+                .then(function (r) { return r.json(); })
+                .then(function (j) { done(j && j.ip ? String(j.ip) : ''); })
+                .catch(function () {
+                    fetch('https://api64.ipify.org?format=json')
+                        .then(function (r) { return r.json(); })
+                        .then(function (j) { done(j && j.ip ? String(j.ip) : ''); })
+                        .catch(function () { done(''); });
+                });
+        });
+    }
+
+    function checkRemoteBan(uid, ip) {
+        const base = getBanApiBase();
+        if (!base) return Promise.resolve(null);
+        const q = 'uid=' + encodeURIComponent(uid || '') + '&ip=' + encodeURIComponent(ip || '');
+        return fetch(base + '/lucac/check?' + q, { method: 'GET', mode: 'cors' })
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                if (j && j.banned) {
+                    const info = { banned: true, kind: j.kind || 'user', until: j.until || 0, reason: j.reason || 'Banned' };
+                    saveBanInfo(info);
+                    return info;
+                }
+                return null;
+            })
+            .catch(function () { return null; });
+    }
+
+    function registerIPWithServer(uid, ip, key) {
+        const base = getBanApiBase();
+        if (!base || !uid || !ip) return;
+        try {
+            fetch(base + '/lucac/register', {
+                method: 'POST',
+                mode: 'cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: String(uid), ip: String(ip), key: String(key || '').slice(0, 80) })
+            }).catch(function () {});
+        } catch (e) {}
+    }
+
+    function showBanGate(info) {
+        try {
+            const old = document.getElementById('kh-ban-gate');
+            if (old) old.remove();
+        } catch (e) {}
+        const untilTxt = formatBanUntil(info && info.until);
+        const reason = (info && info.reason) || 'Không có lý do';
+        const kind = (info && info.kind) === 'ip' ? 'IP' : 'Tài khoản';
+        const gate = document.createElement('div');
+        gate.id = 'kh-ban-gate';
+        gate.innerHTML = `
+<style>
+#kh-ban-gate{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;
+background:rgba(8,2,12,0.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);font-family:'Tomorrow',system-ui,sans-serif;}
+#kh-ban-box{width:min(400px,94vw);padding:26px 20px 20px;border-radius:20px;text-align:center;color:#fce7f3;
+background:radial-gradient(ellipse 120% 80% at 20% -10%,rgba(239,68,68,.35),transparent 55%),rgba(20,4,10,.95);
+border:1px solid rgba(248,113,113,.45);box-shadow:0 16px 48px rgba(0,0,0,.6),0 0 40px rgba(239,68,68,.2);}
+#kh-ban-box h2{margin:0 0 8px;font-size:18px;letter-spacing:1px;font-weight:800;color:#fecaca;}
+#kh-ban-box p{margin:8px 0;font-size:12px;line-height:1.5;color:#fca5a5;}
+#kh-ban-box .kh-ban-reason{margin-top:12px;padding:12px;border-radius:12px;background:rgba(0,0,0,.35);
+border:1px solid rgba(248,113,113,.3);font-size:13px;color:#fff;word-break:break-word;}
+#kh-ban-box .kh-ban-meta{margin-top:10px;font-size:11px;color:#f9a8d4;}
+a.kh-join-btn{display:inline-flex;margin-top:14px;padding:10px 16px;border-radius:12px;background:linear-gradient(135deg,#5865F2,#4752C4);color:#fff!important;text-decoration:none!important;font-weight:800;font-size:12px;}
+</style>
+<div id="kh-ban-box">
+  <h2>⛔ BẠN ĐÃ BỊ BAN</h2>
+  <p>Loại: <b>${kind}</b></p>
+  <p class="kh-ban-meta">Thời hạn: <b>${untilTxt}</b></p>
+  <div class="kh-ban-reason">📝 Lý do: ${reason.replace(/[<>]/g,'')}</div>
+  <p style="margin-top:12px;font-size:11px;color:#9ca3af;">Liên hệ admin trên Discord nếu đây là nhầm lẫn.</p>
+  <a class="kh-join-btn" href="${LUCAC_DISCORD_INVITE}" target="_blank" rel="noopener noreferrer">discord Server</a>
+</div>`;
+        document.documentElement.appendChild(gate);
+    }
+
+
+
+    function getDeviceId() {
+        try {
+            let id = localStorage.getItem(DEVICE_STORAGE);
+            if (id && id.length >= 8) return id;
+            id = 'D' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+            localStorage.setItem(DEVICE_STORAGE, id);
+            return id;
+        } catch (e) {
+            return 'D' + String(Date.now());
+        }
+    }
+    function saveRawKey(key) {
+        try { localStorage.setItem(KEY_RAW_STORAGE, String(key || '').trim()); } catch (e) {}
+    }
+    function loadRawKey() {
+        try { return localStorage.getItem(KEY_RAW_STORAGE) || ''; } catch (e) { return ''; }
+    }
+    function clearRawKey() {
+        try { localStorage.removeItem(KEY_RAW_STORAGE); } catch (e) {}
+    }
+    function sessionRequest(action, key, uid) {
+        const base = getBanApiBase();
+        if (!base) return Promise.resolve({ ok: true, skipped: true });
+        const body = {
+            action: action || 'claim',
+            key: String(key || ''),
+            device: getDeviceId(),
+            uid: String(uid || '')
+        };
+        return fetch(base + '/lucac/session', {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        }).then(function (r) { return r.json(); }).catch(function () {
+            return { ok: true, skipped: true };
+        });
+    }
+    function showKeySharedKick() {
+        try { lockKey(); } catch (e) {}
+        try { clearRawKey(); } catch (e) {}
+        try {
+            const old = document.getElementById('kh-ban-gate');
+            if (old) old.remove();
+            const g = document.getElementById('kh-key-gate');
+            if (g) g.remove();
+        } catch (e) {}
+        const gate = document.createElement('div');
+        gate.id = 'kh-ban-gate';
+        gate.innerHTML = `
+<style>
+#kh-ban-gate{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;
+background:rgba(8,2,12,0.88);backdrop-filter:blur(12px);font-family:'Tomorrow',system-ui,sans-serif;}
+#kh-kick-box{width:min(400px,94vw);padding:26px 20px;border-radius:20px;text-align:center;color:#fce7f3;
+background:radial-gradient(ellipse 120% 80% at 20% -10%,rgba(239,68,68,.4),transparent 55%),rgba(20,4,10,.95);
+border:1px solid rgba(248,113,113,.5);box-shadow:0 16px 48px rgba(0,0,0,.6);}
+#kh-kick-box h2{margin:0 0 10px;font-size:17px;color:#fecaca;}
+#kh-kick-box p{margin:8px 0;font-size:12px;line-height:1.5;color:#fca5a5;}
+a.kh-join-btn{display:inline-flex;margin-top:14px;padding:10px 16px;border-radius:12px;background:linear-gradient(135deg,#5865F2,#4752C4);color:#fff!important;text-decoration:none!important;font-weight:800;font-size:12px;}
+</style>
+<div id="kh-kick-box">
+  <h2>⛔ KEY BỊ SHARE</h2>
+  <p>Key này đã được dùng trên <b>máy khác</b>.</p>
+  <p>Cả 2 người đều bị <b>kick</b>.</p>
+  <p style="color:#fde68a">Hãy tự gõ <b>*getkey</b> trên Discord để lấy key riêng.</p>
+  <a class="kh-join-btn" href="${LUCAC_DISCORD_INVITE}" target="_blank" rel="noopener noreferrer">discord Server · *getkey</a>
+</div>`;
+        document.documentElement.appendChild(gate);
+    }
+    let _sessTimer = null;
+    function startSessionWatch() {
+        if (_sessTimer) return;
+        _sessTimer = setInterval(async function () {
+            const key = loadRawKey();
+            if (!key || !isKeyUnlocked()) return;
+            let uid = '';
+            try {
+                const tok = localStorage.getItem(KEY_STORAGE) || '';
+                const parts = tok.split('|');
+                if (parts[0] === 'timed' || parts[0] === 'perm') {
+                    uid = parts[2] || '';
+                    if (uid && /^[0-9a-fA-F]+$/.test(uid)) uid = String(parseInt(uid, 16));
+                }
+            } catch (e) {}
+            const res = await sessionRequest('check', key, uid);
+            if (res && res.kicked) {
+                try { clearInterval(_sessTimer); } catch (e) {}
+                _sessTimer = null;
+                showKeySharedKick();
+            }
+        }, 20000);
+    }
+
+
+    function showKeyGate(onSuccess) {
+        if (document.getElementById('kh-key-gate')) return;
+        const gate = document.createElement('div');
+        gate.id = 'kh-key-gate';
+        gate.innerHTML = `
+<style>
+#kh-key-gate{position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;
+background:rgba(4,2,12,0.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-family:'Tomorrow',system-ui,sans-serif;}
+#kh-key-box{position:relative;width:min(400px,94vw);padding:26px 20px 20px;border-radius:20px;
+background:radial-gradient(ellipse 120% 80% at 20% -10%,rgba(168,85,247,.28),transparent 50%),rgba(8,6,20,.92);
+border:1px solid rgba(180,140,255,.35);box-shadow:0 12px 40px rgba(0,0,0,.55),0 0 40px rgba(168,85,247,.15);
+color:#f0e6ff;text-align:center;}
+#kh-key-box h2{margin:0 0 4px;font-size:15px;letter-spacing:1.5px;font-weight:800;}
+#kh-key-box p{margin:0 0 14px;font-size:11px;color:#a78bfa;opacity:.9;line-height:1.45;}
+#kh-key-input{width:100%;box-sizing:border-box;padding:11px 12px;border-radius:12px;border:1px solid rgba(168,85,247,.4);
+background:rgba(0,0,0,.45);color:#fff;font-family:monospace;font-size:12px;outline:none;letter-spacing:.3px;text-align:center;}
+#kh-key-input:focus{border-color:#c084fc;box-shadow:0 0 0 2px rgba(168,85,247,.25);}
+#kh-key-row{display:flex;gap:8px;margin-top:0;align-items:stretch;}
+#kh-key-row #kh-key-input{flex:1;min-width:0;}
+#kh-key-paste{flex-shrink:0;padding:0 14px;border:1px solid rgba(168,85,247,.45);border-radius:12px;
+background:rgba(168,85,247,.18);color:#e9d5ff;font-family:'Tomorrow',sans-serif;font-weight:800;font-size:11px;
+cursor:pointer;letter-spacing:.3px;white-space:nowrap;}
+#kh-key-paste:hover{background:rgba(168,85,247,.35);filter:brightness(1.08);}
+#kh-key-join.kh-join-btn,a.kh-join-btn{
+display:flex;align-items:center;justify-content:center;gap:8px;
+width:100%;box-sizing:border-box;margin:10px 0 0;padding:11px 12px;border-radius:12px;
+background:linear-gradient(135deg,#5865F2,#4752C4);color:#fff!important;
+font-family:'Tomorrow',sans-serif;font-weight:800;font-size:12px;letter-spacing:.6px;
+text-decoration:none!important;border:1px solid rgba(255,255,255,.12);
+box-shadow:0 0 16px rgba(88,101,242,.45);transition:filter .15s,transform .15s;
+}
+#kh-key-join.kh-join-btn:hover,a.kh-join-btn:hover{filter:brightness(1.12);transform:translateY(-1px);}
+#kh-key-x{position:absolute;top:8px;right:10px;width:28px;height:28px;border-radius:50%;border:1px solid rgba(168,85,247,.45);
+background:rgba(168,85,247,.2);color:#f0e6ff;font-size:14px;line-height:1;cursor:pointer;}
+#kh-key-x:hover{background:rgba(236,72,153,.4);}
+#kh-key-reopen{position:fixed;right:14px;bottom:14px;z-index:2147483645;width:42px;height:42px;border-radius:50%;
+border:1px solid rgba(168,85,247,.5);background:rgba(8,6,20,.9);color:#fff;font-size:18px;cursor:pointer;box-shadow:0 0 14px rgba(168,85,247,.4);}
+.kh-copy-sv{width:100%;margin-top:8px;padding:10px;border-radius:12px;border:1px solid rgba(88,101,242,.5);
+background:rgba(88,101,242,.22);color:#e0e7ff;font-weight:800;font-size:11px;cursor:pointer;
+font-family:'Tomorrow',sans-serif;letter-spacing:.4px;}
+.kh-copy-sv:hover{filter:brightness(1.12);}
+#kh-key-btn{width:100%;margin-top:12px;padding:11px;border:none;border-radius:12px;cursor:pointer;
+font-family:'Tomorrow',sans-serif;font-weight:800;font-size:12px;letter-spacing:1px;
+background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;box-shadow:0 0 18px rgba(168,85,247,.4);}
+#kh-key-btn:hover{filter:brightness(1.1);}
+#kh-key-err{min-height:16px;margin-top:10px;font-size:11px;color:#fca5a5;font-family:monospace;}
+#kh-key-hint{margin-top:10px;font-size:9px;color:#6b7280;line-height:1.45;}
+</style>
+<div id="kh-key-box">
+  <button id="kh-key-x" type="button" title="Tắt GUI">✕</button>
+  <h2>🔐 LUCAC KEY</h2>
+  <a id="kh-key-join" class="kh-join-btn" href="https://discord.gg/mVq4ytdyD3" target="_blank" rel="noopener noreferrer">discord Join Server</a>
+  <p style="margin-top:12px;">Vào server rồi gõ <b style="color:#e9d5ff">*getkey</b> để lấy key 24h</p>
+  <div id="kh-key-row">
+    <input id="kh-key-input" type="text" placeholder="Dán key LC-... vào đây" autocomplete="off" spellcheck="false">
+    <button id="kh-key-paste" type="button" title="Dán từ clipboard">📋 Dán</button>
+  </div>
+  <button id="kh-key-btn" type="button">UNLOCK</button>
+  <button id="kh-key-copy-invite" type="button" class="kh-copy-sv">📋 Copy link server</button>
+  <div id="kh-key-err"></div>
+  <div id="kh-key-hint">Mỗi người 1 key · hết hạn sau 24 giờ</div>
+</div>`;
+        document.documentElement.appendChild(gate);
+        const inp = document.getElementById('kh-key-input');
+        const err = document.getElementById('kh-key-err');
+        const btn = document.getElementById('kh-key-btn');
+        const copyInv = document.getElementById('kh-key-copy-invite');
+        if (copyInv) {
+            copyInv.onclick = async function () {
+                const link = (typeof LUCAC_DISCORD_INVITE !== 'undefined') ? LUCAC_DISCORD_INVITE : 'https://discord.gg/mVq4ytdyD3';
+                try {
+                    await navigator.clipboard.writeText(link);
+                    err.style.color = '#86efac';
+                    err.textContent = '✓ Đã copy link server';
+                } catch (e) { err.textContent = link; }
+            };
+        }
+        document.getElementById('kh-key-x').onclick = () => {
+            try { gate.remove(); } catch (e) {}
+            if (document.getElementById('kh-key-reopen')) return;
+            const rb = document.createElement('button');
+            rb.id = 'kh-key-reopen';
+            rb.type = 'button';
+            rb.title = 'Mở lại nhập key';
+            rb.textContent = '🔐';
+            rb.onclick = () => { rb.remove(); showKeyGate(onSuccess); };
+            document.documentElement.appendChild(rb);
+        };
+        const go = () => {
+            const r = tryUnlockKey(inp.value);
+            if (r.ok) {
+                try { const rb0 = document.getElementById('kh-key-reopen'); if (rb0) rb0.remove(); } catch (e) {}
+                if (isAdmin()) { try { openAdminConsole(); } catch (e) {} }
+                err.style.color = '#86efac';
+                err.textContent = '✓ ' + r.msg;
+                (async function () {
+                    const ip = await fetchClientIP();
+                    let uid = '';
+                    try {
+                        const tok = localStorage.getItem(KEY_STORAGE) || '';
+                        const parts = tok.split('|');
+                        if (parts[0] === 'timed' || parts[0] === 'perm') uid = parts[2] || '';
+                        // uid may be hex — convert for API
+                        if (uid && /^[0-9a-fA-F]+$/.test(uid)) {
+                            try { uid = String(parseInt(uid, 16)); } catch (e) {}
+                        }
+                    } catch (e) {}
+                    const ban = await checkRemoteBan(uid, ip);
+                    if (ban) {
+                        clearKey();
+                        try { gate.remove(); } catch (e) {}
+                        showBanGate(ban);
+                        return;
+                    }
+                    registerIPWithServer(uid, ip, inp.value);
+                    saveRawKey(inp.value);
+                    const sess = await sessionRequest('claim', inp.value, uid);
+                    if (sess && sess.kicked) {
+                        lockKey();
+                        clearRawKey();
+                        try { gate.remove(); } catch (e) {}
+                        showKeySharedKick();
+                        return;
+                    }
+                    try { gate.remove(); } catch (e) {}
+                    if (typeof onSuccess === 'function') onSuccess();
+                    startSessionWatch();
+                })();
+            } else {
+                err.style.color = '#fca5a5';
+                err.textContent = '✗ ' + r.msg;
+            }
+        };
+        btn.onclick = go;
+        inp.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+        // Nút Dán key từ clipboard
+        const pasteBtn = document.getElementById('kh-key-paste');
+        if (pasteBtn) {
+            pasteBtn.onclick = async () => {
+                let text = '';
+                try {
+                    if (navigator.clipboard && navigator.clipboard.readText) {
+                        text = await navigator.clipboard.readText();
+                    }
+                } catch (e) {}
+                if (!text) {
+                    // fallback: focus input + user paste
+                    try { inp.focus(); inp.select(); } catch (e) {}
+                    err.style.color = '#fcd34d';
+                    err.textContent = 'Dán thủ công: giữ phím → Paste (Ctrl+V)';
+                    return;
+                }
+                text = String(text).trim().replace(/\s+/g, '').replace(/["'`]/g, '');
+                inp.value = text;
+                err.style.color = '#86efac';
+                err.textContent = '✓ Đã dán key — bấm UNLOCK';
+                // tự unlock nếu đúng format
+                if (/^LC-/i.test(text)) {
+                    setTimeout(go, 120);
+                }
+            };
+        }
+        // Ctrl+V / paste event: dọn key
+        inp.addEventListener('paste', (e) => {
+            setTimeout(() => {
+                try {
+                    inp.value = String(inp.value || '').trim().replace(/\s+/g, '').replace(/["'`]/g, '');
+                } catch (err2) {}
+            }, 0);
+        });
+        if (!document.getElementById('kh-key-anim')) {
+            const st = document.createElement('style');
+            st.id = 'kh-key-anim';
+            st.textContent = '@keyframes khKeyShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}';
+            document.head.appendChild(st);
+        }
+        // IP + ban check
+        (async function () {
+            const ip = await fetchClientIP();
+            const hint = document.getElementById('kh-key-hint');
+            if (hint && ip) {
+                hint.innerHTML = 'IP của bạn: <b style="color:#c4b5fd">' + ip + '</b> · 1 key / 24h';
+            }
+            const localBan = loadBanInfo();
+            if (localBan) {
+                try { gate.remove(); } catch (e) {}
+                showBanGate(localBan);
+                return;
+            }
+            const ban = await checkRemoteBan('', ip);
+            if (ban) {
+                try { gate.remove(); } catch (e) {}
+                showBanGate(ban);
+                return;
+            }
+            try { inp.focus(); } catch (e) {}
+        })();
+    }
+
 
     console.log('[LUCAC] Platform:', { IS_IOS, IS_SAFARI, IS_ORION, IOS_MIC_COMPENSATION });
 
@@ -1786,6 +2466,13 @@
             </div>
             <div class="info-name">Ngduyanh</div>
             <div class="info-sub">https://discord.gg/GwtHqmkuyc</div>
+        <div id="kh-ip-row" style="margin-top:10px;display:flex;flex-direction:column;gap:6px;width:100%;padding:0 8px;box-sizing:border-box;">
+          <div id="kh-client-ip" style="font-size:10px;font-family:monospace;color:#a78bfa;text-align:center;">IP: …</div>
+          <div style="display:flex;gap:6px;">
+            <button id="kh-hide-ip" type="button" class="set-btn" style="flex:1;">🙈 Ẩn IP</button>
+            <button id="kh-copy-sv" type="button" class="set-btn set-save" style="flex:1;">📋 Copy SV</button>
+          </div>
+        </div>
         </div>
 
         <!-- TOKEN section moved here -->
@@ -2024,6 +2711,34 @@
             applyLabels();
             applyEffectUI();
             loadIcon();
+        // IP hide + copy SV (BIO)
+        (function bindIpSv() {
+            const ipEl = document.getElementById('kh-client-ip');
+            const hideBtn = document.getElementById('kh-hide-ip');
+            const copySv = document.getElementById('kh-copy-sv');
+            let ipHidden = false, lastIp = '';
+            if (typeof fetchClientIP === 'function') {
+                fetchClientIP().then(function (ip) {
+                    lastIp = ip || '';
+                    if (ipEl && !ipHidden) ipEl.textContent = lastIp ? ('IP: ' + lastIp) : 'IP: ?';
+                });
+            }
+            if (hideBtn && ipEl) {
+                hideBtn.onclick = function () {
+                    ipHidden = !ipHidden;
+                    if (ipHidden) { ipEl.textContent = 'IP: •••.•••.•••.•••'; hideBtn.textContent = '👁 Hiện IP'; }
+                    else { ipEl.textContent = lastIp ? ('IP: ' + lastIp) : 'IP: ?'; hideBtn.textContent = '🙈 Ẩn IP'; }
+                };
+            }
+            if (copySv) {
+                copySv.onclick = async function () {
+                    const link = (typeof LUCAC_DISCORD_INVITE !== 'undefined') ? LUCAC_DISCORD_INVITE : 'https://discord.gg/mVq4ytdyD3';
+                    try { await navigator.clipboard.writeText(link); copySv.textContent = '✓ Copied'; setTimeout(function(){ copySv.textContent = '📋 Copy SV'; }, 1500); }
+                    catch (e) { try { prompt('Copy:', link); } catch (e2) {} }
+                };
+            }
+        })();
+
             syncFixlagUI();
             applyFixlag();
             updateFakeCamUI();
@@ -3000,6 +3715,46 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--kh-accent,#ff0055
 
     loadFakeCam();
 
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => UI.init());
-    else UI.init();
+    function bootLucac() {
+        try { if (typeof isAdmin === 'function' && isAdmin()) openAdminConsole(); } catch (e) {}
+        if (typeof isKeyUnlocked === 'function' && isKeyUnlocked()) {
+            UI.init();
+            try { if (typeof startSessionWatch === 'function') startSessionWatch(); } catch (e) {}
+        } else {
+            var start = function () {
+                (async function () {
+                    var ip = '';
+                    try { ip = await fetchClientIP(); } catch (e) {}
+                    var localBan = (typeof loadBanInfo === 'function') ? loadBanInfo() : null;
+                    if (localBan) { showBanGate(localBan); return; }
+                    var uid = '';
+                    try {
+                        var tok = localStorage.getItem(KEY_STORAGE) || '';
+                        var parts = tok.split('|');
+                        if (parts[0] === 'timed' || parts[0] === 'perm') {
+                            uid = parts[2] || '';
+                            if (uid && /^[0-9a-fA-F]+$/.test(uid)) uid = String(parseInt(uid, 16));
+                        }
+                    } catch (e) {}
+                    try {
+                        var ban = await checkRemoteBan(uid, ip);
+                        if (ban) { clearKey(); showBanGate(ban); return; }
+                    } catch (e) {}
+                    if (isKeyUnlocked()) {
+                        UI.init();
+                        try { if (typeof startSessionWatch === 'function') startSessionWatch(); } catch (e) {}
+                    } else {
+                        showKeyGate(function () {
+                            UI.init();
+                            try { if (typeof startSessionWatch === 'function') startSessionWatch(); } catch (e) {}
+                        });
+                    }
+                })();
+            };
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+            else start();
+        }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootLucac);
+    else bootLucac();
 })();
