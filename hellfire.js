@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         LUCAC
 // @namespace    lucac
-// @version      111
-// @description  NgDuyAnhHw - ban cu 100% (v111)
+// @version      93
+// @description  NgDuyAnhHw - Config share profiles (v93)
 // @match        *://*/*
 // @run-at       document-end
 // @grant        GM_xmlhttpRequest
@@ -137,7 +137,6 @@
     function lockKey() {
         try { localStorage.removeItem(KEY_STORAGE); } catch (e) {}
     }
-    function clearKey() { lockKey(); }
 
     function keyStatusText() {
         try {
@@ -415,7 +414,7 @@ background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;box-shadow:0 0 18p
         tabVoice:  'VOICE',
         tabEq:     'EQ',
         tabMusic:  'TRACK',
-        tabMedia:  'MEDIA',
+        tabMedia:  'CONFIG',
         tabInfo:   'BIO',
         tabChannel: 'CHANNEL',
         tabSettings: '⚙',
@@ -1105,11 +1104,49 @@ background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;box-shadow:0 0 18p
     };
 
     const VOICE_PRESETS = {
-        'NORMAL':{pitch:1.0,formant:1.0,mix:0.0},
-        'BABY':{pitch:1.65,formant:1.4,mix:0.95},
+        'NORMAL':{pitch:1.00,formant:1.00,mix:0.00},
+        'NAM':{pitch:0.92,formant:0.95,mix:0.55},
+        'NU':{pitch:1.28,formant:1.22,mix:0.88},
+        'TRE EM':{pitch:1.55,formant:1.35,mix:0.92},
+        'GIA':{pitch:0.78,formant:0.82,mix:0.85},
+        'LOLI':{pitch:1.92,formant:1.58,mix:0.98},
+        'ANIME GIRL':{pitch:1.48,formant:1.38,mix:0.95},
+        'KAWAII':{pitch:1.72,formant:1.48,mix:0.96},
+        'MOE':{pitch:1.62,formant:1.42,mix:0.94},
+        'TSUNDERE':{pitch:1.38,formant:1.28,mix:0.90},
+        'YANDERE':{pitch:1.22,formant:1.15,mix:0.88},
+        'ONEESAN':{pitch:1.18,formant:1.20,mix:0.86},
+        'IMOUTO':{pitch:1.58,formant:1.40,mix:0.95},
+        'ANIME BOY':{pitch:1.12,formant:1.08,mix:0.80},
+        'SHONEN':{pitch:1.05,formant:1.05,mix:0.75},
+        'SEINEN':{pitch:0.88,formant:0.92,mix:0.80},
+        'IKEMEN':{pitch:0.95,formant:0.98,mix:0.70},
+        'KUN':{pitch:1.08,formant:1.10,mix:0.82},
+        'CHAN':{pitch:1.68,formant:1.45,mix:0.96},
+        'SAMA':{pitch:0.82,formant:0.88,mix:0.85},
+        'HELLS':{pitch:0.55,formant:0.68,mix:0.95},
+        'DEMON':{pitch:0.48,formant:0.62,mix:0.98},
+        'ROBOT':{pitch:1.15,formant:0.70,mix:0.90},
+        'CHIPMUNK':{pitch:2.15,formant:1.70,mix:1.00},
+        'GIANT':{pitch:0.52,formant:0.70,mix:0.95},
+        'GHOST':{pitch:0.72,formant:1.35,mix:0.88},
+        'RADIO':{pitch:1.08,formant:0.85,mix:0.70},
+        'PHONE':{pitch:1.20,formant:0.75,mix:0.75},
+        'HELIUM':{pitch:1.85,formant:1.55,mix:0.97},
+        'SULFUR':{pitch:0.60,formant:0.72,mix:0.92},
+        'BABY':{pitch:1.70,formant:1.42,mix:0.95},
         'WOMAN':{pitch:1.35,formant:1.25,mix:0.90},
-        'LOLI':{pitch:1.95,formant:1.55,mix:0.98},
-        'DEEP':{pitch:0.65,formant:0.75,mix:0.95}
+        'DEEP':{pitch:0.62,formant:0.72,mix:0.95},
+        'DARK':{pitch:0.70,formant:0.78,mix:0.90},
+        'CUTE':{pitch:1.58,formant:1.40,mix:0.93},
+        'SOFT GIRL':{pitch:1.42,formant:1.32,mix:0.90},
+        'COOL GUY':{pitch:0.90,formant:0.95,mix:0.72},
+        'WAIFU':{pitch:1.52,formant:1.36,mix:0.94},
+        'HUSBANDO':{pitch:0.86,formant:0.90,mix:0.78},
+        'NEKO':{pitch:1.78,formant:1.50,mix:0.97},
+        'KITSUNE':{pitch:1.45,formant:1.30,mix:0.92},
+        'ANGEL':{pitch:1.40,formant:1.45,mix:0.88},
+        'DEVIL':{pitch:0.58,formant:0.65,mix:0.96}
     };
 
     const PRESETS = {
@@ -1146,7 +1183,7 @@ background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;box-shadow:0 0 18p
                 { name:'eqBass',defaultValue:0,min:-24,max:24 },
                 { name:'eqMid',defaultValue:0,min:-24,max:24 },
                 { name:'eqTreble',defaultValue:0,min:-24,max:24 },
-                { name:'voicePitch',defaultValue:1,min:-100,max:2.5 },
+                { name:'voicePitch',defaultValue:1,min:0.4,max:2.5 },
                 { name:'voiceFormant',defaultValue:1,min:0.3,max:2.0 },
                 { name:'voiceMix',defaultValue:0,min:0,max:1 },
                 { name:'autotuneOn',defaultValue:0,min:0,max:1 },
@@ -1233,7 +1270,7 @@ background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;box-shadow:0 0 18p
                 gBass=Math.pow(10,params.eqBass[0]/20),
                 gMid=Math.pow(10,params.eqMid[0]/20),
                 gTreble=Math.pow(10,params.eqTreble[0]/20),
-                voicePitch=params.voicePitch[0],voiceMix=params.voiceMix[0],
+                voicePitch=Math.max(0.4,Math.min(2.5,params.voicePitch[0]||1)),voiceMix=params.voiceMix[0],
                 atOn=params.autotuneOn[0]>0.5,atSpeed=params.autotuneSpeed[0],
                 atScaleIdx=Math.round(params.autotuneScale[0]),
                 gateOn=params.noiseGateOn[0]>0.5,gateThresh=params.noiseGateThreshold[0],
@@ -1274,6 +1311,16 @@ background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;box-shadow:0 0 18p
                     if(dL<150||dL>this._pitchBufferSize-150)this._pReadPtrL=(this._pWritePtr-1024+this._pitchBufferSize)%this._pitchBufferSize;
                     let dR=(this._pWritePtr-Math.floor(this._pReadPtrR)+this._pitchBufferSize)%this._pitchBufferSize;
                     if(dR<150||dR>this._pitchBufferSize-150)this._pReadPtrR=(this._pWritePtr-1024+this._pitchBufferSize)%this._pitchBufferSize;
+                }
+                if(voiceMix>0.005){
+                    const vf=params.voiceFormant[0];
+                    if(Math.abs(vf-1.0)>0.02){
+                        this._fmL=(this._fmL||0)*0.92+L*0.08;
+                        this._fmR=(this._fmR||0)*0.92+R*0.08;
+                        const hL=L-this._fmL,hR=R-this._fmR,lL=this._fmL,lR=this._fmR;
+                        if(vf>1){const t=(vf-1)*1.4;L=lL*(1-t*0.25)+hL*(1+t);R=lR*(1-t*0.25)+hR*(1+t);}
+                        else{const t=(1-vf)*1.4;L=lL*(1+t)+hL*(1-t*0.5);R=lR*(1+t)+hR*(1-t*0.5);}
+                    }
                 }
                 if(atOn){
                     this._atBufL[this._atWritePtr%this._atBufSize]=L;
@@ -1651,13 +1698,182 @@ background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;box-shadow:0 0 18p
         }
     };
 
+
+    // ---------- CONFIG PROFILES (save / share) ----------
+    const CFG_STORE_KEY = 'lucac_configs_v1';
+    let _cfgLastShare = '';
+
+    function cfgCollect() {
+        return {
+            v: 1,
+            name: '',
+            P: Object.assign({}, P),
+            ECHO: Object.assign({}, ECHO),
+            voice: null
+        };
+    }
+    function cfgApply(data) {
+        if (!data || !data.P) throw new Error('Config không hợp lệ');
+        Object.keys(data.P).forEach(k => {
+            if (k in P) P[k] = data.P[k];
+        });
+        if (data.ECHO && typeof ECHO === 'object') {
+            Object.keys(data.ECHO).forEach(k => {
+                if (k in ECHO) ECHO[k] = data.ECHO[k];
+            });
+        }
+        try { Core.push(); } catch (e) {}
+        try { syncUI(); } catch (e) {}
+    }
+    function cfgLoadAll() {
+        try {
+            const raw = localStorage.getItem(CFG_STORE_KEY);
+            const o = raw ? JSON.parse(raw) : {};
+            return o && typeof o === 'object' ? o : {};
+        } catch (e) { return {}; }
+    }
+    function cfgSaveAll(map) {
+        try { localStorage.setItem(CFG_STORE_KEY, JSON.stringify(map)); } catch (e) {}
+    }
+    function cfgEncode(obj) {
+        const json = JSON.stringify(obj);
+        const b64 = btoa(unescape(encodeURIComponent(json)));
+        return 'LUCAC_CFG:' + b64;
+    }
+    function cfgDecode(text) {
+        let t = (text || '').trim();
+        if (t.startsWith('LUCAC_CFG:')) t = t.slice(10);
+        const json = decodeURIComponent(escape(atob(t.replace(/\s/g, ''))));
+        return JSON.parse(json);
+    }
+    function cfgMsg(text, ok) {
+        const el = document.getElementById('cfg-msg');
+        if (!el) return;
+        el.textContent = text || '';
+        el.style.color = ok ? '#86efac' : '#fca5a5';
+    }
+    function cfgRenderList() {
+        const list = document.getElementById('cfg-list');
+        const empty = document.getElementById('cfg-empty');
+        if (!list) return;
+        const map = cfgLoadAll();
+        const keys = Object.keys(map).sort();
+        list.innerHTML = '';
+        if (!keys.length) {
+            if (empty) empty.style.display = 'block';
+            return;
+        }
+        if (empty) empty.style.display = 'none';
+        keys.forEach(name => {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;gap:4px;align-items:center;';
+            const label = document.createElement('button');
+            label.className = 'set-btn set-default';
+            label.style.cssText = 'flex:1;text-align:left;font-size:10px;padding:6px 8px;';
+            label.textContent = '📂 ' + name;
+            label.title = 'Load config';
+            label.onclick = () => {
+                try {
+                    cfgApply(map[name]);
+                    cfgMsg('Đã load: ' + name, true);
+                } catch (e) { cfgMsg('Lỗi load: ' + e.message, false); }
+            };
+            const share = document.createElement('button');
+            share.className = 'set-btn set-save';
+            share.style.cssText = 'padding:6px 8px;font-size:10px;';
+            share.textContent = '📤';
+            share.title = 'Share';
+            share.onclick = () => {
+                try {
+                    const data = map[name];
+                    data.name = name;
+                    _cfgLastShare = cfgEncode(data);
+                    const ta = document.getElementById('cfg-import-text');
+                    if (ta) ta.value = _cfgLastShare;
+                    cfgMsg('Code đã tạo — bấm Copy', true);
+                } catch (e) { cfgMsg('Share lỗi', false); }
+            };
+            const del = document.createElement('button');
+            del.className = 'set-btn';
+            del.style.cssText = 'padding:6px 8px;font-size:10px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5;';
+            del.textContent = '🗑';
+            del.onclick = () => {
+                const m2 = cfgLoadAll();
+                delete m2[name];
+                cfgSaveAll(m2);
+                cfgRenderList();
+                cfgMsg('Đã xóa: ' + name, true);
+            };
+            row.appendChild(label);
+            row.appendChild(share);
+            row.appendChild(del);
+            list.appendChild(row);
+        });
+    }
+    function cfgBindUI() {
+        const saveBtn = document.getElementById('cfg-save');
+        const expBtn = document.getElementById('cfg-export');
+        const impBtn = document.getElementById('cfg-import');
+        const copyBtn = document.getElementById('cfg-copy');
+        if (saveBtn) saveBtn.onclick = () => {
+            const name = (document.getElementById('cfg-name') || {}).value || '';
+            const n = name.trim() || ('cfg_' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-'));
+            const data = cfgCollect();
+            data.name = n;
+            const map = cfgLoadAll();
+            map[n] = data;
+            cfgSaveAll(map);
+            cfgRenderList();
+            cfgMsg('Đã lưu: ' + n, true);
+        };
+        if (expBtn) expBtn.onclick = () => {
+            try {
+                const name = ((document.getElementById('cfg-name') || {}).value || '').trim() || 'share';
+                const data = cfgCollect();
+                data.name = name;
+                _cfgLastShare = cfgEncode(data);
+                const ta = document.getElementById('cfg-import-text');
+                if (ta) ta.value = _cfgLastShare;
+                cfgMsg('Share code sẵn — Copy gửi bạn bè', true);
+            } catch (e) { cfgMsg('Export lỗi', false); }
+        };
+        if (impBtn) impBtn.onclick = () => {
+            try {
+                const ta = document.getElementById('cfg-import-text');
+                const data = cfgDecode(ta && ta.value);
+                cfgApply(data);
+                if (data.name) {
+                    const map = cfgLoadAll();
+                    map[data.name] = data;
+                    cfgSaveAll(map);
+                    cfgRenderList();
+                }
+                cfgMsg('Import OK' + (data.name ? (': ' + data.name) : ''), true);
+            } catch (e) { cfgMsg('Import lỗi — code sai?', false); }
+        };
+        if (copyBtn) copyBtn.onclick = () => {
+            const ta = document.getElementById('cfg-import-text');
+            const text = (ta && ta.value) || _cfgLastShare;
+            if (!text) { cfgMsg('Chưa có code', false); return; }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => cfgMsg('Đã copy clipboard', true)).catch(() => {
+                    if (ta) { ta.select(); document.execCommand('copy'); cfgMsg('Đã copy', true); }
+                });
+            } else if (ta) { ta.select(); document.execCommand('copy'); cfgMsg('Đã copy', true); }
+        };
+        cfgRenderList();
+    }
+
+
     function applyVoicePreset(key) {
         const vp = VOICE_PRESETS[key]; if (!vp) return;
-        P.voicePitch = vp.pitch; P.voiceFormant = vp.formant; P.voiceMix = vp.mix;
+        P.voicePitch = Math.max(0.4, Math.min(2.5, +vp.pitch || 1));
+        P.voiceFormant = Math.max(0.3, Math.min(2.0, +vp.formant || 1));
+        P.voiceMix = Math.max(0, Math.min(1, +vp.mix || 0));
         Core.push(); syncUI();
         document.querySelectorAll('.vp-btn').forEach(b => b.classList.toggle('vp-on', b.dataset.vp === key));
-        const s = document.getElementById('kh-voice-status');
-        if (s) { s.innerText = key === 'NORMAL' ? '🎤 NORMAL' : `🎤 ${key}`; s.style.color = '#ff0055'; }
+        const st = document.getElementById('kh-voice-status');
+        if (st) { st.innerText = key === 'NORMAL' ? '🎤 NORMAL' : ('🎤 ' + key); st.style.color = '#ff0055'; }
     }
     function applyPreset(key) {
         const pr = PRESETS[key]; if (!pr) return;
@@ -1684,7 +1900,7 @@ background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;box-shadow:0 0 18p
         if (slIn) { slIn.value = P.inputDb || 0; slIn.style.setProperty('--v', (((P.inputDb||0)+120)/240*100).toFixed(1)+'%'); setLabel('lb-indb', ((P.inputDb||0)>0?'+':'')+(P.inputDb||0).toFixed(1)+' dB'); }
         if (slOut) { slOut.value = P.outputDb || 0; slOut.style.setProperty('--v', (((P.outputDb||0)+120)/240*100).toFixed(1)+'%'); setLabel('lb-outdb', ((P.outputDb||0)>0?'+':'')+(P.outputDb||0).toFixed(1)+' dB'); }
 
-        setSlider('sl-vp',P.voicePitch,-1,2.5); setLabel('lb-vp',P.voicePitch.toFixed(2)+'x');
+        setSlider('sl-vp',P.voicePitch,0.4,2.5); setLabel('lb-vp',P.voicePitch.toFixed(2)+'x');
         setSlider('sl-vf',P.voiceFormant,0.3,2.0); setLabel('lb-vf',P.voiceFormant.toFixed(2)+'x');
         setSlider('sl-vm',P.voiceMix,0,1); setLabel('lb-vm',(P.voiceMix*100).toFixed(0)+'%');
         setSlider('sl-at-speed',P.autotuneSpeed,0,1); setLabel('lb-at-speed',(P.autotuneSpeed*100).toFixed(0)+'%');
@@ -2064,6 +2280,8 @@ background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;box-shadow:0 0 18p
         <button id="kh-rst">⟲ SYSTEM RESET</button>
         <div class="kh-sep"></div>
         <div class="kh-section-title sec-media">🎙 QUICK MUTE</div>
+        <button id="cam-toggle" class="media-toggle-btn cam-on">📷 CAMERA: ON</button>
+        <button id="mic-toggle" class="media-toggle-btn mic-on" style="margin-top:8px;">🎤 MICROPHONE: ON</button>
         <div style="display:flex;gap:8px;">
             <button id="main-mute-mic" class="media-toggle-btn mic-on" style="flex:1;margin:0;">🎤 MIC: ON</button>
             <button id="main-mute-cam" class="media-toggle-btn cam-on" style="flex:1;margin:0;">📷 CAM: ON</button>
@@ -2073,15 +2291,17 @@ background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;box-shadow:0 0 18p
 
     <div class="tab-panel" id="tab-voice" style="display:none">
         <div class="kh-section-title sec-voice">🎙 MODULE</div>
-        <div id="kh-voice-status" style="text-align:center;font-size:13px;color:#c084fc;margin-bottom:12px;font-family:'Share Tech Mono',monospace;text-shadow:0 0 8px rgba(168,85,247,0.4);">🎤 NORMAL</div>
+        <div id="kh-voice-status" style="text-align:center;font-size:13px;color:#c084fc;margin-bottom:6px;font-family:'Share Tech Mono',monospace;text-shadow:0 0 8px rgba(168,85,247,0.4);">🎤 NORMAL</div>
+<div class="kh-hint" style="margin-bottom:8px;text-align:center;">Anime · Loli · Neko · Deep · Robot… · Pitch 0.4–2.5x</div>
         <div id="kh-voice-presets">
             ${Object.keys(VOICE_PRESETS).map(k => {
-                let e = k === 'NORMAL' ? '🎤' : k === 'BABY' ? '👶' : k === 'WOMAN' ? '👩' : k === 'LOLI' ? '🧚' : '👴';
+                const EM={NORMAL:'🎤',NAM:'👨',NU:'👩','TRE EM':'👶',GIA:'👴',LOLI:'🧚','ANIME GIRL':'🎀',KAWAII:'💖',MOE:'🌸',TSUNDERE:'💢',YANDERE:'🔪',ONEESAN:'💃',IMOUTO:'👧','ANIME BOY':'🎮',SHONEN:'⚡',SEINEN:'🕶️',IKEMEN:'✨',KUN:'🙂',CHAN:'💕',SAMA:'👑',HELLS:'😈',DEMON:'👿',ROBOT:'🤖',CHIPMUNK:'🐿️',GIANT:'🗿',GHOST:'👻',RADIO:'📻',PHONE:'📞',HELIUM:'🎈',SULFUR:'🧪',BABY:'👶',WOMAN:'👩',DEEP:'🔊',DARK:'🌑',CUTE:'😊','SOFT GIRL':'🌷','COOL GUY':'😎',WAIFU:'💞',HUSBANDO:'💪',NEKO:'🐱',KITSUNE:'🦊',ANGEL:'😇',DEVIL:'😈'};
+                let e = EM[k] || '🎙';
                 return `<button class="vp-btn${k === 'NORMAL' ? ' vp-on' : ''}" data-vp="${k}">${e} ${k}</button>`;
             }).join('')}
         </div>
         <div class="kh-sep"></div>
-        ${[['sl-vp','lb-vp','PITCH','🎵',-1,2.5,1,'x'],['sl-vf','lb-vf','FORMANT','🎼',0.3,2.0,1,'x'],['sl-vm','lb-vm','MIX','🎚',0,1,0,'%']].map(([sid,lid,name,ico,mn,mx,def,unit]) => `
+        ${[['sl-vp','lb-vp','PITCH','🎵',0.4,2.5,1,'x'],['sl-vf','lb-vf','FORMANT','🎼',0.3,2.0,1,'x'],['sl-vm','lb-vm','MIX','🎚',0,1,0,'%']].map(([sid,lid,name,ico,mn,mx,def,unit]) => `
         <div class="kh-row"><div class="kh-rowlabel"><span>${ico} ${name}</span><span id="${lid}">${def}${unit}</span></div>
         <input type="range" class="voice-slider" id="${sid}" min="${mn}" max="${mx}" step="0.01" value="${def}" style="--v:${((def-mn)/(mx-mn)*100).toFixed(0)}%"></div>`).join('')}
         <div class="kh-sep"></div>
@@ -2161,16 +2381,35 @@ background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;box-shadow:0 0 18p
         </div>
     </div>
 
-    <!-- ============ TAB MEDIA (NEW) ============ -->
+    <!-- ============ TAB CONFIG (profiles + share) ============ -->
     <div class="tab-panel" id="tab-media" style="display:none">
-        <div class="kh-section-title sec-media">🎥 CAMERA / MICROPHONE</div>
-        <div class="kh-hint" style="color:#888;margin-bottom:10px;">Bật/tắt nhanh cam & mic mà không cần tắt luồng. Track sẽ được <code>enabled = false</code> (không gửi dữ liệu).</div>
+        <div class="kh-section-title sec-media">⚙️ CONFIG</div>
+        <div class="kh-hint" style="margin-bottom:8px;">Tự tạo settings · lưu · chia sẻ code cho người khác</div>
 
-        <button id="cam-toggle" class="media-toggle-btn cam-on">📷 CAMERA: ON</button>
-        <button id="mic-toggle" class="media-toggle-btn mic-on" style="margin-top:8px;">🎤 MICROPHONE: ON</button>
+        <div class="kh-row"><div class="kh-rowlabel"><span>Tên config</span></div>
+        <input type="text" id="cfg-name" class="set-input" maxlength="32" placeholder="VD: APO mic, Loli vang..."></div>
+
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+            <button id="cfg-save" class="set-btn set-save" style="flex:1;">💾 Lưu</button>
+            <button id="cfg-export" class="set-btn set-default" style="flex:1;">📤 Share</button>
+        </div>
 
         <div class="kh-sep"></div>
-        <div class="kh-hint" style="color:#666;">Lưu ý: khi tắt, track vẫn tồn tại trong stream nhưng bị disable. Một số app có thể hiển thị khung đen / im lặng.</div>
+        <div class="kh-section-title sec-media">📁 ĐÃ LƯU</div>
+        <div id="cfg-list" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;"></div>
+        <div id="cfg-empty" class="kh-hint" style="text-align:center;color:#666;">Chưa có config nào</div>
+
+        <div class="kh-sep"></div>
+        <div class="kh-section-title sec-media">📥 NHẬP CODE SHARE</div>
+        <textarea id="cfg-import-text" class="set-input" rows="3" placeholder="Dán code LUCAC_CFG:..." style="width:100%;box-sizing:border-box;min-height:64px;font-size:10px;font-family:monospace;resize:vertical;"></textarea>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+            <button id="cfg-import" class="set-btn set-save" style="flex:1;">⬇ Import</button>
+            <button id="cfg-copy" class="set-btn set-default" style="flex:1;">📋 Copy code</button>
+        </div>
+        <div id="cfg-msg" style="text-align:center;font-size:10px;margin-top:8px;color:#a78bfa;min-height:14px;"></div>
+
+        <div class="kh-sep"></div>
+        <div class="kh-hint">Cam/Mic: dùng nút nhanh ở tab GAIN (nếu có). Config gồm GAIN · VOICE · EQ · Vang · Echo · Loudness.</div>
     </div>
 
     <div class="tab-panel" id="tab-info" style="display:none">
@@ -2251,7 +2490,7 @@ background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;box-shadow:0 0 18p
         <div class="kh-row"><div class="kh-rowlabel"><span>Tab 2</span></div><input type="text" id="set-tabvoice" class="set-input" maxlength="14" placeholder="VOICE"></div>
         <div class="kh-row"><div class="kh-rowlabel"><span>Tab 3</span></div><input type="text" id="set-tabeq" class="set-input" maxlength="14" placeholder="EQ"></div>
         <div class="kh-row"><div class="kh-rowlabel"><span>Tab 4</span></div><input type="text" id="set-tabmusic" class="set-input" maxlength="14" placeholder="TRACK"></div>
-        <div class="kh-row"><div class="kh-rowlabel"><span>Tab 5 (Media)</span></div><input type="text" id="set-tabmedia" class="set-input" maxlength="14" placeholder="MEDIA"></div>
+        <div class="kh-row"><div class="kh-rowlabel"><span>Tab 5 (Media)</span></div><input type="text" id="set-tabmedia" class="set-input" maxlength="14" placeholder="CONFIG"></div>
         <div class="kh-row"><div class="kh-rowlabel"><span>Tab 6</span></div><input type="text" id="set-tabinfo" class="set-input" maxlength="14" placeholder="BIO"></div>
         <div class="kh-row"><div class="kh-rowlabel"><span>Tab 7</span></div><input type="text" id="set-tabchannel" class="set-input" maxlength="14" placeholder="CHANNEL"></div>
         <div class="kh-row"><div class="kh-rowlabel"><span>Tab 8</span></div><input type="text" id="set-tabsettings" class="set-input" maxlength="14" placeholder="⚙ SETTINGS"></div>
@@ -2575,7 +2814,7 @@ background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;box-shadow:0 0 18p
             const bNuke = document.getElementById('loud-nuke');
             if (bNuke) bNuke.onclick = () => applyLoudPreset(1.0, 40);
 
-            [['sl-vp','lb-vp','voicePitch',-1,2.5,'x',100],['sl-vf','lb-vf','voiceFormant',0.3,2.0,'x',100],['sl-vm','lb-vm','voiceMix',0,1,'%',100]].forEach(([sid,lid,param,mn,mx,unit,sc]) => {
+            [['sl-vp','lb-vp','voicePitch',0.4,2.5,'x',100],['sl-vf','lb-vf','voiceFormant',0.3,2.0,'x',100],['sl-vm','lb-vm','voiceMix',0,1,'%',100]].forEach(([sid,lid,param,mn,mx,unit,sc]) => {
                 const sl = document.getElementById(sid);
                 if (!sl) return;
                 sl.oninput = () => {
